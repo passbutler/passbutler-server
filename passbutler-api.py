@@ -15,6 +15,13 @@ databasePath = os.path.join(baseDirectory, 'passbutler.sqlite')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + databasePath
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+#CREATE TABLE IF NOT EXISTS `user` (`username` TEXT NOT NULL, `lockTimeout` INTEGER NOT NULL, `deleted` INTEGER NOT NULL, `modified` INTEGER NOT NULL, `created` INTEGER NOT NULL, PRIMARY KEY(`username`));
+# INSERT INTO `user` (`username`, `lockTimeout`, `deleted`, `modified`, `created`) VALUES ('a@sicherheitskritisch.de', 1, 0, 0,0);
+# INSERT INTO `user` (`username`, `lockTimeout`, `deleted`, `modified`, `created`) VALUES ('b@sicherheitskritisch.de', 1, 0, 0,0);
+
+#curl -X PUT -H "Content-Type: application/json" -d '{"deleted":0,"lockTimeout":3,"modified":1}' "http://127.0.0.1:5000/user/a@sicherheitskritisch.de"
+
+
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
@@ -87,6 +94,7 @@ def update_users():
         ## Update only allowed fields
         updatedUser.lockTimeout = user['lockTimeout']
         updatedUser.modified = user['modified']
+        updatedUser.deleted = user['deleted']
 
     db.session.commit()
 
