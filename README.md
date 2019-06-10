@@ -1,6 +1,12 @@
 # PassButler API
 
-## Setup
+## Development setup
+
+    ### Installation
+
+    pip install pytest flask-testing
+
+    TODO: python3.7 virtualenv
 
     $ virtualenv passbutler-server-venv --python=python3
     $ source ./passbutler-server-venv/bin/activate
