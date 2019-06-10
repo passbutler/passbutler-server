@@ -1,16 +1,32 @@
 # PassButler API
 
-## Development setup
+## Development setup (tested on Ubuntu 16.04)
 
-    ### Installation
+Install packages:
 
-    pip install pytest flask-testing
+    $ sudo apt install python3-virtualenv
 
-    TODO: python3.7 virtualenv
+Setup virtual env:
 
-    $ virtualenv passbutler-server-venv --python=python3
-    $ source ./passbutler-server-venv/bin/activate
+    $ virtualenv ~/passbutler-server-venv --python=python3
+    $ source ~/passbutler-server-venv/bin/activate
+
+Install dependencies:
 
     $ pip install flask-sqlalchemy flask-marshmallow marshmallow-sqlalchemy
+
+Install unit testing dependencies:
+
+    $ pip install pytest flask-testing
+
+## Unit testing
+
+Run unit tests:
+
+    $ pytest
+
+## Run server
+
+Start server:
 
     $ ./passbutler-server.py
