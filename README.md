@@ -2,11 +2,9 @@
 
 ## Setup
 
-    $ virtualenv passbutler-api-venv --python=python3
-    $ source ./passbutler-api-venv/bin/activate
+    $ virtualenv passbutler-server-venv --python=python3
+    $ source ./passbutler-server-venv/bin/activate
 
-    $ pip install flask-sqlalchemy
-    $ pip install flask-marshmallow
-    $ pip install marshmallow-sqlalchemy
+    $ pip install flask-sqlalchemy flask-marshmallow marshmallow-sqlalchemy
 
-    $ ./passbutler-api.py
+    $ ./passbutler-server.py
