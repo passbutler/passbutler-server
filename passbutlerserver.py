@@ -31,30 +31,21 @@ class User(db.Model):
         self.modified = modified
         self.created = created
 
-class UserSchema(ma.Schema):
-    class Meta:
-        fields = ('username', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
-
-privateUserSchema = UserSchema()
-publicUsersSchema = UserSchema(many=True)
 
 
 
 
 
-class TestUserSchema(ma.ModelSchema):
+## TODO: only validate partial fields in some requests
+## TODO: validate relations?
+
+class UserSchema(ma.ModelSchema):
     class Meta:
         model = User
 
-
-
-
-
-
-## TODO: Really needed?
-class UserAlreadyExistsException(Exception):
-    pass
-
+class PublicUserSchema(ma.Schema):
+    class Meta:
+        fields = ('username', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
 
 
 
@@ -106,53 +97,28 @@ def create_app(test_config=None):
     @app.route("/users", methods=["GET"])
     def get_users():
         allUsers = User.query.all()
-        result = publicUsersSchema.dump(allUsers)
+        result = PublicUserSchema(many=True).dump(allUsers)
         return jsonify(result.data)
 
     @app.route("/users", methods=["POST"])
     def create_users():
-        # unmarshalResult = TestUserSchema(many=True).load(request.json, session=db.session) ## TODO: session?
+        ## TODO: Where pass `session` and `transient`?
+        unmarshalResult = UserSchema(many=True).load(request.json, session=db.session, transient=True)
 
-        # if (len(unmarshalResult.errors) > 0):
-        #     app.logger.error('Model validation failed with errors: ' + str(unmarshalResult.errors))
-        #     abort(400)
-
-
-
-        validationResult = TestUserSchema().validate(data=request.json, many=True) 
-
-        print(validationResult)
-
-        if (len(validationResult) > 0):
-            app.logger.error('Model validation failed with errors: ' + str(validationResult))
+        if (len(unmarshalResult.errors) > 0):
+            app.logger.error('Model validation failed with errors: {0}'.format(unmarshalResult.errors))
             abort(400)
 
+        users = unmarshalResult.data
 
-        try:
-            users = request.json
+        for user in users:
+            if User.query.filter_by(username=user.username).first() is None:
+                db.session.add(user)
+            else:
+                app.logger.error('The user {0} already exists!'.format(user.username))
+                abort(409)
 
-            for user in users:
-                if User.query.filter_by(username=user['username']).first() is None:
-
-                    ## TODO: directly create user from json?
-                    db.session.add(User(
-                        username = user['username'],
-                        masterKeyDerivationInformation = user['masterKeyDerivationInformation'],
-                        masterEncryptionKey = user['masterEncryptionKey'],
-                        itemEncryptionPublicKey = user['itemEncryptionPublicKey'],
-                        itemEncryptionSecretKey = user['itemEncryptionSecretKey'],
-                        settings = user['settings'],
-                        deleted = user['deleted'],
-                        modified = user['modified'],
-                        created = user['created']
-                    ))
-                else:
-                    raise UserAlreadyExistsException()
-
-            db.session.commit()
-        except UserAlreadyExistsException:
-            app.logger.error('The user already exists!')
-            abort(409)
+        db.session.commit()
 
         return ('', 204)
 
