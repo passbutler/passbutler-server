@@ -11,6 +11,38 @@ import time
 db = SQLAlchemy()
 ma = Marshmallow()
 
+class User(db.Model):
+    username = db.Column(db.String(64), primary_key=True, nullable=False)
+    masterKeyDerivationInformation = db.Column(db.String, nullable=False)
+    masterEncryptionKey = db.Column(db.String, nullable=False)
+    itemEncryptionPublicKey = db.Column(db.String, nullable=False)
+    itemEncryptionSecretKey = db.Column(db.String, nullable=False)
+    settings = db.Column(db.String, nullable=False)
+    deleted = db.Column(db.Boolean, nullable=False)
+    modified = db.Column(db.Integer, nullable=False)
+    created = db.Column(db.Integer, nullable=False)
+
+    def __init__(self, username, masterKeyDerivationInformation, masterEncryptionKey, itemEncryptionPublicKey, itemEncryptionSecretKey, settings, deleted, modified, created):
+        self.username = username
+        self.masterKeyDerivationInformation = masterKeyDerivationInformation
+        self.masterEncryptionKey = masterEncryptionKey
+        self.itemEncryptionPublicKey = itemEncryptionPublicKey
+        self.itemEncryptionSecretKey = itemEncryptionSecretKey
+        self.settings = settings
+        self.deleted = deleted
+        self.modified = modified
+        self.created = created
+
+class UserSchema(ma.Schema):
+    class Meta:
+        fields = ('username', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
+
+userSchema = UserSchema()
+usersSchema = UserSchema(many=True)
+
+class UserAlreadyExistsException(Exception):
+    pass
+
 def create_app(test_config=None):
     app = Flask(__name__)
 
@@ -32,117 +64,53 @@ def create_app(test_config=None):
     def not_found(error):
         return make_response(jsonify({'error': 'Not found'}), 404)
 
+    @app.errorhandler(409)
+    def not_found(error):
+        return make_response(jsonify({'error': 'Already exists'}), 409)
+
+    @app.errorhandler(Exception)
+    def unhandled_exception(e):
+        app.logger.error('Unexpected exception occured: %s', (e))
+        return make_response(jsonify({'error': 'Server error'}), 500)
+
     @app.route("/users", methods=["GET"])
     def get_users():
         allUsers = User.query.all()
         result = usersSchema.dump(allUsers)
         return jsonify(result.data)
 
+    @app.route("/users", methods=["POST"])
+    def create_users():
+        if (not request.json or not len(request.json) > 0):
+            abort(400)
+
+        try:
+            users = request.json
+
+            for user in users:
+                if User.query.filter_by(username=user['username']).first() is None:
+                    db.session.add(User(
+                        username = user['username'],
+                        masterKeyDerivationInformation = user['masterKeyDerivationInformation'],
+                        masterEncryptionKey = user['masterEncryptionKey'],
+                        itemEncryptionPublicKey = user['itemEncryptionPublicKey'],
+                        itemEncryptionSecretKey = user['itemEncryptionSecretKey'],
+                        settings = user['settings'],
+                        deleted = user['deleted'],
+                        modified = user['modified'],
+                        created = user['created']
+                    ))
+                else:
+                    raise UserAlreadyExistsException()
+
+            db.session.commit()
+        except UserAlreadyExistsException:
+            app.logger.error('The user already exists!')
+            abort(409)
+
+        return ('', 204)
+
     return app
-
-class User(db.Model):
-    username = db.Column(db.String(64), primary_key=True, nullable=False)
-    masterKeyDerivationInformation = db.Column(db.String, nullable=False)
-    masterEncryptionKey = db.Column(db.String, nullable=False)
-    itemEncryptionPublicKey = db.Column(db.String, nullable=False)
-    itemEncryptionSecretKey = db.Column(db.String, nullable=False)
-    settings = db.Column(db.String, nullable=False)
-    deleted = db.Column(db.Boolean, nullable=False)
-    modified = db.Column(db.Integer, nullable=False)
-    created = db.Column(db.Integer, nullable=False)
-
-    def __init__(self, username, masterKeyDerivationInformation, masterEncryptionKey, itemEncryptionPublicKey, itemEncryptionSecretKey, settings, deleted, modified, created):
-        self.username = username
-        self.masterKeyDerivationInformation = masterKeyDerivationInformation
-        self.masterEncryptionKey = masterEncryptionKey
-        self.itemEncryptionPublicKey = itemEncryptionPublicKey
-        self.itemEncryptionSecretKey = itemEncryptionSecretKey
-        self.settings = settings
-        self.deleted = False
-        self.modified = modified
-        self.created = created
-
-class UserSchema(ma.Schema):
-    class Meta:
-        fields = ('username', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
-
-userSchema = UserSchema()
-usersSchema = UserSchema(many=True)
-
-
-
-
-
-
-# @app.route("/users", methods=["POST"])
-# def create_users():
-
-#     if (not request.json or not len(request.json) > 0):
-#         abort(400)
-
-#     users = request.json
-
-#     ## TODO: Check if user already exists?
-#     for user in users:
-#         newUser = User(
-#             user['username'],
-#             user['masterKeyDerivationInformation'],
-#             user['masterEncryptionKey'],
-#             user['itemEncryptionPublicKey'],
-#             user['itemEncryptionSecretKey'],
-#             user['settings'],
-#             user['deleted'],
-#             user['modified'],
-#             user['created']
-#         )
-
-#         db.session.add(newUser)
-
-#     db.session.commit()
-
-#     return ('', 204)
-
-# @app.route("/users", methods=["PUT"])
-# def update_users():
-
-#     if (not request.json or not len(request.json) > 0):
-#         abort(400)
-
-#     users = request.json
-
-#     for user in users:
-#         updatedUser = User.query.get(user['username'])
-
-#         if (updatedUser is None):
-#             abort(404)
-
-#         ## Update only allowed fields
-#         updatedUser.lockTimeout = user['lockTimeout']
-#         updatedUser.modified = user['modified']
-#         updatedUser.deleted = user['deleted']
-
-#     db.session.commit()
-
-#     return ('', 204)
-
-# @app.route("/user/<username>", methods=["GET"])
-# def user_detail(username):
-#     user = User.query.get(username)
-#     return userSchema.jsonify(user)
-
-# ## TODO: Check only the user itself is allowed to call this route
-# @app.route("/user/<username>", methods=["PUT"])
-# def user_update(username):
-#     user = User.query.get(username)
-
-#     user.lockTimeout = request.json['lockTimeout']
-#     user.deleted = request.json['deleted']
-#     user.modified = request.json['modified']
-
-#     db.session.commit()
-#     return userSchema.jsonify(user)
-
-
 
 if __name__ == '__main__':
     app = create_app()
