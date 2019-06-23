@@ -3,10 +3,8 @@
 from flask import Flask, request, jsonify, abort, make_response
 from flask_marshmallow import Marshmallow
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.schema import CreateSchema
 import json
 import os
-import time
 
 db = SQLAlchemy()
 ma = Marshmallow()
@@ -37,11 +35,39 @@ class UserSchema(ma.Schema):
     class Meta:
         fields = ('username', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
 
-userSchema = UserSchema()
-usersSchema = UserSchema(many=True)
+privateUserSchema = UserSchema()
+publicUsersSchema = UserSchema(many=True)
 
+
+
+
+
+class TestUserSchema(ma.ModelSchema):
+    class Meta:
+        model = User
+
+
+
+
+
+
+## TODO: Really needed?
 class UserAlreadyExistsException(Exception):
     pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def create_app(test_config=None):
     app = Flask(__name__)
@@ -65,8 +91,12 @@ def create_app(test_config=None):
         return make_response(jsonify({'error': 'Not found'}), 404)
 
     @app.errorhandler(409)
-    def not_found(error):
+    def already_exists(error):
         return make_response(jsonify({'error': 'Already exists'}), 409)
+
+    @app.errorhandler(400)
+    def invalid_request(error):
+        return make_response(jsonify({'error': 'Invalid request'}), 400)
 
     @app.errorhandler(Exception)
     def unhandled_exception(e):
@@ -76,19 +106,35 @@ def create_app(test_config=None):
     @app.route("/users", methods=["GET"])
     def get_users():
         allUsers = User.query.all()
-        result = usersSchema.dump(allUsers)
+        result = publicUsersSchema.dump(allUsers)
         return jsonify(result.data)
 
     @app.route("/users", methods=["POST"])
     def create_users():
-        if (not request.json or not len(request.json) > 0):
+        # unmarshalResult = TestUserSchema(many=True).load(request.json, session=db.session) ## TODO: session?
+
+        # if (len(unmarshalResult.errors) > 0):
+        #     app.logger.error('Model validation failed with errors: ' + str(unmarshalResult.errors))
+        #     abort(400)
+
+
+
+        validationResult = TestUserSchema().validate(data=request.json, many=True) 
+
+        print(validationResult)
+
+        if (len(validationResult) > 0):
+            app.logger.error('Model validation failed with errors: ' + str(validationResult))
             abort(400)
+
 
         try:
             users = request.json
 
             for user in users:
                 if User.query.filter_by(username=user['username']).first() is None:
+
+                    ## TODO: directly create user from json?
                     db.session.add(User(
                         username = user['username'],
                         masterKeyDerivationInformation = user['masterKeyDerivationInformation'],
