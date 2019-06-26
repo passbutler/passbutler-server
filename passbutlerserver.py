@@ -106,7 +106,7 @@ def create_app(test_config=None):
         unmarshalResult = UserSchema(many=True).load(request.json, session=db.session, transient=True)
 
         if (len(unmarshalResult.errors) > 0):
-            app.logger.error('Model validation failed with errors: {0}'.format(unmarshalResult.errors))
+            app.logger.debug('Model validation failed with errors: {0}'.format(unmarshalResult.errors))
             abort(400)
 
         users = unmarshalResult.data
@@ -115,7 +115,7 @@ def create_app(test_config=None):
             if User.query.filter_by(username=user.username).first() is None:
                 db.session.add(user)
             else:
-                app.logger.error('The user {0} already exists!'.format(user.username))
+                app.logger.debug('The user {0} already exists!'.format(user.username))
                 abort(409)
 
         db.session.commit()
@@ -126,4 +126,4 @@ def create_app(test_config=None):
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='127.0.0.1', debug=True)
