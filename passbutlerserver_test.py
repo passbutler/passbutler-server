@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+
+import unittest
 from flask_testing import TestCase
 from passbutlerserver import create_app, db
 from passbutlerserver import User
@@ -39,8 +42,6 @@ class UserTests(PassButlerTestCase):
             modified = 12345678902,
             created = 12345678901
         )
-
-        # print(user)
 
         db.session.add(user)
         db.session.commit()
@@ -239,3 +240,6 @@ class UserTests(PassButlerTestCase):
     #     ## Check that the existing user is unchanged
     #     existingUser = User.query.get("testuser")
     #     assert existingUser.username == "testuser"
+
+if __name__ == '__main__':
+    unittest.main()
