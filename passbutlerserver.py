@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 from flask import Flask, request, jsonify, abort, make_response
-from flask_marshmallow import Marshmallow
+from flask_marshmallow import Marshmallow, Schema
 from flask_sqlalchemy import SQLAlchemy
+from marshmallow_sqlalchemy import ModelSchema
 import json
 import os
 
@@ -31,34 +32,19 @@ class User(db.Model):
         self.modified = modified
         self.created = created
 
+    def __repr__(self):
+        return "<User(username={self.username!r})>".format(self=self)
 
-
-
-
-
-## TODO: only validate partial fields in some requests
-## TODO: validate relations?
-
-class UserSchema(ma.ModelSchema):
+class UserSchema(ModelSchema):
     class Meta:
         model = User
 
-class PublicUserSchema(ma.Schema):
+        ## Do not connect schema to database SQLAlchemy session
+        transient = True
+
+class PublicUserSchema(Schema):
     class Meta:
         fields = ('username', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 def create_app(test_config=None):
     app = Flask(__name__)
@@ -102,14 +88,13 @@ def create_app(test_config=None):
 
     @app.route("/users", methods=["POST"])
     def create_users():
-        ## TODO: Where pass `session` and `transient`?
-        unmarshalResult = UserSchema(many=True).load(request.json, session=db.session, transient=True)
+        usersSchema = UserSchema(many=True).load(request.json)
 
-        if (len(unmarshalResult.errors) > 0):
-            app.logger.debug('Model validation failed with errors: {0}'.format(unmarshalResult.errors))
+        if (len(usersSchema.errors) > 0):
+            app.logger.debug('Model validation failed with errors: {0}'.format(usersSchema.errors))
             abort(400)
 
-        users = unmarshalResult.data
+        users = usersSchema.data
 
         for user in users:
             if User.query.filter_by(username=user.username).first() is None:
