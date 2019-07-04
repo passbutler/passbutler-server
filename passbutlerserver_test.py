@@ -22,6 +22,58 @@ class PassButlerTestCase(TestCase):
         db.session.remove()
         db.drop_all()
 
+def createUser(
+    username,
+    masterKeyDerivationInformation,
+    masterEncryptionKey,
+    itemEncryptionPublicKey,
+    itemEncryptionSecretKey,
+    settings,
+    deleted,
+    modified,
+    created
+):
+    return User(
+        username = username,
+        masterKeyDerivationInformation = masterKeyDerivationInformation,
+        masterEncryptionKey = masterEncryptionKey,
+        itemEncryptionPublicKey = itemEncryptionPublicKey,
+        itemEncryptionSecretKey = itemEncryptionSecretKey,
+        settings = settings,
+        deleted = deleted,
+        modified = modified,
+        created = created
+    )
+
+def createUserJson(user):
+    return {
+        "username": user.username,
+        "masterKeyDerivationInformation": user.masterKeyDerivationInformation,
+        "masterEncryptionKey": user.masterEncryptionKey,
+        "itemEncryptionPublicKey": user.itemEncryptionPublicKey,
+        "itemEncryptionSecretKey": user.itemEncryptionSecretKey,
+        "settings": user.settings,
+        "deleted": user.deleted,
+        "modified": user.modified,
+        "created": user.created
+    }
+
+def assertUserEquals(expectedUser, actualUser):
+    equalChecks = [
+        expectedUser.username == actualUser.username,
+        expectedUser.masterKeyDerivationInformation == actualUser.masterKeyDerivationInformation,
+        expectedUser.masterEncryptionKey == actualUser.masterEncryptionKey,
+        expectedUser.itemEncryptionPublicKey == actualUser.itemEncryptionPublicKey,
+        expectedUser.itemEncryptionSecretKey == actualUser.itemEncryptionSecretKey,
+        expectedUser.settings == actualUser.settings,
+        expectedUser.deleted == actualUser.deleted,
+        expectedUser.modified == actualUser.modified,
+        expectedUser.created == actualUser.created
+    ]
+
+    if (all(equalChecks) == False):
+        raise AssertionError("The user objects are not equal!")
+
 class UserTests(PassButlerTestCase):
 
     def test_get_users_no_users(self):
@@ -31,57 +83,22 @@ class UserTests(PassButlerTestCase):
         assert b'[]' in response.data
 
     def test_get_users_one_user(self):
-        user = User(
-            username = "testuser",
-            masterKeyDerivationInformation = "a",
-            masterEncryptionKey = "b",
-            itemEncryptionPublicKey = "c",
-            itemEncryptionSecretKey = "d",
-            settings = "e",
-            deleted = False,
-            modified = 12345678902,
-            created = 12345678901
-        )
-
+        user = createUser("testuser", "a", "b", "c", "d", "e", False, 12345678902, 12345678901)
         db.session.add(user)
         db.session.commit()
 
         response = self.client.get("/users")
 
         assert response.status_code == 200
-        assert response.get_json() == [{
-            'username': 'testuser',
-            'itemEncryptionPublicKey': 'c',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901,
-        }]
+        assert response.get_json() == [
+            {'username': 'testuser', 'itemEncryptionPublicKey': 'c', 'deleted': False, 'modified': 12345678902, 'created': 12345678901}
+        ]
 
     def test_get_users_multiple_users(self):
-        user1 = User(
-            username = "testuser1",
-            masterKeyDerivationInformation = "a1",
-            masterEncryptionKey = "b1",
-            itemEncryptionPublicKey = "c1",
-            itemEncryptionSecretKey = "d1",
-            settings = "e1",
-            deleted = False,
-            modified = 12345678902,
-            created = 12345678901
-        )
+        user1 = createUser("testuser1", "a1", "b1", "c1", "d1", "e1", False, 12345678902, 12345678901)
         db.session.add(user1)
 
-        user2 = User(
-            username = "testuser2",
-            masterKeyDerivationInformation = "a2",
-            masterEncryptionKey = "b2",
-            itemEncryptionPublicKey = "c2",
-            itemEncryptionSecretKey = "d2",
-            settings = "e2",
-            deleted = False,
-            modified = 12345678903,
-            created = 12345678902
-        )
+        user2 = createUser("testuser2", "a2", "b2", "c2", "d2", "e2", False, 12345678904, 12345678903)
         db.session.add(user2)
 
         db.session.commit()
@@ -89,138 +106,52 @@ class UserTests(PassButlerTestCase):
         response = self.client.get("/users")
 
         assert response.status_code == 200
-        assert response.get_json() == [{
-            'username': 'testuser1',
-            'itemEncryptionPublicKey': 'c1',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901,
-        },
-        {
-            'username': 'testuser2',
-            'itemEncryptionPublicKey': 'c2',
-            'deleted': False,
-            'modified': 12345678903,
-            'created': 12345678902,
-        }]
+        assert response.get_json() == [
+            {'username': 'testuser1', 'itemEncryptionPublicKey': 'c1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
+            {'username': 'testuser2', 'itemEncryptionPublicKey': 'c2', 'deleted': False, 'modified': 12345678904, 'created': 12345678903}
+        ]
 
     def test_create_users_one_user(self):
-        response = self.client.post("/users", json=[{
-            "username": "testuser",
-            "masterKeyDerivationInformation": "a",
-            "masterEncryptionKey": "b",
-            "itemEncryptionPublicKey": "c",
-            "itemEncryptionSecretKey": "d",
-            "settings": "e",
-            "deleted": False,
-            "modified": 12345678902,
-            "created": 12345678901
-        }])
+        newUser = createUser("testuser", "a", "b", "c", "d", "e", False, 12345678902, 12345678901)
+        newUserJson = createUserJson(newUser)
+        response = self.client.post("/users", json=[newUserJson])
 
         assert response.status_code == 204
 
-        newUser = User.query.get("testuser")
-        assert newUser.username == "testuser"
-        assert newUser.masterKeyDerivationInformation == "a"
-        assert newUser.masterEncryptionKey == "b"
-        assert newUser.itemEncryptionPublicKey == "c"
-        assert newUser.itemEncryptionSecretKey == "d"
-        assert newUser.settings == "e"
-        assert newUser.deleted == False
-        assert newUser.modified == 12345678902
-        assert newUser.created == 12345678901
+        actualUser = User.query.get("testuser")
+        assertUserEquals(newUser, actualUser)
 
     def test_create_users_multiple_users(self):
-        response = self.client.post("/users", json=[
-            {
-                "username": "testuser1",
-                "masterKeyDerivationInformation": "a1",
-                "masterEncryptionKey": "b1",
-                "itemEncryptionPublicKey": "c1",
-                "itemEncryptionSecretKey": "d1",
-                "settings": "e1",
-                "deleted": False,
-                "modified": 12345678902,
-                "created": 12345678901
-            },
-            {
-                "username": "testuser2",
-                "masterKeyDerivationInformation": "a2",
-                "masterEncryptionKey": "b2",
-                "itemEncryptionPublicKey": "c2",
-                "itemEncryptionSecretKey": "d2",
-                "settings": "e2",
-                "deleted": False,
-                "modified": 12345678903,
-                "created": 12345678902
-            }
-        ])
+        newUser1 = createUser("testuser1", "a1", "b1", "c1", "d1", "e1", False, 12345678902, 12345678901)
+        newUser1Json = createUserJson(newUser1)
+
+        newUser2 = createUser("testuser2", "a2", "b2", "c2", "d2", "e2", False, 12345678904, 12345678903)
+        newUser2Json = createUserJson(newUser2)
+
+        response = self.client.post("/users", json=[newUser1Json, newUser2Json])
 
         assert response.status_code == 204
 
-        newUser1 = User.query.get("testuser1")
-        assert newUser1.username == "testuser1"
-        assert newUser1.masterKeyDerivationInformation == "a1"
-        assert newUser1.masterEncryptionKey == "b1"
-        assert newUser1.itemEncryptionPublicKey == "c1"
-        assert newUser1.itemEncryptionSecretKey == "d1"
-        assert newUser1.settings == "e1"
-        assert newUser1.deleted == False
-        assert newUser1.modified == 12345678902
-        assert newUser1.created == 12345678901
+        actualNewUser1 = User.query.get("testuser1")
+        assertUserEquals(newUser1, actualNewUser1)
 
-        newUser2 = User.query.get("testuser2")
-        assert newUser2.username == "testuser2"
-        assert newUser2.masterKeyDerivationInformation == "a2"
-        assert newUser2.masterEncryptionKey == "b2"
-        assert newUser2.itemEncryptionPublicKey == "c2"
-        assert newUser2.itemEncryptionSecretKey == "d2"
-        assert newUser2.settings == "e2"
-        assert newUser2.deleted == False
-        assert newUser2.modified == 12345678903
-        assert newUser2.created == 12345678902
+        actualNewUser2 = User.query.get("testuser2")
+        assertUserEquals(newUser2, actualNewUser2)
 
     def test_create_users_already_existing(self):
-        user = User(
-            username = "testuser",
-            masterKeyDerivationInformation = "a1",
-            masterEncryptionKey = "b1",
-            itemEncryptionPublicKey = "c1",
-            itemEncryptionSecretKey = "d1",
-            settings = "e1",
-            deleted = False,
-            modified = 12345678902,
-            created = 12345678901
-        )
-
-        db.session.add(user)
+        initialExistingUser = createUser("testuser", "a1", "b1", "c1", "d1", "e1", False, 12345678902, 12345678901)
+        db.session.add(initialExistingUser)
         db.session.commit()
 
-        response = self.client.post("/users", json=[{
-            "username": "testuser",
-            "masterKeyDerivationInformation": "a2",
-            "masterEncryptionKey": "b2",
-            "itemEncryptionPublicKey": "c2",
-            "itemEncryptionSecretKey": "d2",
-            "settings": "e2",
-            "deleted": False,
-            "modified": 12345678903,
-            "created": 12345678902
-        }])
+        addingUser = createUser("testuser", "a2", "b2", "c2", "d2", "e2", False, 12345678904, 12345678903)
+        addingUserJson = createUserJson(addingUser)
+        response = self.client.post("/users", json=[addingUserJson])
 
         assert response.status_code == 409
 
-        ## Check that the existing user is unchanged
+        ## Check that the initial existing user is unchanged
         existingUser = User.query.get("testuser")
-        assert existingUser.username == "testuser"
-        assert existingUser.masterKeyDerivationInformation == "a1"
-        assert existingUser.masterEncryptionKey == "b1"
-        assert existingUser.itemEncryptionPublicKey == "c1"
-        assert existingUser.itemEncryptionSecretKey == "d1"
-        assert existingUser.settings == "e1"
-        assert existingUser.deleted == False
-        assert existingUser.modified == 12345678902
-        assert existingUser.created == 12345678901
+        assertUserEquals(initialExistingUser, existingUser)
 
     # def test_create_users_missing_json_content(self):
     #     response = self.client.post("/users", json=[{
