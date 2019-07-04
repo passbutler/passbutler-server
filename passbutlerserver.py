@@ -39,26 +39,26 @@ class UserSchema(ModelSchema):
     class Meta:
         model = User
 
-        ## Do not connect schema to database SQLAlchemy session
+        ## Do not connect schema to SQLAlchemy database session
         transient = True
 
 class PublicUserSchema(Schema):
     class Meta:
         fields = ('username', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
 
-def create_app(test_config=None):
+def create_app(testConfig=None):
     app = Flask(__name__)
 
     ## General config (production and test related)
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    if (test_config is None):
+    if (testConfig is None):
         baseDirectory = os.path.abspath(os.path.dirname(__file__))
         databaseFilePath = os.path.join(baseDirectory, 'passbutler.sqlite')
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + databaseFilePath
     else:
         ## Use `flask_testing.TestCase` fields for configuration
-        app.config.from_object(test_config)
+        app.config.from_object(testConfig)
 
     db.init_app(app)
     ma.init_app(app)
