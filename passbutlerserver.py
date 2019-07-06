@@ -112,6 +112,16 @@ def create_app(testConfig=None):
 
         return ('', 204)
 
+    @app.route("/user/<username>", methods=["GET"])
+    def get_user_detail(username):
+        user = User.query.get(username)
+
+        if user is None:
+            abort(404)
+
+        result = UserSchema().dump(user)
+        return jsonify(result.data)
+
     return app
 
 if __name__ == '__main__':

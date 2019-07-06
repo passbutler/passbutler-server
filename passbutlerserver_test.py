@@ -170,5 +170,29 @@ class UserTests(PassButlerTestCase):
         createdUser = User.query.get("testuser")
         assert createdUser == None
 
+    """
+    Tests for GET /user/exampleuser
+
+    """
+
+    ## TODO: Authentication
+    def test_get_user(self):
+        user = User("testuser", "a", "b", "c", "d", "e", False, 12345678902, 12345678901)
+        db.session.add(user)
+        db.session.commit()
+
+        response = self.client.get("/user/testuser")
+
+        assert response.status_code == 200
+
+        userJson = createUserJson(user)
+        assert response.get_json() == userJson
+
+    def test_get_user_not_existing(self):
+        response = self.client.get("/user/nonExistingUser")
+
+        assert response.status_code == 404
+        assert response.get_json() == {'error': 'Not found'}
+
 if __name__ == '__main__':
     unittest.main()
