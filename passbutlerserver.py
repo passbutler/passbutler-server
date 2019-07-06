@@ -63,6 +63,11 @@ def create_app(testConfig=None):
     db.init_app(app)
     ma.init_app(app)
 
+    ## Create database tables if not in unit test mode
+    if (testConfig is None):
+        with app.app_context():
+            db.create_all()
+
     @app.errorhandler(404)
     def not_found(error):
         return make_response(jsonify({'error': 'Not found'}), 404)
