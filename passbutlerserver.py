@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 
-from flask import Flask, request, jsonify, abort, make_response
+from flask import Flask, request, jsonify, abort, make_response, g
 from flask_marshmallow import Marshmallow, Schema
 from flask_sqlalchemy import SQLAlchemy
-
+from marshmallow_sqlalchemy import ModelSchema
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 from werkzeug.security import generate_password_hash, check_password_hash
-from itsdangerous import TimedJSONWebSignatureSerializer as JWS, BadSignature, SignatureExpired
-
-from marshmallow_sqlalchemy import ModelSchema
-import json
+from itsdangerous import TimedJSONWebSignatureSerializer as JsonWebToken, BadSignature, SignatureExpired
 import os
 
 db = SQLAlchemy()
@@ -17,7 +14,7 @@ ma = Marshmallow()
 
 class User(db.Model):
     username = db.Column(db.String(64), primary_key=True, nullable=False)
-   # authenticationPassword = db.Column(db.String, nullable=False)
+    authenticationPassword = db.Column(db.String, nullable=False)
     masterKeyDerivationInformation = db.Column(db.String, nullable=False)
     masterEncryptionKey = db.Column(db.String, nullable=False)
     itemEncryptionPublicKey = db.Column(db.String, nullable=False)
@@ -40,6 +37,9 @@ class User(db.Model):
 
     def __repr__(self):
         return "<User(username={self.username!r})>".format(self=self)
+
+    def generate_auth_token(self, jsonWebToken):
+        return jsonWebToken.dumps({'username': self.username})
 
 class UserSchema(ModelSchema):
     class Meta:
@@ -89,48 +89,42 @@ def create_app(testConfig=None):
 
 
 
+    jsonWebToken = JsonWebToken(app.config['SECRET_KEY'], expires_in=3600)
 
+    passwordAuth = HTTPBasicAuth()
+    tokenAuth = HTTPTokenAuth('Bearer')
 
-
-    jws = JWS(app.config['SECRET_KEY'], expires_in=3600)
-
-    basic_auth = HTTPBasicAuth()
-    token_auth = HTTPTokenAuth('Bearer')
-
-    users = {
-        "testuser": generate_password_hash("1234")
-    }
-
-    @basic_auth.verify_password
+    @passwordAuth.verify_password
     def verify_password(username, password):
-        #g.user = None
-        if username in users:
-            if check_password_hash(users.get(username), password):
-                #g.user = username
-                return True
-        return False
+        g.user = None
+        requestingUser = User.query.filter_by(username=username).first()
 
-    @token_auth.verify_token
-    def verify_token(token):
-        #g.user = None
-
-        try:
-            data = jws.loads(token)
-        except SignatureExpired:
-            return None # valid token, but expired
-        except BadSignature:
-            return None # invalid token
-
-        if 'username' in data:
-            #g.user = data['username']
+        if requestingUser is not None and check_password_hash(requestingUser.authenticationPassword, password):
+            g.user = requestingUser
             return True
 
         return False
 
+    @tokenAuth.verify_token
+    def verify_token(token):
+        g.user = None
 
+        try:
+            tokenData = jsonWebToken.loads(token)
+        except SignatureExpired:
+            return False
+        except BadSignature:
+            return False
 
-    @basic_auth.error_handler
-    def unauthorized_http_basic_auth():
+        if 'username' in tokenData:
+            g.user = User.query.filter_by(username=tokenData['username']).first()
+            return True
+
+        return False
+
+    @passwordAuth.error_handler
+    @tokenAuth.error_handler
+    def unauthorized_httpauth():
         abort(403)
 
 
@@ -204,13 +198,13 @@ def create_app(testConfig=None):
         return ('', 204)
 
     @app.route("/token", methods=["GET"])
-    @basic_auth.login_required
-    def generate_token():
-        username = "testuser"
-        return (jws.dumps({"username": username}), 200)
+    @passwordAuth.login_required
+    def request_token():
+        token = g.user.generate_auth_token(jsonWebToken)
+        return jsonify({'token': token.decode('ascii')})
 
     @app.route("/user/<username>", methods=["GET"])
-    @token_auth.login_required
+    @tokenAuth.login_required
     def get_user_detail(username):
         user = User.query.get(username)
 
