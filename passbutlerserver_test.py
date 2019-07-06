@@ -7,9 +7,9 @@ from passbutlerserver import User
 
 class PassButlerTestCase(TestCase):
 
-    SQLALCHEMY_DATABASE_URI = "sqlite://"
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
     TESTING = True
+
+    SQLALCHEMY_DATABASE_URI = "sqlite://"
 
     def create_app(self):
         app = create_app(self)
