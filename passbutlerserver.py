@@ -14,7 +14,7 @@ ma = Marshmallow()
 
 class User(db.Model):
     username = db.Column(db.String(64), primary_key=True, nullable=False)
-    authenticationPassword = db.Column(db.String, nullable=False)
+    authenticationPasswordHash = db.Column(db.String, nullable=False)
     masterKeyDerivationInformation = db.Column(db.String, nullable=False)
     masterEncryptionKey = db.Column(db.String, nullable=False)
     itemEncryptionPublicKey = db.Column(db.String, nullable=False)
@@ -38,7 +38,10 @@ class User(db.Model):
     def __repr__(self):
         return "<User(username={self.username!r})>".format(self=self)
 
-    def generate_auth_token(self, jsonWebToken):
+    def checkAuthenticationPassword(self, password):
+        return check_password_hash(self.authenticationPasswordHash, password)
+
+    def generateAuthenticationToken(self, jsonWebToken):
         return jsonWebToken.dumps({'username': self.username})
 
 class UserSchema(ModelSchema):
@@ -52,13 +55,13 @@ class PublicUserSchema(Schema):
     class Meta:
         fields = ('username', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
 
-def create_app(testConfig=None):
+def createApp(testConfig=None):
     app = Flask(__name__)
 
     ## General config (production and test related)
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    if (testConfig is None):
+    if testConfig is None:
         baseDirectory = os.path.abspath(os.path.dirname(__file__))
         databaseFilePath = os.path.join(baseDirectory, 'passbutlerserver.sqlite')
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + databaseFilePath
@@ -75,35 +78,35 @@ def create_app(testConfig=None):
     ma.init_app(app)
 
     ## Create database tables if not in unit test mode
-    if (testConfig is None):
+    if testConfig is None:
         with app.app_context():
             db.create_all()
 
-    jsonWebToken = JsonWebToken(app.config['SECRET_KEY'], expires_in=3600)
+    jsonWebTokenSerializer = JsonWebToken(app.config['SECRET_KEY'], expires_in=3600)
 
     passwordAuth = HTTPBasicAuth()
-    tokenAuth = HTTPTokenAuth('Bearer')
+    webTokenAuth = HTTPTokenAuth('Bearer')
 
     @passwordAuth.verify_password
-    def verify_password(username, password):
+    def httpAuthVerifyPassword(username, password):
         wasSuccessful = False
         g.authenticatedUser = None
 
         requestingUser = User.query.filter_by(username=username).first()
 
-        if requestingUser is not None and check_password_hash(requestingUser.authenticationPassword, password):
+        if requestingUser is not None and requestingUser.checkAuthenticationPassword(password):
             g.authenticatedUser = requestingUser
             wasSuccessful = True
 
         return wasSuccessful
 
-    @tokenAuth.verify_token
-    def verify_token(token):
+    @webTokenAuth.verify_token
+    def httpAuthVerifyToken(token):
         wasSuccessful = False
         g.authenticatedUser = None
 
         try:
-            tokenData = jsonWebToken.loads(token)
+            tokenData = jsonWebTokenSerializer.loads(token)
             username = tokenData.get('username')
 
             if username is not None:
@@ -116,30 +119,30 @@ def create_app(testConfig=None):
         return wasSuccessful
 
     @passwordAuth.error_handler
-    @tokenAuth.error_handler
-    def unauthorized_httpauth():
+    @webTokenAuth.error_handler
+    def httpAuthUnauthorizedHandler():
         ## Just pass the event to normal Flask handler
         abort(403)
 
     @app.errorhandler(400)
-    def invalid_request(error):
+    def invalidRequestHandler(error):
         return make_response(jsonify({'error': 'Invalid request'}), 400)
 
     @app.errorhandler(403)
-    def unauthorized(error):
+    def unauthorizedRequestHandler(error):
         return make_response(jsonify({'error': 'Unauthorized'}), 403)
 
     @app.errorhandler(404)
-    def not_found(error):
+    def notFoundRequestHandler(error):
         return make_response(jsonify({'error': 'Not found'}), 404)
 
     @app.errorhandler(409)
-    def already_exists(error):
+    def alreadyExistsRequestHandler(error):
         return make_response(jsonify({'error': 'Already exists'}), 409)
 
     @app.errorhandler(Exception)
-    def unhandled_exception(e):
-        app.logger.error('Unexpected exception occured: %s', (e))
+    def unhandledExceptionHandler(exception):
+        app.logger.error('Unexpected exception occured: %s', (exception))
         return make_response(jsonify({'error': 'Server error'}), 500)
 
     @app.route("/users", methods=["GET"])
@@ -152,7 +155,7 @@ def create_app(testConfig=None):
     def create_users():
         usersSchema = UserSchema(many=True).load(request.json)
 
-        if (len(usersSchema.errors) > 0):
+        if len(usersSchema.errors) > 0:
             app.logger.debug('Model validation failed with errors: {0}'.format(usersSchema.errors))
             abort(400)
 
@@ -176,12 +179,12 @@ def create_app(testConfig=None):
     """
     @app.route("/token", methods=["GET"])
     @passwordAuth.login_required
-    def request_token():
-        token = g.authenticatedUser.generate_auth_token(jsonWebToken)
+    def get_token():
+        token = g.authenticatedUser.generateAuthenticationToken(jsonWebTokenSerializer)
         return jsonify({'token': token.decode('ascii')})
 
     @app.route("/user/<username>", methods=["GET"])
-    @tokenAuth.login_required
+    @webTokenAuth.login_required
     def get_user_detail(username):
         user = User.query.get(username)
 
@@ -198,7 +201,7 @@ def create_app(testConfig=None):
     return app
 
 if __name__ == '__main__':
-    app = create_app()
+    app = createApp()
 
     ## TODO: Set debug via configuration + general better configuration handling
     app.run(host='127.0.0.1', debug=True)

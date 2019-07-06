@@ -2,7 +2,7 @@
 
 import unittest
 from flask_testing import TestCase
-from passbutlerserver import create_app, db
+from passbutlerserver import createApp, db
 from passbutlerserver import User
 
 class PassButlerTestCase(TestCase):
@@ -13,7 +13,7 @@ class PassButlerTestCase(TestCase):
     SECRET_KEY = 'secretKeyForTesting'
 
     def create_app(self):
-        app = create_app(self)
+        app = createApp(self)
         return app
 
     def setUp(self):
