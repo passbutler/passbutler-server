@@ -22,29 +22,6 @@ class PassButlerTestCase(TestCase):
         db.session.remove()
         db.drop_all()
 
-def createUser(
-    username,
-    masterKeyDerivationInformation,
-    masterEncryptionKey,
-    itemEncryptionPublicKey,
-    itemEncryptionSecretKey,
-    settings,
-    deleted,
-    modified,
-    created
-):
-    return User(
-        username = username,
-        masterKeyDerivationInformation = masterKeyDerivationInformation,
-        masterEncryptionKey = masterEncryptionKey,
-        itemEncryptionPublicKey = itemEncryptionPublicKey,
-        itemEncryptionSecretKey = itemEncryptionSecretKey,
-        settings = settings,
-        deleted = deleted,
-        modified = modified,
-        created = created
-    )
-
 def createUserJson(user):
     return {
         "username": user.username,
@@ -83,7 +60,7 @@ class UserTests(PassButlerTestCase):
         assert b'[]' in response.data
 
     def test_get_users_one_user(self):
-        user = createUser("testuser", "a", "b", "c", "d", "e", False, 12345678902, 12345678901)
+        user = User("testuser", "a", "b", "c", "d", "e", False, 12345678902, 12345678901)
         db.session.add(user)
         db.session.commit()
 
@@ -95,10 +72,10 @@ class UserTests(PassButlerTestCase):
         ]
 
     def test_get_users_multiple_users(self):
-        user1 = createUser("testuser1", "a1", "b1", "c1", "d1", "e1", False, 12345678902, 12345678901)
+        user1 = User("testuser1", "a1", "b1", "c1", "d1", "e1", False, 12345678902, 12345678901)
         db.session.add(user1)
 
-        user2 = createUser("testuser2", "a2", "b2", "c2", "d2", "e2", False, 12345678904, 12345678903)
+        user2 = User("testuser2", "a2", "b2", "c2", "d2", "e2", False, 12345678904, 12345678903)
         db.session.add(user2)
 
         db.session.commit()
@@ -112,7 +89,7 @@ class UserTests(PassButlerTestCase):
         ]
 
     def test_create_users_one_user(self):
-        newUser = createUser("testuser", "a", "b", "c", "d", "e", False, 12345678902, 12345678901)
+        newUser = User("testuser", "a", "b", "c", "d", "e", False, 12345678902, 12345678901)
         newUserJson = createUserJson(newUser)
         response = self.client.post("/users", json=[newUserJson])
 
@@ -122,10 +99,10 @@ class UserTests(PassButlerTestCase):
         assertUserEquals(newUser, actualUser)
 
     def test_create_users_multiple_users(self):
-        newUser1 = createUser("testuser1", "a1", "b1", "c1", "d1", "e1", False, 12345678902, 12345678901)
+        newUser1 = User("testuser1", "a1", "b1", "c1", "d1", "e1", False, 12345678902, 12345678901)
         newUser1Json = createUserJson(newUser1)
 
-        newUser2 = createUser("testuser2", "a2", "b2", "c2", "d2", "e2", False, 12345678904, 12345678903)
+        newUser2 = User("testuser2", "a2", "b2", "c2", "d2", "e2", False, 12345678904, 12345678903)
         newUser2Json = createUserJson(newUser2)
 
         response = self.client.post("/users", json=[newUser1Json, newUser2Json])
@@ -139,11 +116,11 @@ class UserTests(PassButlerTestCase):
         assertUserEquals(newUser2, actualNewUser2)
 
     def test_create_users_already_existing(self):
-        initialExistingUser = createUser("testuser", "a1", "b1", "c1", "d1", "e1", False, 12345678902, 12345678901)
+        initialExistingUser = User("testuser", "a1", "b1", "c1", "d1", "e1", False, 12345678902, 12345678901)
         db.session.add(initialExistingUser)
         db.session.commit()
 
-        addingUser = createUser("testuser", "a2", "b2", "c2", "d2", "e2", False, 12345678904, 12345678903)
+        addingUser = User("testuser", "a2", "b2", "c2", "d2", "e2", False, 12345678904, 12345678903)
         addingUserJson = createUserJson(addingUser)
         response = self.client.post("/users", json=[addingUserJson])
 
