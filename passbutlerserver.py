@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from marshmallow_sqlalchemy import ModelSchema
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 from werkzeug.security import generate_password_hash, check_password_hash
-from itsdangerous import TimedJSONWebSignatureSerializer as JsonWebToken, BadSignature, SignatureExpired
+from itsdangerous import TimedJSONWebSignatureSerializer as JsonWebToken
 import os
 
 db = SQLAlchemy()
@@ -79,16 +79,6 @@ def create_app(testConfig=None):
         with app.app_context():
             db.create_all()
 
-
-
-
-
-
-
-
-
-
-
     jsonWebToken = JsonWebToken(app.config['SECRET_KEY'], expires_in=3600)
 
     passwordAuth = HTTPBasicAuth()
@@ -96,58 +86,40 @@ def create_app(testConfig=None):
 
     @passwordAuth.verify_password
     def verify_password(username, password):
-        g.user = None
+        wasSuccessful = False
+        g.authenticatedUser = None
+
         requestingUser = User.query.filter_by(username=username).first()
 
         if requestingUser is not None and check_password_hash(requestingUser.authenticationPassword, password):
-            g.user = requestingUser
-            return True
+            g.authenticatedUser = requestingUser
+            wasSuccessful = True
 
-        return False
+        return wasSuccessful
 
     @tokenAuth.verify_token
     def verify_token(token):
-        g.user = None
+        wasSuccessful = False
+        g.authenticatedUser = None
 
         try:
             tokenData = jsonWebToken.loads(token)
-        except SignatureExpired:
-            return False
-        except BadSignature:
-            return False
+            username = tokenData.get('username')
 
-        if 'username' in tokenData:
-            g.user = User.query.filter_by(username=tokenData['username']).first()
-            return True
+            if username is not None:
+                g.authenticatedUser = User.query.filter_by(username=username).first()
+                wasSuccessful = True
+        except:
+            ## If any exception ocures, the token is invalid/expired
+            wasSuccessful = False
 
-        return False
+        return wasSuccessful
 
     @passwordAuth.error_handler
     @tokenAuth.error_handler
     def unauthorized_httpauth():
+        ## Just pass the event to normal Flask handler
         abort(403)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     @app.errorhandler(400)
     def invalid_request(error):
@@ -197,10 +169,15 @@ def create_app(testConfig=None):
 
         return ('', 204)
 
+    """
+    A new token is only possible with password based authentication to be sure
+    tokens can't refresh themselfs for unlimited time.
+
+    """
     @app.route("/token", methods=["GET"])
     @passwordAuth.login_required
     def request_token():
-        token = g.user.generate_auth_token(jsonWebToken)
+        token = g.authenticatedUser.generate_auth_token(jsonWebToken)
         return jsonify({'token': token.decode('ascii')})
 
     @app.route("/user/<username>", methods=["GET"])
@@ -210,6 +187,10 @@ def create_app(testConfig=None):
 
         if user is None:
             abort(404)
+
+        ## A user only can see his own details
+        if (user.username != g.authenticatedUser.username):
+            abort(403)
 
         result = UserSchema().dump(user)
         return jsonify(result.data)
