@@ -53,6 +53,11 @@ def assertUserEquals(expectedUser, actualUser):
 
 class UserTests(PassButlerTestCase):
 
+    """
+    Tests for GET /users
+
+    """
+
     def test_get_users_no_users(self):
         response = self.client.get("/users")
 
@@ -87,6 +92,11 @@ class UserTests(PassButlerTestCase):
             {'username': 'testuser1', 'itemEncryptionPublicKey': 'c1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
             {'username': 'testuser2', 'itemEncryptionPublicKey': 'c2', 'deleted': False, 'modified': 12345678904, 'created': 12345678903}
         ]
+
+    """
+    Tests for POST /users
+
+    """
 
     def test_create_users_one_user(self):
         newUser = User("testuser", "a", "b", "c", "d", "e", False, 12345678902, 12345678901)
@@ -125,6 +135,7 @@ class UserTests(PassButlerTestCase):
         response = self.client.post("/users", json=[addingUserJson])
 
         assert response.status_code == 409
+        assert response.get_json() == {'error': 'Already exists'}
 
         ## Check that the initial existing user is unchanged
         existingUser = User.query.get("testuser")
@@ -140,6 +151,7 @@ class UserTests(PassButlerTestCase):
         response = self.client.post("/users", json=[newUserJson])
 
         assert response.status_code == 400
+        assert response.get_json() == {'error': 'Invalid request'}
 
         createdUser = User.query.get("testuser")
         assert createdUser == None
@@ -153,6 +165,7 @@ class UserTests(PassButlerTestCase):
 
         response = self.client.post("/users", json=[newUserJson])
         assert response.status_code == 400
+        assert response.get_json() == {'error': 'Invalid request'}
 
         createdUser = User.query.get("testuser")
         assert createdUser == None
