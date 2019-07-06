@@ -130,24 +130,32 @@ class UserTests(PassButlerTestCase):
         existingUser = User.query.get("testuser")
         assertUserEquals(initialExistingUser, existingUser)
 
-    # def test_create_users_missing_json_content(self):
-    #     response = self.client.post("/users", json=[{
-    #         "usernameINVALID": "testuser",
-    #         "masterKeyDerivationInformation": "a2",
-    #         "masterEncryptionKey": "b2",
-    #         "itemEncryptionPublicKey": "c2",
-    #         "itemEncryptionSecretKey": "d2",
-    #         "settings": "e2",
-    #         "deleted": False,
-    #         "modified": 12345678903,
-    #         "created": 12345678902
-    #     }])
+    def test_create_users_missing_json_key(self):
+        newUser = User("testuser", "a", "b", "c", "d", "e", False, 12345678902, 12345678901)
+        newUserJson = createUserJson(newUser)
 
-    #     assert response.status_code == 409
+        ## Remove key
+        del newUserJson["settings"]
 
-    #     ## Check that the existing user is unchanged
-    #     existingUser = User.query.get("testuser")
-    #     assert existingUser.username == "testuser"
+        response = self.client.post("/users", json=[newUserJson])
+
+        assert response.status_code == 400
+
+        createdUser = User.query.get("testuser")
+        assert createdUser == None
+
+    def test_create_users_wrong_json_key_type(self):
+        newUser = User("testuser", "a", "b", "c", "d", "e", False, 12345678902, 12345678901)
+        newUserJson = createUserJson(newUser)
+
+        ## Change key type to integer
+        newUserJson["settings"] = 123
+
+        response = self.client.post("/users", json=[newUserJson])
+        assert response.status_code == 400
+
+        createdUser = User.query.get("testuser")
+        assert createdUser == None
 
 if __name__ == '__main__':
     unittest.main()
