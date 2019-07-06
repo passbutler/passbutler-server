@@ -10,6 +10,7 @@ class PassButlerTestCase(TestCase):
     TESTING = True
 
     SQLALCHEMY_DATABASE_URI = "sqlite://"
+    SECRET_KEY = 'secretKeyForTesting'
 
     def create_app(self):
         app = create_app(self)

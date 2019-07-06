@@ -13,7 +13,7 @@ Setup virtual env:
 
 Install dependencies:
 
-    $ pip install flask-sqlalchemy flask-marshmallow marshmallow-sqlalchemy
+    $ pip install flask-sqlalchemy flask-marshmallow marshmallow-sqlalchemy flask-httpauth
 
 Install unit testing dependencies:
 
@@ -29,4 +29,4 @@ Run unit tests:
 
 Start server:
 
-    $ ./passbutler-server.py
+    $ PASSBUTLER_SETTINGS=/path/to/passbutlerserver.conf ./passbutlerserver.py

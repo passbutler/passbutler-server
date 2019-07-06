@@ -3,6 +3,11 @@
 from flask import Flask, request, jsonify, abort, make_response
 from flask_marshmallow import Marshmallow, Schema
 from flask_sqlalchemy import SQLAlchemy
+
+from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
+from werkzeug.security import generate_password_hash, check_password_hash
+from itsdangerous import TimedJSONWebSignatureSerializer as JWS, BadSignature, SignatureExpired
+
 from marshmallow_sqlalchemy import ModelSchema
 import json
 import os
@@ -12,6 +17,7 @@ ma = Marshmallow()
 
 class User(db.Model):
     username = db.Column(db.String(64), primary_key=True, nullable=False)
+   # authenticationPassword = db.Column(db.String, nullable=False)
     masterKeyDerivationInformation = db.Column(db.String, nullable=False)
     masterEncryptionKey = db.Column(db.String, nullable=False)
     itemEncryptionPublicKey = db.Column(db.String, nullable=False)
@@ -54,11 +60,16 @@ def create_app(testConfig=None):
 
     if (testConfig is None):
         baseDirectory = os.path.abspath(os.path.dirname(__file__))
-        databaseFilePath = os.path.join(baseDirectory, 'passbutler.sqlite')
+        databaseFilePath = os.path.join(baseDirectory, 'passbutlerserver.sqlite')
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + databaseFilePath
+
+        app.config.from_envvar('PASSBUTLER_SETTINGS')
     else:
         ## Use `flask_testing.TestCase` fields for configuration
         app.config.from_object(testConfig)
+
+    if not app.config['SECRET_KEY']:
+        raise ValueError("The 'SECRET_KEY' is not set in configuration!")
 
     db.init_app(app)
     ma.init_app(app)
@@ -68,6 +79,90 @@ def create_app(testConfig=None):
         with app.app_context():
             db.create_all()
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+    jws = JWS(app.config['SECRET_KEY'], expires_in=3600)
+
+    basic_auth = HTTPBasicAuth()
+    token_auth = HTTPTokenAuth('Bearer')
+
+    users = {
+        "testuser": generate_password_hash("1234")
+    }
+
+    @basic_auth.verify_password
+    def verify_password(username, password):
+        #g.user = None
+        if username in users:
+            if check_password_hash(users.get(username), password):
+                #g.user = username
+                return True
+        return False
+
+    @token_auth.verify_token
+    def verify_token(token):
+        #g.user = None
+
+        try:
+            data = jws.loads(token)
+        except SignatureExpired:
+            return None # valid token, but expired
+        except BadSignature:
+            return None # invalid token
+
+        if 'username' in data:
+            #g.user = data['username']
+            return True
+
+        return False
+
+
+
+    @basic_auth.error_handler
+    def unauthorized_http_basic_auth():
+        abort(403)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @app.errorhandler(400)
+    def invalid_request(error):
+        return make_response(jsonify({'error': 'Invalid request'}), 400)
+
+    @app.errorhandler(403)
+    def unauthorized(error):
+        return make_response(jsonify({'error': 'Unauthorized'}), 403)
+
     @app.errorhandler(404)
     def not_found(error):
         return make_response(jsonify({'error': 'Not found'}), 404)
@@ -75,10 +170,6 @@ def create_app(testConfig=None):
     @app.errorhandler(409)
     def already_exists(error):
         return make_response(jsonify({'error': 'Already exists'}), 409)
-
-    @app.errorhandler(400)
-    def invalid_request(error):
-        return make_response(jsonify({'error': 'Invalid request'}), 400)
 
     @app.errorhandler(Exception)
     def unhandled_exception(e):
@@ -112,7 +203,14 @@ def create_app(testConfig=None):
 
         return ('', 204)
 
+    @app.route("/token", methods=["GET"])
+    @basic_auth.login_required
+    def generate_token():
+        username = "testuser"
+        return (jws.dumps({"username": username}), 200)
+
     @app.route("/user/<username>", methods=["GET"])
+    @token_auth.login_required
     def get_user_detail(username):
         user = User.query.get(username)
 
@@ -126,4 +224,6 @@ def create_app(testConfig=None):
 
 if __name__ == '__main__':
     app = create_app()
+
+    ## TODO: Set debug via configuration + general better configuration handling
     app.run(host='127.0.0.1', debug=True)
