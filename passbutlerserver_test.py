@@ -95,6 +95,17 @@ class UserTests(PassButlerTestCase):
         assert response.status_code == 403
         assert response.get_json() == {'error': 'Unauthorized'}
 
+    def test_get_token_with_valid_token(self):
+        alice = User("alice", "pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        db.session.add(alice)
+        db.session.commit()
+
+        response = self.client.get("/token", headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        ## A token only can be requested with username and password
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Unauthorized'}
+
     def test_get_token_without_authentication(self):
         alice = User("alice", "pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
         db.session.add(alice)
