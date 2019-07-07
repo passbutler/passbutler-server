@@ -24,8 +24,21 @@ class User(db.Model):
     modified = db.Column(db.Integer, nullable=False)
     created = db.Column(db.Integer, nullable=False)
 
-    def __init__(self, username, masterKeyDerivationInformation, masterEncryptionKey, itemEncryptionPublicKey, itemEncryptionSecretKey, settings, deleted, modified, created):
+    def __init__(
+        self,
+        username,
+        authenticationPasswordHash,
+        masterKeyDerivationInformation,
+        masterEncryptionKey,
+        itemEncryptionPublicKey,
+        itemEncryptionSecretKey,
+        settings,
+        deleted,
+        modified,
+        created
+    ):
         self.username = username
+        self.authenticationPasswordHash = authenticationPasswordHash
         self.masterKeyDerivationInformation = masterKeyDerivationInformation
         self.masterEncryptionKey = masterEncryptionKey
         self.itemEncryptionPublicKey = itemEncryptionPublicKey
