@@ -44,6 +44,11 @@ def createHttpBasicAuthHeaders(username, password):
     base64EncodedCredentials = base64.b64encode(credentialBytes).decode('utf-8')
     return {'Authorization': 'Basic ' + base64EncodedCredentials}
 
+def createHttpTokenAuthHeaders(secretKey, user, expiresIn=3600):
+    tokenSerializer = TimedJSONWebSignatureSerializer(secretKey, expires_in=expiresIn)
+    token = user.generateAuthenticationToken(tokenSerializer)
+    return {'Authorization': 'Bearer ' + token}
+
 def assertUserEquals(expectedUser, actualUser):
     if expectedUser is None or actualUser is None:
         raise AssertionError("The given user objects must not be None!")
@@ -228,24 +233,68 @@ class UserTests(PassButlerTestCase):
 
     """
 
-    ## TODO: Authentication + only own user + token tests
     def test_get_user(self):
-        user = User("alice", "x", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        alice = User("alice", "pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        db.session.add(alice)
+        db.session.commit()
+
+        response = self.client.get("/user/alice", headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        assert response.status_code == 200
+
+        aliceJson = createUserJson(alice)
+        assert response.get_json() == aliceJson
+
+    def test_get_user_foreign_user_details(self):
+        response = self.client.get("/user/nonExistingUser")
+
+        alice = User("alice", "x", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        db.session.add(alice)
+
+        sandy = User("sandy", "y", "s1", "s2", "s3", "s4", "s5", False, 12345678904, 12345678903)
+        db.session.add(sandy)
+
+        ## Sandy is not allowed to access user details of alice
+        response = self.client.get("/user/alice", headers=createHttpTokenAuthHeaders(self.SECRET_KEY, sandy))
+
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Unauthorized'}
+
+    def test_get_user_without_authentication(self):
+        user = User("alice", "pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
         db.session.add(user)
         db.session.commit()
 
         response = self.client.get("/user/alice")
 
-        assert response.status_code == 200
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Unauthorized'}
 
-        userJson = createUserJson(user)
-        assert response.get_json() == userJson
+    def test_get_user_without_authentication_no_user_record(self):
+        response = self.client.get("/user/alice")
 
-    def test_get_user_not_existing(self):
-        response = self.client.get("/user/nonExistingUser")
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Unauthorized'}
 
-        assert response.status_code == 404
-        assert response.get_json() == {'error': 'Not found'}
+    def test_get_user_unaccepted_password_authentication(self):
+        user = User("alice", "pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        db.session.add(user)
+        db.session.commit()
+
+        response = self.client.get("/user/alice", headers=createHttpBasicAuthHeaders("alice", "1234"))
+
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Unauthorized'}
+
+    def test_get_user_expired_token(self):
+        alice = User("alice", "pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        db.session.add(alice)
+        db.session.commit()
+
+        response = self.client.get("/user/alice", headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, -3600))
+
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Unauthorized'}
 
 if __name__ == '__main__':
     unittest.main()
