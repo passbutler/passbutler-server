@@ -186,7 +186,7 @@ def createApp(testConfig=None):
         return ('', 204)
 
     """
-    A new token is only possible with password based authentication to be sure
+    Get a new token is only possible with password based authentication to be sure
     tokens can't refresh themselfs for unlimited time.
 
     """
@@ -199,10 +199,8 @@ def createApp(testConfig=None):
     @app.route("/user/<username>", methods=["GET"])
     @webTokenAuth.login_required
     def get_user_detail(username):
+        ## No record exists check needed because authentication never succeeds than
         user = User.query.get(username)
-
-        if user is None:
-            abort(404)
 
         ## A user only can see his own details
         if (user.username != g.authenticatedUser.username):
