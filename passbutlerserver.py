@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from marshmallow_sqlalchemy import ModelSchema
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 from werkzeug.security import generate_password_hash, check_password_hash
-from itsdangerous import TimedJSONWebSignatureSerializer as JsonWebToken
+from itsdangerous import TimedJSONWebSignatureSerializer
 import os
 
 db = SQLAlchemy()
@@ -54,8 +54,8 @@ class User(db.Model):
     def checkAuthenticationPassword(self, password):
         return check_password_hash(self.authenticationPasswordHash, password)
 
-    def generateAuthenticationToken(self, jsonWebToken):
-        return jsonWebToken.dumps({'username': self.username})
+    def generateAuthenticationToken(self, tokenSerializer):
+        return tokenSerializer.dumps({'username': self.username}).decode('ascii')
 
 class UserSchema(ModelSchema):
     class Meta:
@@ -95,7 +95,7 @@ def createApp(testConfig=None):
         with app.app_context():
             db.create_all()
 
-    jsonWebTokenSerializer = JsonWebToken(app.config['SECRET_KEY'], expires_in=3600)
+    tokenSerializer = TimedJSONWebSignatureSerializer(app.config['SECRET_KEY'], expires_in=3600)
 
     passwordAuth = HTTPBasicAuth()
     webTokenAuth = HTTPTokenAuth('Bearer')
@@ -119,7 +119,7 @@ def createApp(testConfig=None):
         g.authenticatedUser = None
 
         try:
-            tokenData = jsonWebTokenSerializer.loads(token)
+            tokenData = tokenSerializer.loads(token)
             username = tokenData.get('username')
 
             if username is not None:
@@ -193,8 +193,8 @@ def createApp(testConfig=None):
     @app.route("/token", methods=["GET"])
     @passwordAuth.login_required
     def get_token():
-        token = g.authenticatedUser.generateAuthenticationToken(jsonWebTokenSerializer)
-        return jsonify({'token': token.decode('ascii')})
+        token = g.authenticatedUser.generateAuthenticationToken(tokenSerializer)
+        return jsonify({'token': token})
 
     @app.route("/user/<username>", methods=["GET"])
     @webTokenAuth.login_required
