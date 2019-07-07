@@ -70,8 +70,8 @@ class UserTests(PassButlerTestCase):
         assert b'[]' in response.data
 
     def test_get_users_one_user(self):
-        user = User("alice", "x", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
-        db.session.add(user)
+        alice = User("alice", "x", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        db.session.add(alice)
         db.session.commit()
 
         response = self.client.get("/users")
@@ -82,11 +82,11 @@ class UserTests(PassButlerTestCase):
         ]
 
     def test_get_users_multiple_users(self):
-        user1 = User("alice", "x", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
-        db.session.add(user1)
+        alice = User("alice", "x", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        db.session.add(alice)
 
-        user2 = User("sandy", "y", "s1", "s2", "s3", "s4", "s5", False, 12345678904, 12345678903)
-        db.session.add(user2)
+        sandy = User("sandy", "y", "s1", "s2", "s3", "s4", "s5", False, 12345678904, 12345678903)
+        db.session.add(sandy)
 
         db.session.commit()
 
@@ -104,31 +104,31 @@ class UserTests(PassButlerTestCase):
     """
 
     def test_create_users_one_user(self):
-        newUser = User("alice", "x", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
-        newUserJson = createUserJson(newUser)
-        response = self.client.post("/users", json=[newUserJson])
+        alice = User("alice", "x", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        aliceJson = createUserJson(alice)
+        response = self.client.post("/users", json=[aliceJson])
 
         assert response.status_code == 204
 
-        actualUser = User.query.get("alice")
-        assertUserEquals(newUser, actualUser)
+        actualAlice = User.query.get("alice")
+        assertUserEquals(alice, actualAlice)
 
     def test_create_users_multiple_users(self):
-        newUser1 = User("alice", "x", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
-        newUser1Json = createUserJson(newUser1)
+        alice = User("alice", "x", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        aliceJson = createUserJson(alice)
 
-        newUser2 = User("sandy", "y", "s1", "s2", "s3", "s4", "s5", False, 12345678904, 12345678903)
-        newUser2Json = createUserJson(newUser2)
+        sandy = User("sandy", "y", "s1", "s2", "s3", "s4", "s5", False, 12345678904, 12345678903)
+        sandyJson = createUserJson(sandy)
 
-        response = self.client.post("/users", json=[newUser1Json, newUser2Json])
+        response = self.client.post("/users", json=[aliceJson, sandyJson])
 
         assert response.status_code == 204
 
-        actualNewUser1 = User.query.get("alice")
-        assertUserEquals(newUser1, actualNewUser1)
+        actualAlice = User.query.get("alice")
+        assertUserEquals(alice, actualAlice)
 
-        actualNewUser2 = User.query.get("sandy")
-        assertUserEquals(newUser2, actualNewUser2)
+        actualSandy = User.query.get("sandy")
+        assertUserEquals(sandy, actualSandy)
 
     def test_create_users_already_existing(self):
         initialUser = User("alice", "x", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
@@ -147,32 +147,32 @@ class UserTests(PassButlerTestCase):
         assertUserEquals(initialUser, existingUser)
 
     def test_create_users_missing_json_key(self):
-        newUser = User("alice", "x", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
-        newUserJson = createUserJson(newUser)
+        alice = User("alice", "x", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        aliceJson = createUserJson(alice)
 
         ## Remove key
-        del newUserJson["settings"]
+        del aliceJson["settings"]
 
-        response = self.client.post("/users", json=[newUserJson])
+        response = self.client.post("/users", json=[aliceJson])
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
 
-        createdUser = User.query.get("testuser")
+        createdUser = User.query.get(alice.username)
         assert createdUser == None
 
     def test_create_users_wrong_json_key_type(self):
-        newUser = User("alice", "x", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
-        newUserJson = createUserJson(newUser)
+        alice = User("alice", "x", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        aliceJson = createUserJson(alice)
 
         ## Change key type to integer
-        newUserJson["settings"] = 123
+        aliceJson["settings"] = 123
 
-        response = self.client.post("/users", json=[newUserJson])
+        response = self.client.post("/users", json=[aliceJson])
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
 
-        createdUser = User.query.get("testuser")
+        createdUser = User.query.get(alice.username)
         assert createdUser == None
 
     """
