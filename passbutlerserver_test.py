@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
-import unittest
 from flask_testing import TestCase
 from passbutlerserver import createApp, db
 from passbutlerserver import User
+from itsdangerous import TimedJSONWebSignatureSerializer
+import base64
+import unittest
 
 class PassButlerTestCase(TestCase):
 
@@ -37,6 +39,11 @@ def createUserJson(user):
         "created": user.created
     }
 
+def createHttpBasicAuthHeaders(username, password):
+    credentialBytes = (username + ':' + password).encode()
+    base64EncodedCredentials = base64.b64encode(credentialBytes).decode('utf-8')
+    return {'Authorization': 'Basic ' + base64EncodedCredentials}
+
 def assertUserEquals(expectedUser, actualUser):
     if expectedUser is None or actualUser is None:
         raise AssertionError("The given user objects must not be None!")
@@ -57,6 +64,47 @@ def assertUserEquals(expectedUser, actualUser):
         raise AssertionError("The user objects are not equal!")
 
 class UserTests(PassButlerTestCase):
+
+    """
+    Tests for GET /token
+
+    """
+
+    def test_get_token_with_correct_credentials(self):
+        alice = User("alice", "pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        db.session.add(alice)
+        db.session.commit()
+
+        response = self.client.get("/token", headers=createHttpBasicAuthHeaders("alice", "1234"))
+
+        assert response.status_code == 200
+        assert len(response.get_json().get('token')) == 181
+
+    def test_get_token_with_invalid_credentials(self):
+        alice = User("alice", "pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        db.session.add(alice)
+        db.session.commit()
+
+        response = self.client.get("/token", headers=createHttpBasicAuthHeaders("alice", "1235"))
+
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Unauthorized'}
+
+    def test_get_token_without_authentication(self):
+        alice = User("alice", "pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        db.session.add(alice)
+        db.session.commit()
+
+        response = self.client.get("/token")
+
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Unauthorized'}
+
+    def test_get_token_without_authentication_no_user_record(self):
+        response = self.client.get("/token")
+
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Unauthorized'}
 
     """
     Tests for GET /users
