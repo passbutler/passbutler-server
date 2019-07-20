@@ -123,8 +123,11 @@ def createApp(testConfig=None):
             username = tokenData.get('username')
 
             if username is not None:
-                g.authenticatedUser = User.query.filter_by(username=username).first()
-                wasSuccessful = True
+                user = User.query.filter_by(username=username).first()
+
+                if user is not None:
+                    g.authenticatedUser = user
+                    wasSuccessful = True
         except:
             ## If any exception ocures, the token is invalid/expired
             wasSuccessful = False
