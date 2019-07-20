@@ -57,11 +57,11 @@ class User(db.Model):
     def generateAuthenticationToken(self, tokenSerializer):
         return tokenSerializer.dumps({'username': self.username}).decode('ascii')
 
-class UserSchema(ModelSchema):
+class DefaultUserSchema(ModelSchema):
     class Meta:
         model = User
 
-        ## Do not connect schema to SQLAlchemy database session
+        ## Do not implicitly connect schema to SQLAlchemy database session
         transient = True
 
 class PublicUserSchema(Schema):
@@ -158,6 +158,17 @@ def createApp(testConfig=None):
         app.logger.error('Unexpected exception occured: %s', (exception))
         return make_response(jsonify({'error': 'Server error'}), 500)
 
+    """
+    Get a new token is only possible with password based authentication to be sure
+    tokens can't refresh themselfs for unlimited time.
+
+    """
+    @app.route("/token", methods=["GET"])
+    @passwordAuth.login_required
+    def get_token():
+        token = g.authenticatedUser.generateAuthenticationToken(tokenSerializer)
+        return jsonify({'token': token})
+
     @app.route("/users", methods=["GET"])
     def get_users():
         allUsers = User.query.all()
@@ -166,10 +177,10 @@ def createApp(testConfig=None):
 
     @app.route("/users", methods=["POST"])
     def create_users():
-        usersSchema = UserSchema(many=True).load(request.json)
+        usersSchema = DefaultUserSchema(many=True).load(request.json)
 
         if len(usersSchema.errors) > 0:
-            app.logger.debug('Model validation failed with errors: {0}'.format(usersSchema.errors))
+            app.logger.warning('Model validation failed with errors: {0}'.format(usersSchema.errors))
             abort(400)
 
         users = usersSchema.data
@@ -185,17 +196,6 @@ def createApp(testConfig=None):
 
         return ('', 204)
 
-    """
-    Get a new token is only possible with password based authentication to be sure
-    tokens can't refresh themselfs for unlimited time.
-
-    """
-    @app.route("/token", methods=["GET"])
-    @passwordAuth.login_required
-    def get_token():
-        token = g.authenticatedUser.generateAuthenticationToken(tokenSerializer)
-        return jsonify({'token': token})
-
     @app.route("/user/<username>", methods=["GET"])
     @webTokenAuth.login_required
     def get_user_detail(username):
@@ -206,7 +206,7 @@ def createApp(testConfig=None):
         if (user.username != g.authenticatedUser.username):
             abort(403)
 
-        result = UserSchema().dump(user)
+        result = DefaultUserSchema().dump(user)
         return jsonify(result.data)
 
     return app

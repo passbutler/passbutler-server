@@ -256,7 +256,7 @@ class UserTests(PassButlerTestCase):
         aliceJson = createUserJson(alice)
         assert response.get_json() == aliceJson
 
-    def test_get_user_foreign_user_details(self):
+    def test_get_user_as_unauthorized_user(self):
         response = self.client.get("/user/nonExistingUser")
 
         alice = User("alice", "x", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
