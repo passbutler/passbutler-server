@@ -57,6 +57,10 @@ class User(db.Model):
     def generateAuthenticationToken(self, tokenSerializer):
         return tokenSerializer.dumps({'username': self.username}).decode('ascii')
 
+class PublicUserSchema(Schema):
+    class Meta:
+        fields = ('username', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
+
 class DefaultUserSchema(ModelSchema):
     class Meta:
         model = User
@@ -64,9 +68,15 @@ class DefaultUserSchema(ModelSchema):
         ## Do not implicitly connect schema to SQLAlchemy database session
         transient = True
 
-class PublicUserSchema(Schema):
+class UpdateUserSchema(ModelSchema):
     class Meta:
-        fields = ('username', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
+        model = User
+
+        ## Only the following fields are allowed to update
+        fields = ('authenticationPasswordHash', 'masterEncryptionKey', 'settings', 'modified')
+
+        ## Do not implicitly connect schema to SQLAlchemy database session
+        transient = True
 
 def createApp(testConfig=None):
     app = Flask(__name__)
@@ -211,6 +221,24 @@ def createApp(testConfig=None):
 
         result = DefaultUserSchema().dump(user)
         return jsonify(result.data)
+
+    @app.route("/user/<username>", methods=["PUT"])
+    @webTokenAuth.login_required
+    def update_user_detail(username):
+        ## No record exists check needed because authentication never succeeds than
+        user = User.query.get(username)
+
+        ## A user only can update his own details
+        if (user.username != g.authenticatedUser.username):
+            abort(403)
+
+        userSchema = UpdateUserSchema().load(request.json, session=db.session, instance=user, partial=True)
+
+        if len(userSchema.errors) > 0:
+            app.logger.warning('Model validation failed with errors: {0}'.format(userSchema.errors))
+            abort(400)
+
+        return ('', 204)
 
     return app
 

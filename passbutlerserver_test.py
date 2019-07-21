@@ -247,7 +247,7 @@ class UserTests(PassButlerTestCase):
         assert createdUser == None
 
     """
-    Tests for GET /user/username
+    Tests for GET /user/username (include authentication tests)
 
     """
 
@@ -313,6 +313,104 @@ class UserTests(PassButlerTestCase):
 
         assert response.status_code == 403
         assert response.get_json() == {'error': 'Unauthorized'}
+
+    """
+    Tests for PUT /user/username
+
+    """
+
+    def test_update_user_one_field(self):
+        alice = User("alice", "pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        db.session.add(alice)
+        db.session.commit()
+
+        ## Save user as JSON to be sure it is not connected to database
+        aliceJson = createUserJson(alice)
+
+        requestData = {"settings": "a5a"}
+        response = self.client.put("/user/alice", json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        assert response.status_code == 204
+
+        ## Alter the JSON and compare users to be sure only the altered fields have changed
+        aliceJson["settings"] = "a5a"
+
+        updatedAliceJson = createUserJson(User.query.get("alice"))
+
+        assert aliceJson == updatedAliceJson
+
+    def test_update_user_multiple_fields(self):
+        alice = User("alice", "pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        db.session.add(alice)
+        db.session.commit()
+
+        aliceJson = createUserJson(alice)
+
+        requestData = {"authenticationPasswordHash": "x", "masterEncryptionKey": "a2a", "settings": "a5a", "modified": 12345678903}
+        response = self.client.put("/user/alice", json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        assert response.status_code == 204
+
+        aliceJson["authenticationPasswordHash"] = "x"
+        aliceJson["masterEncryptionKey"] = "a2a"
+        aliceJson["settings"] = "a5a"
+        aliceJson["modified"] = 12345678903
+
+        updatedAliceJson = createUserJson(User.query.get("alice"))
+
+        assert aliceJson == updatedAliceJson
+
+    def test_update_user_unknown_field(self):
+        alice = User("alice", "pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        db.session.add(alice)
+        db.session.commit()
+
+        aliceJson = createUserJson(alice)
+
+        requestData = {"foo": "bar"}
+        response = self.client.put("/user/alice", json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        assert response.status_code == 204
+
+        ## Nothing is changed
+        updatedAliceJson = createUserJson(User.query.get("alice"))
+        assert aliceJson == updatedAliceJson
+
+    def test_update_user_immutable_field(self):
+        alice = User("alice", "pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        db.session.add(alice)
+        db.session.commit()
+
+        aliceJson = createUserJson(alice)
+
+        requestData = {"created": 12345678902}
+        response = self.client.put("/user/alice", json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        assert response.status_code == 204
+
+        ## Nothing is changed
+        updatedAliceJson = createUserJson(User.query.get("alice"))
+        assert aliceJson == updatedAliceJson
+
+    def test_update_user_wrong_json_key_type(self):
+        alice = User("alice", "pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
+        db.session.add(alice)
+        db.session.commit()
+
+        aliceJson = createUserJson(alice)
+
+        requestData = aliceJson.copy()
+
+        ## Change key type to integer
+        requestData = 123
+
+        response = self.client.put("/user/alice", json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        assert response.status_code == 400
+        assert response.get_json() == {'error': 'Invalid request'}
+
+        updatedAliceJson = createUserJson(User.query.get("alice"))
+        assert aliceJson == updatedAliceJson
 
 if __name__ == '__main__':
     unittest.main()
