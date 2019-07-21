@@ -97,8 +97,15 @@ def createApp(testConfig=None):
         ## Use `flask_testing.TestCase` fields for configuration
         app.config.from_object(testConfig)
 
-    if not app.config['SECRET_KEY']:
-        raise ValueError("The 'SECRET_KEY' is not set in configuration!")
+    mandatoryConfigurationValues = [
+        'SERVER_HOST',
+        'SERVER_PORT',
+        'SECRET_KEY',
+    ]
+
+    for configurationValue in mandatoryConfigurationValues:
+        if configurationValue not in app.config:
+            raise ValueError("The value '" + configurationValue + "' is not set in configuration!")
 
     db.init_app(app)
     ma.init_app(app)
@@ -248,6 +255,4 @@ def createApp(testConfig=None):
 
 if __name__ == '__main__':
     app = createApp()
-
-    ## TODO: Set debug via configuration + general better configuration handling
-    app.run(host='127.0.0.1', debug=True)
+    app.run(host=app.config['SERVER_HOST'], port=app.config['SERVER_PORT'], debug=app.config['DEBUG'])

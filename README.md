@@ -29,4 +29,4 @@ Run unit tests:
 
 Start server:
 
-    $ PASSBUTLER_SETTINGS=/path/to/passbutlerserver.conf ./passbutlerserver.py
+    $ PASSBUTLER_SETTINGS=./passbutlerserver.conf ./passbutlerserver.py
