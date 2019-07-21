@@ -170,7 +170,9 @@ class UserTests(PassButlerTestCase):
     def test_create_users_one_user(self):
         alice = User("alice", "x", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
         aliceJson = createUserJson(alice)
-        response = self.client.post("/users", json=[aliceJson])
+
+        requestData = [aliceJson]
+        response = self.client.post("/users", json=requestData)
 
         assert response.status_code == 204
 
@@ -184,7 +186,8 @@ class UserTests(PassButlerTestCase):
         sandy = User("sandy", "y", "s1", "s2", "s3", "s4", "s5", False, 12345678904, 12345678903)
         sandyJson = createUserJson(sandy)
 
-        response = self.client.post("/users", json=[aliceJson, sandyJson])
+        requestData = [aliceJson, sandyJson]
+        response = self.client.post("/users", json=requestData)
 
         assert response.status_code == 204
 
@@ -201,7 +204,9 @@ class UserTests(PassButlerTestCase):
 
         addingUser = User("alice", "x", "b1", "b2", "b3", "b4", "b5", False, 12345678904, 12345678903)
         addingUserJson = createUserJson(addingUser)
-        response = self.client.post("/users", json=[addingUserJson])
+
+        requestData = [addingUserJson]
+        response = self.client.post("/users", json=requestData)
 
         assert response.status_code == 409
         assert response.get_json() == {'error': 'Already exists'}
@@ -217,7 +222,8 @@ class UserTests(PassButlerTestCase):
         ## Remove key
         del aliceJson["settings"]
 
-        response = self.client.post("/users", json=[aliceJson])
+        requestData = [aliceJson]
+        response = self.client.post("/users", json=requestData)
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
@@ -232,7 +238,8 @@ class UserTests(PassButlerTestCase):
         ## Change key type to integer
         aliceJson["settings"] = 123
 
-        response = self.client.post("/users", json=[aliceJson])
+        requestData = [aliceJson]
+        response = self.client.post("/users", json=requestData)
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
 
