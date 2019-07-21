@@ -13,6 +13,9 @@ db = SQLAlchemy()
 ma = Marshmallow()
 
 class User(db.Model):
+
+    __tablename__ = 'users'
+
     username = db.Column(db.String(64), primary_key=True, nullable=False)
     authenticationPasswordHash = db.Column(db.String, nullable=False)
     masterKeyDerivationInformation = db.Column(db.String, nullable=False)
@@ -49,7 +52,7 @@ class User(db.Model):
         self.created = created
 
     def __repr__(self):
-        return "<User(username={user.username!r}) @ {id!r}>".format(user=self, id=id(self))
+        return "<User(username={user.username!r}) @ {objId!r}>".format(user=self, objId=id(self))
 
     def checkAuthenticationPassword(self, password):
         return check_password_hash(self.authenticationPasswordHash, password)
@@ -139,7 +142,7 @@ def createApp(testConfig=None):
                     g.authenticatedUser = user
                     wasSuccessful = True
         except:
-            ## If any exception ocures, the token is invalid/expired
+            ## If any exception occurs, the token is invalid/expired
             wasSuccessful = False
 
         return wasSuccessful
@@ -188,6 +191,7 @@ def createApp(testConfig=None):
         result = PublicUserSchema(many=True).dump(allUsers)
         return jsonify(result.data)
 
+    ## TODO: Remove method
     @app.route("/users", methods=["POST"])
     def create_users():
         usersSchema = DefaultUserSchema(many=True).load(request.json)
