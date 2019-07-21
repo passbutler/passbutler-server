@@ -49,7 +49,7 @@ class User(db.Model):
         self.created = created
 
     def __repr__(self):
-        return "<User(username={self.username!r})>".format(self=self)
+        return "<User(username={user.username!r}) @ {id!r}>".format(user=self, id=id(self))
 
     def checkAuthenticationPassword(self, password):
         return check_password_hash(self.authenticationPasswordHash, password)
