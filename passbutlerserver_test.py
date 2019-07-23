@@ -12,7 +12,10 @@ class PassButlerTestCase(TestCase):
     TESTING = True
 
     SQLALCHEMY_DATABASE_URI = "sqlite://"
+
     SECRET_KEY = 'This is the secret key for testing'
+    SERVER_HOST = ''
+    SERVER_PORT = 0
 
     def create_app(self):
         app = createApp(self)
@@ -28,7 +31,7 @@ class PassButlerTestCase(TestCase):
 def createUserJson(user):
     return {
         "username": user.username,
-        "authenticationPasswordHash": user.authenticationPasswordHash,
+        "masterPasswordAuthenticationHash": user.masterPasswordAuthenticationHash,
         "masterKeyDerivationInformation": user.masterKeyDerivationInformation,
         "masterEncryptionKey": user.masterEncryptionKey,
         "itemEncryptionPublicKey": user.itemEncryptionPublicKey,
@@ -346,12 +349,12 @@ class UserTests(PassButlerTestCase):
 
         aliceJson = createUserJson(alice)
 
-        requestData = {"authenticationPasswordHash": "x", "masterEncryptionKey": "a2a", "settings": "a5a", "modified": 12345678903}
+        requestData = {"masterPasswordAuthenticationHash": "x", "masterEncryptionKey": "a2a", "settings": "a5a", "modified": 12345678903}
         response = self.client.put("/user/alice", json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         assert response.status_code == 204
 
-        aliceJson["authenticationPasswordHash"] = "x"
+        aliceJson["masterPasswordAuthenticationHash"] = "x"
         aliceJson["masterEncryptionKey"] = "a2a"
         aliceJson["settings"] = "a5a"
         aliceJson["modified"] = 12345678903

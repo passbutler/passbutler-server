@@ -17,7 +17,7 @@ class User(db.Model):
     __tablename__ = 'users'
 
     username = db.Column(db.String(64), primary_key=True, nullable=False)
-    authenticationPasswordHash = db.Column(db.String, nullable=False)
+    masterPasswordAuthenticationHash = db.Column(db.String, nullable=False)
     masterKeyDerivationInformation = db.Column(db.String, nullable=False)
     masterEncryptionKey = db.Column(db.String, nullable=False)
     itemEncryptionPublicKey = db.Column(db.String, nullable=False)
@@ -30,7 +30,7 @@ class User(db.Model):
     def __init__(
         self,
         username,
-        authenticationPasswordHash,
+        masterPasswordAuthenticationHash,
         masterKeyDerivationInformation,
         masterEncryptionKey,
         itemEncryptionPublicKey,
@@ -41,7 +41,7 @@ class User(db.Model):
         created
     ):
         self.username = username
-        self.authenticationPasswordHash = authenticationPasswordHash
+        self.masterPasswordAuthenticationHash = masterPasswordAuthenticationHash
         self.masterKeyDerivationInformation = masterKeyDerivationInformation
         self.masterEncryptionKey = masterEncryptionKey
         self.itemEncryptionPublicKey = itemEncryptionPublicKey
@@ -55,7 +55,7 @@ class User(db.Model):
         return "<User(username={user.username!r}) @ {objId!r}>".format(user=self, objId=id(self))
 
     def checkAuthenticationPassword(self, password):
-        return check_password_hash(self.authenticationPasswordHash, password)
+        return check_password_hash(self.masterPasswordAuthenticationHash, password)
 
     def generateAuthenticationToken(self, tokenSerializer):
         return tokenSerializer.dumps({'username': self.username}).decode('ascii')
@@ -76,7 +76,7 @@ class UpdateUserSchema(ModelSchema):
         model = User
 
         ## Only the following fields are allowed to update
-        fields = ('authenticationPasswordHash', 'masterEncryptionKey', 'settings', 'modified')
+        fields = ('masterPasswordAuthenticationHash', 'masterEncryptionKey', 'settings', 'modified')
 
         ## Do not implicitly connect schema to SQLAlchemy database session
         transient = True
