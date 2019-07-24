@@ -105,7 +105,7 @@ def createApp(testConfig=None):
 
     for configurationValue in mandatoryConfigurationValues:
         if configurationValue not in app.config:
-            raise ValueError("The value '" + configurationValue + "' is not set in configuration!")
+            raise ValueError('The value "' + configurationValue + '" is not set in configuration!')
 
     db.init_app(app)
     ma.init_app(app)
@@ -186,20 +186,20 @@ def createApp(testConfig=None):
     tokens can't refresh themselfs for unlimited time.
 
     """
-    @app.route("/token", methods=["GET"])
+    @app.route('/token', methods=['GET'])
     @passwordAuth.login_required
     def get_token():
         token = g.authenticatedUser.generateAuthenticationToken(tokenSerializer)
         return jsonify({'token': token})
 
-    @app.route("/users", methods=["GET"])
+    @app.route('/users', methods=['GET'])
     def get_users():
         allUsers = User.query.all()
         result = PublicUserSchema(many=True).dump(allUsers)
         return jsonify(result.data)
 
     ## TODO: Remove method
-    @app.route("/users", methods=["POST"])
+    @app.route('/users', methods=['POST'])
     def create_users():
         usersSchema = DefaultUserSchema(many=True).load(request.json)
 
@@ -220,7 +220,7 @@ def createApp(testConfig=None):
 
         return ('', 204)
 
-    @app.route("/user/<username>", methods=["GET"])
+    @app.route('/user/<username>', methods=['GET'])
     @webTokenAuth.login_required
     def get_user_detail(username):
         ## No record exists check needed because authentication never succeeds than
@@ -233,7 +233,7 @@ def createApp(testConfig=None):
         result = DefaultUserSchema().dump(user)
         return jsonify(result.data)
 
-    @app.route("/user/<username>", methods=["PUT"])
+    @app.route('/user/<username>', methods=['PUT'])
     @webTokenAuth.login_required
     def update_user_detail(username):
         ## No record exists check needed because authentication never succeeds than
