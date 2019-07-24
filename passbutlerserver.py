@@ -193,6 +193,7 @@ def createApp(testConfig=None):
         return jsonify({'token': token})
 
     @app.route('/users', methods=['GET'])
+    @webTokenAuth.login_required
     def get_users():
         allUsers = User.query.all()
         result = PublicUserSchema(many=True).dump(allUsers)

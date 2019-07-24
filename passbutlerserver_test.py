@@ -130,18 +130,12 @@ class UserTests(PassButlerTestCase):
 
     """
 
-    def test_get_users_no_users(self):
-        response = self.client.get('/users')
-
-        assert response.status_code == 200
-        assert b'[]' in response.data
-
     def test_get_users_one_user(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         db.session.add(alice)
         db.session.commit()
 
-        response = self.client.get('/users')
+        response = self.client.get('/users', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         assert response.status_code == 200
         assert response.get_json() == [
@@ -157,7 +151,7 @@ class UserTests(PassButlerTestCase):
 
         db.session.commit()
 
-        response = self.client.get('/users')
+        response = self.client.get('/users', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         assert response.status_code == 200
         assert response.get_json() == [
@@ -250,7 +244,7 @@ class UserTests(PassButlerTestCase):
         assert createdUser == None
 
     """
-    Tests for GET /user/username (include authentication tests)
+    Tests for GET /user/username (include general token authentication tests)
 
     """
 
@@ -282,8 +276,8 @@ class UserTests(PassButlerTestCase):
         assert response.get_json() == {'error': 'Unauthorized'}
 
     def test_get_user_without_authentication(self):
-        user = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(user)
+        alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        db.session.add(alice)
         db.session.commit()
 
         response = self.client.get('/user/alice')
@@ -298,8 +292,8 @@ class UserTests(PassButlerTestCase):
         assert response.get_json() == {'error': 'Unauthorized'}
 
     def test_get_user_unaccepted_password_authentication(self):
-        user = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(user)
+        alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        db.session.add(alice)
         db.session.commit()
 
         response = self.client.get('/user/alice', headers=createHttpBasicAuthHeaders('alice', '1234'))
