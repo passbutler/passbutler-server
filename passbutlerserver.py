@@ -4,8 +4,8 @@ from flask import Flask, request, jsonify, abort, make_response, g
 from flask_marshmallow import Marshmallow, Schema
 from flask_sqlalchemy import SQLAlchemy
 from marshmallow_sqlalchemy import ModelSchema
-from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
-from werkzeug.security import generate_password_hash, check_password_hash
+from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
+from werkzeug.security import check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer
 import os
 
