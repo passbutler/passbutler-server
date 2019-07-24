@@ -222,7 +222,7 @@ class UserTests(PassButlerTestCase):
         alice = User("alice", "x", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
         aliceJson = createUserJson(alice)
 
-        ## Remove key
+        ## Remove value
         del aliceJson["settings"]
 
         requestData = [aliceJson]
@@ -234,12 +234,12 @@ class UserTests(PassButlerTestCase):
         createdUser = User.query.get(alice.username)
         assert createdUser == None
 
-    def test_create_users_wrong_json_key_type(self):
+    def test_create_users_wrong_json_type(self):
         alice = User("alice", "x", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
         aliceJson = createUserJson(alice)
 
-        ## Change key type to integer
-        aliceJson["settings"] = 123
+        ## Change a value to invalid type
+        aliceJson['modified'] = 'a'
 
         requestData = [aliceJson]
         response = self.client.post("/users", json=requestData)
@@ -395,7 +395,7 @@ class UserTests(PassButlerTestCase):
         updatedAliceJson = createUserJson(User.query.get("alice"))
         assert aliceJson == updatedAliceJson
 
-    def test_update_user_wrong_json_key_type(self):
+    def test_update_user_wrong_json_type(self):
         alice = User("alice", "pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309", "a1", "a2", "a3", "a4", "a5", False, 12345678902, 12345678901)
         db.session.add(alice)
         db.session.commit()
@@ -404,8 +404,8 @@ class UserTests(PassButlerTestCase):
 
         requestData = aliceJson.copy()
 
-        ## Change key type to integer
-        requestData = 123
+        ## Change a value to invalid type
+        requestData['modified'] = 'a'
 
         response = self.client.put("/user/alice", json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
