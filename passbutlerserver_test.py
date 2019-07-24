@@ -13,9 +13,9 @@ class PassButlerTestCase(TestCase):
 
     SQLALCHEMY_DATABASE_URI = "sqlite://"
 
-    SECRET_KEY = 'This is the secret key for testing'
     SERVER_HOST = ''
     SERVER_PORT = 0
+    SECRET_KEY = 'This is the secret key for testing'
 
     def create_app(self):
         app = createApp(self)

@@ -25,8 +25,8 @@ Run unit tests:
 
     $ pytest
 
-## Run server
+## Run server for development
 
 Start server:
 
-    $ PASSBUTLER_SETTINGS=./passbutlerserver.conf ./passbutlerserver.py
+    $ FLASK_ENV=development PASSBUTLER_SETTINGS=./passbutlerserver.conf ./passbutlerserver.py

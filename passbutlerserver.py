@@ -255,4 +255,4 @@ def createApp(testConfig=None):
 
 if __name__ == '__main__':
     app = createApp()
-    app.run(host=app.config['SERVER_HOST'], port=app.config['SERVER_PORT'], debug=app.config['DEBUG'])
+    app.run(host=app.config['SERVER_HOST'], port=app.config['SERVER_PORT'])
