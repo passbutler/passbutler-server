@@ -199,31 +199,9 @@ def createApp(testConfig=None):
         result = PublicUserSchema(many=True).dump(allUsers)
         return jsonify(result.data)
 
-    ## TODO: Remove method
-    @app.route('/users', methods=['POST'])
-    def create_users():
-        usersSchema = DefaultUserSchema(many=True).load(request.json)
-
-        if len(usersSchema.errors) > 0:
-            app.logger.warning('Model validation failed with errors: {0}'.format(usersSchema.errors))
-            abort(400)
-
-        users = usersSchema.data
-
-        for user in users:
-            if User.query.filter_by(username=user.username).first() is None:
-                db.session.add(user)
-            else:
-                app.logger.debug('The user {0} already exists!'.format(user.username))
-                abort(409)
-
-        db.session.commit()
-
-        return ('', 204)
-
     @app.route('/user/<username>', methods=['GET'])
     @webTokenAuth.login_required
-    def get_user_detail(username):
+    def get_user_details(username):
         ## No record exists check needed because authentication never succeeds than
         user = User.query.get(username)
 
@@ -236,7 +214,7 @@ def createApp(testConfig=None):
 
     @app.route('/user/<username>', methods=['PUT'])
     @webTokenAuth.login_required
-    def update_user_detail(username):
+    def set_user_details(username):
         ## No record exists check needed because authentication never succeeds than
         user = User.query.get(username)
 
