@@ -115,7 +115,7 @@ def createApp(testConfig=None):
         with app.app_context():
             db.create_all()
 
-    tokenSerializer = TimedJSONWebSignatureSerializer(app.config['SECRET_KEY'], expires_in=3600)
+    tokenSerializer = TimedJSONWebSignatureSerializer(app.config['SECRET_KEY'], expires_in=3600, algorithm_name="HS512")
 
     passwordAuth = HTTPBasicAuth()
     webTokenAuth = HTTPTokenAuth('Bearer')

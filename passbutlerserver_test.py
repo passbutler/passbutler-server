@@ -47,8 +47,8 @@ def createHttpBasicAuthHeaders(username, password):
     base64EncodedCredentials = base64.b64encode(credentialBytes).decode('utf-8')
     return {'Authorization': 'Basic ' + base64EncodedCredentials}
 
-def createHttpTokenAuthHeaders(secretKey, user, expiresIn=3600):
-    tokenSerializer = TimedJSONWebSignatureSerializer(secretKey, expires_in=expiresIn)
+def createHttpTokenAuthHeaders(secretKey, user, expiresIn=3600, signatureAlgorithm="HS512"):
+    tokenSerializer = TimedJSONWebSignatureSerializer(secretKey, expires_in=expiresIn, algorithm_name=signatureAlgorithm)
     token = user.generateAuthenticationToken(tokenSerializer)
     return {'Authorization': 'Bearer ' + token}
 
@@ -223,6 +223,16 @@ class UserTests(PassButlerTestCase):
         db.session.commit()
 
         response = self.client.get('/user/alice', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, -3600))
+
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Unauthorized'}
+
+    def test_get_user_token_without_signature(self):
+        alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        db.session.add(alice)
+        db.session.commit()
+
+        response = self.client.get('/user/alice', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, signatureAlgorithm="none"))
 
         assert response.status_code == 403
         assert response.get_json() == {'error': 'Unauthorized'}
