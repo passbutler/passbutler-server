@@ -12,6 +12,8 @@ import os
 db = SQLAlchemy()
 ma = Marshmallow()
 
+## TODO: Check difference between `User.query.filter_by(username=username)` and `User.query.get(username)`
+
 class User(db.Model):
 
     __tablename__ = 'users'
@@ -206,8 +208,11 @@ def createApp(testConfig=None):
     @app.route('/user/<username>', methods=['GET'])
     @webTokenAuth.login_required
     def get_user_details(username):
-        ## No record exists check needed because authentication never succeeds than
         user = User.query.get(username)
+
+        ## Record exists check is needed because an authenticated user could request a non-existing record
+        if user is None:
+            abort(404)
 
         ## A user only can see his own details
         if (user.username != g.authenticatedUser.username):
@@ -219,8 +224,11 @@ def createApp(testConfig=None):
     @app.route('/user/<username>', methods=['PUT'])
     @webTokenAuth.login_required
     def set_user_details(username):
-        ## No record exists check needed because authentication never succeeds than
         user = User.query.get(username)
+
+        ## Record exists check is needed because an authenticated user could request a non-existing record
+        if user is None:
+            abort(404)
 
         ## A user only can update his own details
         if (user.username != g.authenticatedUser.username):
