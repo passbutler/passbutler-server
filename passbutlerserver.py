@@ -158,15 +158,19 @@ def createApp(testConfig=None):
     @webTokenAuth.error_handler
     def httpAuthUnauthorizedHandler():
         ## Just pass the event to normal Flask handler
-        abort(403)
+        abort(401)
 
     @app.errorhandler(400)
     def invalidRequestHandler(error):
         return make_response(jsonify({'error': 'Invalid request'}), 400)
 
-    @app.errorhandler(403)
+    @app.errorhandler(401)
     def unauthorizedRequestHandler(error):
-        return make_response(jsonify({'error': 'Unauthorized'}), 403)
+        return make_response(jsonify({'error': 'Unauthorized'}), 401)
+
+    @app.errorhandler(403)
+    def forbiddenRequestHandler(error):
+        return make_response(jsonify({'error': 'Forbidden'}), 403)
 
     @app.errorhandler(404)
     def notFoundRequestHandler(error):

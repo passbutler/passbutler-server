@@ -95,7 +95,7 @@ class UserTests(PassButlerTestCase):
 
         response = self.client.get('/token', headers=createHttpBasicAuthHeaders('alice', '1235'))
 
-        assert response.status_code == 403
+        assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
 
     def test_get_token_with_valid_token(self):
@@ -106,7 +106,7 @@ class UserTests(PassButlerTestCase):
         response = self.client.get('/token', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         ## A token only can be requested with username and password
-        assert response.status_code == 403
+        assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
 
     def test_get_token_without_authentication(self):
@@ -116,13 +116,13 @@ class UserTests(PassButlerTestCase):
 
         response = self.client.get('/token')
 
-        assert response.status_code == 403
+        assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
 
     def test_get_token_without_authentication_no_user_record(self):
         response = self.client.get('/token')
 
-        assert response.status_code == 403
+        assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
 
     """
@@ -176,20 +176,28 @@ class UserTests(PassButlerTestCase):
         aliceJson = createUserJson(alice)
         assert response.get_json() == aliceJson
 
-    def test_get_user_as_unauthorized_user(self):
-        response = self.client.get('/user/nonExistingUser')
-
+    def test_get_user_as_other_user(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         db.session.add(alice)
 
         sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678904, 12345678903)
         db.session.add(sandy)
 
-        ## Sandy is not allowed to access user details of alice
+        ## Sandy is not allowed to access user details of Alice
         response = self.client.get('/user/alice', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, sandy))
 
         assert response.status_code == 403
-        assert response.get_json() == {'error': 'Unauthorized'}
+        assert response.get_json() == {'error': 'Forbidden'}
+
+    def test_get_nonexisting_user_as_other_user(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        db.session.add(alice)
+
+        ## Alice is not allowed to access user details of another non-existing user
+        response = self.client.get('/user/nonExistingUser', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Forbidden'}
 
     def test_get_user_without_authentication(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -198,13 +206,13 @@ class UserTests(PassButlerTestCase):
 
         response = self.client.get('/user/alice')
 
-        assert response.status_code == 403
+        assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
 
     def test_get_user_without_authentication_no_user_record(self):
         response = self.client.get('/user/alice')
 
-        assert response.status_code == 403
+        assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
 
     def test_get_user_unaccepted_password_authentication(self):
@@ -214,7 +222,7 @@ class UserTests(PassButlerTestCase):
 
         response = self.client.get('/user/alice', headers=createHttpBasicAuthHeaders('alice', '1234'))
 
-        assert response.status_code == 403
+        assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
 
     def test_get_user_expired_token(self):
@@ -224,7 +232,7 @@ class UserTests(PassButlerTestCase):
 
         response = self.client.get('/user/alice', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, -3600))
 
-        assert response.status_code == 403
+        assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
 
     def test_get_user_token_without_signature(self):
@@ -234,7 +242,7 @@ class UserTests(PassButlerTestCase):
 
         response = self.client.get('/user/alice', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, signatureAlgorithm="none"))
 
-        assert response.status_code == 403
+        assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
 
     """
