@@ -288,6 +288,7 @@ class UserTests(PassButlerTestCase):
         aliceJson['settings'] = 'a5a'
         aliceJson['modified'] = 12345678903
 
+        ## TODO: Test if committed
         updatedAliceJson = createUserJson(User.query.get('alice'))
 
         assert aliceJson == updatedAliceJson

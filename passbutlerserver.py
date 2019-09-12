@@ -236,6 +236,8 @@ def createApp(testConfig=None):
 
         userSchema = UpdateUserSchema().load(request.json, session=db.session, instance=user, partial=True)
 
+        db.session.commit()
+
         if len(userSchema.errors) > 0:
             app.logger.warning('Model validation failed with errors: {0}'.format(userSchema.errors))
             abort(400)
