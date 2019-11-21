@@ -262,6 +262,9 @@ class UserTests(PassButlerTestCase):
         requestData = {'settings': 'a5a'}
         response = self.client.put('/user/alice', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
+        ## Discard uncommited changes to check if the changes has been committed
+        db.session.rollback()
+
         assert response.status_code == 204
 
         ## Alter the JSON and compare users to be sure only the altered fields have changed
@@ -281,6 +284,8 @@ class UserTests(PassButlerTestCase):
         requestData = {'masterPasswordAuthenticationHash': 'x', 'masterEncryptionKey': 'a2a', 'settings': 'a5a', 'modified': 12345678903}
         response = self.client.put('/user/alice', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
+        db.session.rollback()
+
         assert response.status_code == 204
 
         aliceJson['masterPasswordAuthenticationHash'] = 'x'
@@ -288,7 +293,6 @@ class UserTests(PassButlerTestCase):
         aliceJson['settings'] = 'a5a'
         aliceJson['modified'] = 12345678903
 
-        ## TODO: Test if committed
         updatedAliceJson = createUserJson(User.query.get('alice'))
 
         assert aliceJson == updatedAliceJson
@@ -302,6 +306,8 @@ class UserTests(PassButlerTestCase):
 
         requestData = {'foo': 'bar'}
         response = self.client.put('/user/alice', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
 
         assert response.status_code == 204
 
@@ -318,6 +324,8 @@ class UserTests(PassButlerTestCase):
 
         requestData = {'created': 12345678902}
         response = self.client.put('/user/alice', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
 
         assert response.status_code == 204
 
@@ -338,6 +346,8 @@ class UserTests(PassButlerTestCase):
         requestData['modified'] = 'a'
 
         response = self.client.put('/user/alice', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
