@@ -73,6 +73,12 @@ def assertUserEquals(expectedUser, actualUser):
 
 class UserTests(PassButlerTestCase):
 
+    def __add_users(self, *users):
+        for user in users:
+            db.session.add(user)
+
+        db.session.commit()   
+
     """
     Tests for GET /token
 
@@ -80,8 +86,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_token_with_correct_credentials(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(alice)
-        db.session.commit()
+        self.__add_users(alice)
 
         response = self.client.get('/token', headers=createHttpBasicAuthHeaders('alice', '1234'))
 
@@ -90,8 +95,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_token_with_invalid_credentials(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(alice)
-        db.session.commit()
+        self.__add_users(alice)
 
         response = self.client.get('/token', headers=createHttpBasicAuthHeaders('alice', '1235'))
 
@@ -100,8 +104,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_token_with_valid_token(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(alice)
-        db.session.commit()
+        self.__add_users(alice)
 
         response = self.client.get('/token', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
@@ -111,8 +114,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_token_without_authentication(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(alice)
-        db.session.commit()
+        self.__add_users(alice)
 
         response = self.client.get('/token')
 
@@ -132,8 +134,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_users_one_user(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(alice)
-        db.session.commit()
+        self.__add_users(alice)
 
         response = self.client.get('/users', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
@@ -144,12 +145,8 @@ class UserTests(PassButlerTestCase):
 
     def test_get_users_multiple_users(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(alice)
-
         sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678904, 12345678903)
-        db.session.add(sandy)
-
-        db.session.commit()
+        self.__add_users(alice, sandy)
 
         response = self.client.get('/users', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
@@ -160,48 +157,13 @@ class UserTests(PassButlerTestCase):
         ]
 
     """
-    Tests for GET /user/username (include general token authentication tests)
+    Authentication tests (using GET /user/username)
 
     """
 
-    def test_get_user(self):
-        alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(alice)
-        db.session.commit()
-
-        response = self.client.get('/user/alice', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
-
-        assert response.status_code == 200
-
-        aliceJson = createUserJson(alice)
-        assert response.get_json() == aliceJson
-
-    def test_get_user_as_other_user(self):
-        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(alice)
-
-        sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678904, 12345678903)
-        db.session.add(sandy)
-
-        ## Sandy is not allowed to access user details of Alice
-        response = self.client.get('/user/alice', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, sandy))
-
-        assert response.status_code == 403
-        assert response.get_json() == {'error': 'Forbidden'}
-
-    def test_get_nonexisting_user_as_other_user(self):
-        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(alice)
-
-        response = self.client.get('/user/nonExistingUser', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
-
-        assert response.status_code == 404
-        assert response.get_json() == {'error': 'Not found'}
-
     def test_get_user_without_authentication(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(alice)
-        db.session.commit()
+        self.__add_users(alice)
 
         response = self.client.get('/user/alice')
 
@@ -216,8 +178,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_user_unaccepted_password_authentication(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(alice)
-        db.session.commit()
+        self.__add_users(alice)
 
         response = self.client.get('/user/alice', headers=createHttpBasicAuthHeaders('alice', '1234'))
 
@@ -226,8 +187,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_user_expired_token(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(alice)
-        db.session.commit()
+        self.__add_users(alice)
 
         response = self.client.get('/user/alice', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, -3600))
 
@@ -236,13 +196,49 @@ class UserTests(PassButlerTestCase):
 
     def test_get_user_token_without_signature(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(alice)
-        db.session.commit()
+        self.__add_users(alice)
 
         response = self.client.get('/user/alice', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, signatureAlgorithm="none"))
 
         assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
+
+
+    """
+    Tests for GET /user/username
+
+    """
+
+    def test_get_user(self):
+        alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.__add_users(alice)
+
+        response = self.client.get('/user/alice', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        assert response.status_code == 200
+
+        aliceJson = createUserJson(alice)
+        assert response.get_json() == aliceJson
+
+    def test_get_user_as_other_user(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678904, 12345678903)
+        self.__add_users(alice, sandy)
+
+        ## Sandy is not allowed to access user details of Alice
+        response = self.client.get('/user/alice', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, sandy))
+
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Forbidden'}
+
+    def test_get_nonexisting_user_as_other_user(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.__add_users(alice)
+
+        response = self.client.get('/user/nonExistingUser', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        assert response.status_code == 404
+        assert response.get_json() == {'error': 'Not found'}
 
     """
     Tests for PUT /user/username
@@ -253,8 +249,7 @@ class UserTests(PassButlerTestCase):
 
     def test_update_user_one_field(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(alice)
-        db.session.commit()
+        self.__add_users(alice)
 
         ## Save user as JSON to be sure it is not connected to database
         aliceJson = createUserJson(alice)
@@ -276,8 +271,7 @@ class UserTests(PassButlerTestCase):
 
     def test_update_user_multiple_fields(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(alice)
-        db.session.commit()
+        self.__add_users(alice)
 
         aliceJson = createUserJson(alice)
 
@@ -299,8 +293,7 @@ class UserTests(PassButlerTestCase):
 
     def test_update_user_unknown_field(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(alice)
-        db.session.commit()
+        self.__add_users(alice)
 
         aliceJson = createUserJson(alice)
 
@@ -317,8 +310,7 @@ class UserTests(PassButlerTestCase):
 
     def test_update_user_immutable_field(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(alice)
-        db.session.commit()
+        self.__add_users(alice)
 
         aliceJson = createUserJson(alice)
 
@@ -335,8 +327,7 @@ class UserTests(PassButlerTestCase):
 
     def test_update_user_wrong_json_type(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        db.session.add(alice)
-        db.session.commit()
+        self.__add_users(alice)
 
         aliceJson = createUserJson(alice)
 
