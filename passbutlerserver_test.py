@@ -245,14 +245,12 @@ class UserTests(PassButlerTestCase):
 
     """
 
-    ## TODO: Add also authentication tests
-
     def test_update_user_one_field(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.__add_users(alice)
 
         ## Save user as JSON to be sure it is not connected to database
-        aliceJson = createUserJson(alice)
+        aliceJsonBefore = createUserJson(alice)
 
         requestData = {'settings': 'a5a'}
         response = self.client.put('/user/alice', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
@@ -263,17 +261,17 @@ class UserTests(PassButlerTestCase):
         assert response.status_code == 204
 
         ## Alter the JSON and compare users to be sure only the altered fields have changed
-        aliceJson['settings'] = 'a5a'
+        aliceJsonBefore['settings'] = 'a5a'
 
-        updatedAliceJson = createUserJson(User.query.get('alice'))
+        aliceJsonAfter = createUserJson(User.query.get('alice'))
 
-        assert aliceJson == updatedAliceJson
+        assert aliceJsonBefore == aliceJsonAfter
 
     def test_update_user_multiple_fields(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.__add_users(alice)
 
-        aliceJson = createUserJson(alice)
+        aliceJsonBefore = createUserJson(alice)
 
         requestData = {'masterPasswordAuthenticationHash': 'x', 'masterEncryptionKey': 'a2a', 'settings': 'a5a', 'modified': 12345678903}
         response = self.client.put('/user/alice', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
@@ -282,20 +280,52 @@ class UserTests(PassButlerTestCase):
 
         assert response.status_code == 204
 
-        aliceJson['masterPasswordAuthenticationHash'] = 'x'
-        aliceJson['masterEncryptionKey'] = 'a2a'
-        aliceJson['settings'] = 'a5a'
-        aliceJson['modified'] = 12345678903
+        aliceJsonBefore['masterPasswordAuthenticationHash'] = 'x'
+        aliceJsonBefore['masterEncryptionKey'] = 'a2a'
+        aliceJsonBefore['settings'] = 'a5a'
+        aliceJsonBefore['modified'] = 12345678903
 
-        updatedAliceJson = createUserJson(User.query.get('alice'))
+        aliceJsonAfter = createUserJson(User.query.get('alice'))
 
-        assert aliceJson == updatedAliceJson
+        assert aliceJsonBefore == aliceJsonAfter
+
+    def test_update_user_as_other_user(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678904, 12345678903)
+        self.__add_users(alice, sandy)
+
+        aliceJsonBefore = createUserJson(alice)
+
+        ## Sandy is not allowed to update user details of Alice
+        requestData = {'settings': 'a5a'}
+        response = self.client.put('/user/alice', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, sandy))
+
+        db.session.rollback()
+
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Forbidden'}
+
+        aliceJsonAfter = createUserJson(User.query.get('alice'))
+
+        assert aliceJsonBefore == aliceJsonAfter
+
+    def test_update_nonexisting_user_as_other_user(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.__add_users(alice)
+
+        requestData = {'settings': 'foobar'}
+        response = self.client.put('/user/nonExistingUser', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 404
+        assert response.get_json() == {'error': 'Not found'}
 
     def test_update_user_unknown_field(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.__add_users(alice)
 
-        aliceJson = createUserJson(alice)
+        aliceJsonBefore = createUserJson(alice)
 
         requestData = {'foo': 'bar'}
         response = self.client.put('/user/alice', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
@@ -304,15 +334,14 @@ class UserTests(PassButlerTestCase):
 
         assert response.status_code == 204
 
-        ## Nothing is changed
-        updatedAliceJson = createUserJson(User.query.get('alice'))
-        assert aliceJson == updatedAliceJson
+        aliceJsonAfter = createUserJson(User.query.get('alice'))
+        assert aliceJsonBefore == aliceJsonAfter
 
     def test_update_user_immutable_field(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.__add_users(alice)
 
-        aliceJson = createUserJson(alice)
+        aliceJsonBefore = createUserJson(alice)
 
         requestData = {'created': 12345678902}
         response = self.client.put('/user/alice', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
@@ -321,17 +350,16 @@ class UserTests(PassButlerTestCase):
 
         assert response.status_code == 204
 
-        ## Nothing is changed
-        updatedAliceJson = createUserJson(User.query.get('alice'))
-        assert aliceJson == updatedAliceJson
+        aliceJsonAfter = createUserJson(User.query.get('alice'))
+        assert aliceJsonBefore == aliceJsonAfter
 
     def test_update_user_wrong_json_type(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.__add_users(alice)
 
-        aliceJson = createUserJson(alice)
+        aliceJsonBefore = createUserJson(alice)
 
-        requestData = aliceJson.copy()
+        requestData = aliceJsonBefore.copy()
 
         ## Change a value to invalid type
         requestData['modified'] = 'a'
@@ -343,8 +371,8 @@ class UserTests(PassButlerTestCase):
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
 
-        updatedAliceJson = createUserJson(User.query.get('alice'))
-        assert aliceJson == updatedAliceJson
+        aliceJsonAfter = createUserJson(User.query.get('alice'))
+        assert aliceJsonBefore == aliceJsonAfter
 
 if __name__ == '__main__':
     unittest.main()
