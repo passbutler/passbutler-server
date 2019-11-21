@@ -161,7 +161,7 @@ class UserTests(PassButlerTestCase):
 
     """
 
-    def test_get_user_without_authentication(self):
+    def test_get_user_details_without_authentication(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.__add_users(alice)
 
@@ -170,13 +170,13 @@ class UserTests(PassButlerTestCase):
         assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
 
-    def test_get_user_without_authentication_no_user_record(self):
+    def test_get_user_details_without_authentication_no_user_record(self):
         response = self.client.get('/user/alice')
 
         assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
 
-    def test_get_user_unaccepted_password_authentication(self):
+    def test_get_user_details_unaccepted_password_authentication(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.__add_users(alice)
 
@@ -185,7 +185,7 @@ class UserTests(PassButlerTestCase):
         assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
 
-    def test_get_user_expired_token(self):
+    def test_get_user_details_expired_token(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.__add_users(alice)
 
@@ -194,7 +194,7 @@ class UserTests(PassButlerTestCase):
         assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
 
-    def test_get_user_token_without_signature(self):
+    def test_get_user_details_token_without_signature(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.__add_users(alice)
 
@@ -210,7 +210,7 @@ class UserTests(PassButlerTestCase):
     """
 
     def test_get_user(self):
-        alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.__add_users(alice)
 
         response = self.client.get('/user/alice', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
@@ -220,7 +220,7 @@ class UserTests(PassButlerTestCase):
         aliceJson = createUserJson(alice)
         assert response.get_json() == aliceJson
 
-    def test_get_user_as_other_user(self):
+    def test_get_user_details_as_other_user(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678904, 12345678903)
         self.__add_users(alice, sandy)
@@ -248,7 +248,7 @@ class UserTests(PassButlerTestCase):
     ## TODO: Add also authentication tests
 
     def test_update_user_one_field(self):
-        alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.__add_users(alice)
 
         ## Save user as JSON to be sure it is not connected to database
@@ -270,7 +270,7 @@ class UserTests(PassButlerTestCase):
         assert aliceJson == updatedAliceJson
 
     def test_update_user_multiple_fields(self):
-        alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.__add_users(alice)
 
         aliceJson = createUserJson(alice)
@@ -292,7 +292,7 @@ class UserTests(PassButlerTestCase):
         assert aliceJson == updatedAliceJson
 
     def test_update_user_unknown_field(self):
-        alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.__add_users(alice)
 
         aliceJson = createUserJson(alice)
@@ -309,7 +309,7 @@ class UserTests(PassButlerTestCase):
         assert aliceJson == updatedAliceJson
 
     def test_update_user_immutable_field(self):
-        alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.__add_users(alice)
 
         aliceJson = createUserJson(alice)
@@ -326,7 +326,7 @@ class UserTests(PassButlerTestCase):
         assert aliceJson == updatedAliceJson
 
     def test_update_user_wrong_json_type(self):
-        alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.__add_users(alice)
 
         aliceJson = createUserJson(alice)
