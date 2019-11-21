@@ -21,7 +21,7 @@ Install unit testing dependencies:
 
 ## Unit testing
 
-Run unit tests:
+Run unit tests (add `-v` for more verbosity):
 
     $ pytest
 
