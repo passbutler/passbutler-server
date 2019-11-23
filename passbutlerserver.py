@@ -12,8 +12,6 @@ import os
 db = SQLAlchemy()
 ma = Marshmallow()
 
-## TODO: Check difference between `User.query.filter_by(username=username)` and `User.query.get(username)`
-
 class User(db.Model):
 
     __tablename__ = 'users'
