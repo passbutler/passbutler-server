@@ -12,6 +12,87 @@ import os
 db = SQLAlchemy()
 ma = Marshmallow()
 
+class Item(db.Model):
+
+    __tablename__ = 'items'
+
+    id = db.Column(db.String(36), primary_key=True, nullable=False)
+    userId = db.Column(db.String, db.ForeignKey('users.username'))
+    data = db.Column(db.JSON, nullable=False)
+    deleted = db.Column(db.Boolean, nullable=False)
+    modified = db.Column(db.Integer, nullable=False)
+    created = db.Column(db.Integer, nullable=False)
+
+    def __init__(
+        self,
+        id,
+        userId,
+        data,
+        deleted,
+        modified,
+        created
+    ):
+        self.id = id
+        self.userId = userId
+        self.data = data
+        self.deleted = deleted
+        self.modified = modified
+        self.created = created
+
+    def __repr__(self):
+        return "<Item(id={item.id!r}) @ {objId!r}>".format(item=self, objId=id(self))
+
+class DefaultItemSchema(ModelSchema):
+    class Meta:
+        model = Item
+
+        ## Also include foreign keys in JSON
+        include_fk = True
+
+        transient = True
+
+class UpdateItemSchema(ModelSchema):
+    class Meta:
+        model = Item
+        fields = ('data', 'deleted', 'modified')
+        transient = True
+
+class ItemAuthorization(db.Model):
+
+    __tablename__ = 'item_authorizations'
+
+    id = db.Column(db.String(36), primary_key=True, nullable=False)
+    userId = db.Column(db.String, db.ForeignKey('users.username'))
+    itemId = db.Column(db.String, db.ForeignKey('items.id'))
+    itemKey = db.Column(db.JSON, nullable=False)
+    readOnly = db.Column(db.Boolean, nullable=False)
+    deleted = db.Column(db.Boolean, nullable=False)
+    modified = db.Column(db.Integer, nullable=False)
+    created = db.Column(db.Integer, nullable=False)
+
+    def __init__(
+        self,
+        id,
+        userId,
+        itemId,
+        itemKey,
+        readOnly,
+        deleted,
+        modified,
+        created
+    ):
+        self.id = id
+        self.userId = userId
+        self.itemId = itemId
+        self.itemKey = itemKey
+        self.readOnly = readOnly
+        self.deleted = deleted
+        self.modified = modified
+        self.created = created
+
+    def __repr__(self):
+        return "<ItemAuthorization(id={item.id!r}) @ {objId!r}>".format(item=self, objId=id(self))
+
 class User(db.Model):
 
     __tablename__ = 'users'
@@ -26,6 +107,8 @@ class User(db.Model):
     deleted = db.Column(db.Boolean, nullable=False)
     modified = db.Column(db.Integer, nullable=False)
     created = db.Column(db.Integer, nullable=False)
+
+    items = db.relationship('Item')
 
     def __init__(
         self,
@@ -68,7 +151,9 @@ class DefaultUserSchema(ModelSchema):
     class Meta:
         model = User
 
-        ## Do not implicitly connect schema to SQLAlchemy database session
+        ## Do not include items in the JSON
+        exclude = ('items',)
+
         transient = True
 
 class UpdateUserSchema(ModelSchema):
@@ -241,6 +326,25 @@ def createApp(testConfig=None):
             abort(400)
 
         return ('', 204)
+
+    @app.route('/user/<username>/items', methods=['GET'])
+    @webTokenAuth.login_required
+    def get_user_items(username):
+        user = User.query.get(username)
+
+        ## Record exists check is needed because an authenticated user could request a non-existing record
+        if user is None:
+            abort(404)
+
+        ## A user only can see his own details
+        if (user.username != g.authenticatedUser.username):
+            abort(403)
+
+        ## TODO: Return all items where user has access
+
+        allUserItems = user.items
+        result = DefaultItemSchema(many=True).dump(allUserItems)
+        return jsonify(result.data)
 
     return app
 

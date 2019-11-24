@@ -2,7 +2,7 @@
 
 from flask_testing import TestCase
 from passbutlerserver import createApp, db
-from passbutlerserver import User
+from passbutlerserver import User, Item, ItemAuthorization
 from itsdangerous import TimedJSONWebSignatureSerializer
 import base64
 import unittest
@@ -73,11 +73,17 @@ def assertUserEquals(expectedUser, actualUser):
 
 class UserTests(PassButlerTestCase):
 
-    def __add_users(self, *users):
+    def __addUsers(self, *users):
         for user in users:
             db.session.add(user)
 
         db.session.commit()   
+
+    def __addItems(self, *items):
+        for item in items:
+            db.session.add(item)
+
+        db.session.commit()  
 
     """
     Tests for GET /token
@@ -86,7 +92,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_token_with_correct_credentials(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__add_users(alice)
+        self.__addUsers(alice)
 
         response = self.client.get('/token', headers=createHttpBasicAuthHeaders('alice', '1234'))
 
@@ -95,7 +101,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_token_with_invalid_credentials(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__add_users(alice)
+        self.__addUsers(alice)
 
         response = self.client.get('/token', headers=createHttpBasicAuthHeaders('alice', '1235'))
 
@@ -104,7 +110,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_token_with_valid_token(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__add_users(alice)
+        self.__addUsers(alice)
 
         response = self.client.get('/token', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
@@ -114,7 +120,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_token_without_authentication(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__add_users(alice)
+        self.__addUsers(alice)
 
         response = self.client.get('/token')
 
@@ -134,7 +140,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_users_one_user(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__add_users(alice)
+        self.__addUsers(alice)
 
         response = self.client.get('/users', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
@@ -146,7 +152,7 @@ class UserTests(PassButlerTestCase):
     def test_get_users_multiple_users(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678904, 12345678903)
-        self.__add_users(alice, sandy)
+        self.__addUsers(alice, sandy)
 
         response = self.client.get('/users', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
@@ -163,7 +169,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_user_details_without_authentication(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__add_users(alice)
+        self.__addUsers(alice)
 
         response = self.client.get('/user/alice')
 
@@ -178,7 +184,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_user_details_unaccepted_password_authentication(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__add_users(alice)
+        self.__addUsers(alice)
 
         response = self.client.get('/user/alice', headers=createHttpBasicAuthHeaders('alice', '1234'))
 
@@ -187,7 +193,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_user_details_expired_token(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__add_users(alice)
+        self.__addUsers(alice)
 
         response = self.client.get('/user/alice', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, -3600))
 
@@ -196,7 +202,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_user_details_token_without_signature(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__add_users(alice)
+        self.__addUsers(alice)
 
         response = self.client.get('/user/alice', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, signatureAlgorithm="none"))
 
@@ -211,7 +217,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_user(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__add_users(alice)
+        self.__addUsers(alice)
 
         response = self.client.get('/user/alice', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
@@ -223,7 +229,7 @@ class UserTests(PassButlerTestCase):
     def test_get_user_details_as_other_user(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678904, 12345678903)
-        self.__add_users(alice, sandy)
+        self.__addUsers(alice, sandy)
 
         ## Sandy is not allowed to access user details of Alice
         response = self.client.get('/user/alice', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, sandy))
@@ -233,7 +239,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_nonexisting_user_as_other_user(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__add_users(alice)
+        self.__addUsers(alice)
 
         response = self.client.get('/user/nonExistingUser', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
@@ -247,7 +253,7 @@ class UserTests(PassButlerTestCase):
 
     def test_update_user_one_field(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__add_users(alice)
+        self.__addUsers(alice)
 
         ## Save user as JSON to be sure it is not connected to database
         aliceJsonBefore = createUserJson(alice)
@@ -269,7 +275,7 @@ class UserTests(PassButlerTestCase):
 
     def test_update_user_multiple_fields(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__add_users(alice)
+        self.__addUsers(alice)
 
         aliceJsonBefore = createUserJson(alice)
 
@@ -292,7 +298,7 @@ class UserTests(PassButlerTestCase):
     def test_update_user_as_other_user(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678904, 12345678903)
-        self.__add_users(alice, sandy)
+        self.__addUsers(alice, sandy)
 
         aliceJsonBefore = createUserJson(alice)
 
@@ -311,7 +317,7 @@ class UserTests(PassButlerTestCase):
 
     def test_update_nonexisting_user_as_other_user(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__add_users(alice)
+        self.__addUsers(alice)
 
         requestData = {'settings': 'foobar'}
         response = self.client.put('/user/nonExistingUser', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
@@ -323,7 +329,7 @@ class UserTests(PassButlerTestCase):
 
     def test_update_user_unknown_field(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__add_users(alice)
+        self.__addUsers(alice)
 
         aliceJsonBefore = createUserJson(alice)
 
@@ -339,7 +345,7 @@ class UserTests(PassButlerTestCase):
 
     def test_update_user_immutable_field(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__add_users(alice)
+        self.__addUsers(alice)
 
         aliceJsonBefore = createUserJson(alice)
 
@@ -355,7 +361,7 @@ class UserTests(PassButlerTestCase):
 
     def test_update_user_wrong_json_type(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__add_users(alice)
+        self.__addUsers(alice)
 
         aliceJsonBefore = createUserJson(alice)
 
@@ -373,6 +379,28 @@ class UserTests(PassButlerTestCase):
 
         aliceJsonAfter = createUserJson(User.query.get('alice'))
         assert aliceJsonBefore == aliceJsonAfter
+
+    """
+    Tests for GET /user/username/items
+
+    """
+
+    def test_get_user_items(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.__addUsers(alice)
+
+        self.__addItems(
+            Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901),
+            Item('item2', 'alice', 'example data 2', True, 12345678904, 12345678903),
+        )
+
+        response = self.client.get('/user/alice/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        assert response.status_code == 200
+        assert response.get_json() == [
+            {'id': 'item1', 'userId': 'alice', 'data': 'example data 1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
+            {'id': 'item2', 'userId': 'alice', 'data': 'example data 2', 'deleted': True, 'modified': 12345678904, 'created': 12345678903}
+        ]
 
 if __name__ == '__main__':
     unittest.main()
