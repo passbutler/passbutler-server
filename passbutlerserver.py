@@ -333,13 +333,13 @@ def createApp(testConfig=None):
         if (user.username != g.authenticatedUser.username):
             abort(403)
 
-        userSchema = UpdateUserSchema().load(request.json, session=db.session, instance=user, partial=True)
+        updateUserSchema = UpdateUserSchema().load(request.json, session=db.session, instance=user, partial=True)
+
+        if len(updateUserSchema.errors) > 0:
+            app.logger.warning('Model validation failed with errors: {0}'.format(updateUserSchema.errors))
+            abort(400)
 
         db.session.commit()
-
-        if len(userSchema.errors) > 0:
-            app.logger.warning('Model validation failed with errors: {0}'.format(userSchema.errors))
-            abort(400)
 
         return ('', 204)
 
@@ -352,7 +352,7 @@ def createApp(testConfig=None):
         if user is None:
             abort(404)
 
-        ## A user only can see his own details
+        ## A user only can see his own items
         if (user.username != g.authenticatedUser.username):
             abort(403)
 
@@ -371,7 +371,7 @@ def createApp(testConfig=None):
         if user is None:
             abort(404)
 
-        ## A user only can see his own details
+        ## A user only can see his own item authorzations
         if (user.username != g.authenticatedUser.username):
             abort(403)
 
