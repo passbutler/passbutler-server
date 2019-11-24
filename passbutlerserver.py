@@ -93,6 +93,21 @@ class ItemAuthorization(db.Model):
     def __repr__(self):
         return "<ItemAuthorization(id={item.id!r}) @ {objId!r}>".format(item=self, objId=id(self))
 
+class DefaultItemAuthorizationSchema(ModelSchema):
+    class Meta:
+        model = ItemAuthorization
+
+        ## Also include foreign keys in JSON
+        include_fk = True
+
+        transient = True
+
+class UpdateItemAuthorizationSchema(ModelSchema):
+    class Meta:
+        model = ItemAuthorization
+        fields = ('readOnly', 'deleted', 'modified')
+        transient = True
+
 class User(db.Model):
 
     __tablename__ = 'users'
@@ -109,6 +124,7 @@ class User(db.Model):
     created = db.Column(db.Integer, nullable=False)
 
     items = db.relationship('Item')
+    itemAuthorization = db.relationship('ItemAuthorization')
 
     def __init__(
         self,
@@ -152,7 +168,7 @@ class DefaultUserSchema(ModelSchema):
         model = User
 
         ## Do not include items in the JSON
-        exclude = ('items',)
+        exclude = ('items', 'itemAuthorization')
 
         transient = True
 
@@ -344,6 +360,23 @@ def createApp(testConfig=None):
 
         allUserItems = user.items
         result = DefaultItemSchema(many=True).dump(allUserItems)
+        return jsonify(result.data)
+
+    @app.route('/user/<username>/itemauthorizations', methods=['GET'])
+    @webTokenAuth.login_required
+    def get_user_item_authorizations(username):
+        user = User.query.get(username)
+
+        ## Record exists check is needed because an authenticated user could request a non-existing record
+        if user is None:
+            abort(404)
+
+        ## A user only can see his own details
+        if (user.username != g.authenticatedUser.username):
+            abort(403)
+
+        allUserItemAuthorization = user.itemAuthorization
+        result = DefaultItemAuthorizationSchema(many=True).dump(allUserItemAuthorization)
         return jsonify(result.data)
 
     return app

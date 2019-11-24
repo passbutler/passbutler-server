@@ -85,6 +85,12 @@ class UserTests(PassButlerTestCase):
 
         db.session.commit()  
 
+    def __addItemAuthorizations(self, *itemAuthorizations):
+        for itemAuthorization in itemAuthorizations:
+            db.session.add(itemAuthorization)
+
+        db.session.commit() 
+
     """
     Tests for GET /token
 
@@ -400,6 +406,44 @@ class UserTests(PassButlerTestCase):
         assert response.get_json() == [
             {'id': 'item1', 'userId': 'alice', 'data': 'example data 1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
             {'id': 'item2', 'userId': 'alice', 'data': 'example data 2', 'deleted': True, 'modified': 12345678904, 'created': 12345678903}
+        ]
+
+    """
+    Tests for GET /user/username/itemauthorizations
+
+    """
+
+    def test_get_user_item_authorizations(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy', 'x', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        self.__addUsers(alice, sandy)
+
+        item1 = Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
+        item2 = Item('item2', 'sandy', 'example data 2', False, 12345678902, 12345678901)
+        item3 = Item('item3', 'sandy', 'example data 3', False, 12345678902, 12345678901)
+        self.__addItems(item1, item2, item3)
+
+        ## Item authorization for "alice" for her item
+        itemAuthorization1 = ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
+
+        ## Item authorization (readonly) for "alice" for item of "sandy"
+        itemAuthorization2 = ItemAuthorization('itemAuthorization2', 'alice', 'item2', 'example item key 2', True, False, 12345678902, 12345678901)
+
+        ## Item authorization (readonly and deleted) for "alice" for item of "sandy"
+        itemAuthorization3 = ItemAuthorization('itemAuthorization3', 'alice', 'item3', 'example item key 3', True, True, 12345678902, 12345678901)
+
+        ## Item authorization for "sandy" for her item
+        itemAuthorization4 = ItemAuthorization('itemAuthorization4', 'sandy', 'item2', 'example item key 2', False, False, 12345678902, 12345678901)
+
+        self.__addItemAuthorizations(itemAuthorization1, itemAuthorization2, itemAuthorization3, itemAuthorization4)
+
+        response = self.client.get('/user/alice/itemauthorizations', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        assert response.status_code == 200
+        assert response.get_json() == [
+            {'id': 'itemAuthorization1', 'userId': 'alice', 'itemId': 'item1', 'itemKey': 'example item key 1', 'readOnly': False, 'deleted': False, 'modified': 12345678902,'created': 12345678901},
+            {'id': 'itemAuthorization2', 'userId': 'alice', 'itemId': 'item2', 'itemKey': 'example item key 2', 'readOnly': True, 'deleted': False, 'modified': 12345678902,'created': 12345678901},
+            {'id': 'itemAuthorization3', 'userId': 'alice', 'itemId': 'item3', 'itemKey': 'example item key 3', 'readOnly': True, 'deleted': True, 'modified': 12345678902,'created': 12345678901},
         ]
 
 if __name__ == '__main__':
