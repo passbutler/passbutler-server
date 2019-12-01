@@ -124,7 +124,7 @@ class User(db.Model):
     created = db.Column(db.Integer, nullable=False)
 
     items = db.relationship('Item')
-    itemAuthorization = db.relationship('ItemAuthorization')
+    itemAuthorizations = db.relationship('ItemAuthorization')
 
     def __init__(
         self,
@@ -168,7 +168,7 @@ class DefaultUserSchema(ModelSchema):
         model = User
 
         ## Do not include items in the JSON
-        exclude = ('items', 'itemAuthorization')
+        exclude = ('items', 'itemAuthorizations')
 
         transient = True
 
@@ -375,7 +375,7 @@ def createApp(testConfig=None):
         if (user.username != g.authenticatedUser.username):
             abort(403)
 
-        allUserItemAuthorization = user.itemAuthorization
+        allUserItemAuthorization = user.itemAuthorizations
         result = DefaultItemAuthorizationSchema(many=True).dump(allUserItemAuthorization)
         return jsonify(result.data)
 
