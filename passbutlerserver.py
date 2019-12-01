@@ -17,7 +17,7 @@ class Item(db.Model):
     __tablename__ = 'items'
 
     id = db.Column(db.String(36), primary_key=True, nullable=False)
-    userId = db.Column(db.String, db.ForeignKey('users.username'))
+    userId = db.Column(db.String, db.ForeignKey('users.username'), nullable=False)
     data = db.Column(db.JSON, nullable=False)
     deleted = db.Column(db.Boolean, nullable=False)
     modified = db.Column(db.Integer, nullable=False)
@@ -62,8 +62,8 @@ class ItemAuthorization(db.Model):
     __tablename__ = 'item_authorizations'
 
     id = db.Column(db.String(36), primary_key=True, nullable=False)
-    userId = db.Column(db.String, db.ForeignKey('users.username'))
-    itemId = db.Column(db.String, db.ForeignKey('items.id'))
+    userId = db.Column(db.String, db.ForeignKey('users.username'), nullable=False)
+    itemId = db.Column(db.String, db.ForeignKey('items.id'), nullable=False)
     itemKey = db.Column(db.JSON, nullable=False)
     readOnly = db.Column(db.Boolean, nullable=False)
     deleted = db.Column(db.Boolean, nullable=False)
