@@ -339,16 +339,130 @@ class UserTests(PassButlerTestCase):
         self.__addUsers(alice)
 
         self.__addItems(
+            Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
+        )
+
+        self.__addItemAuthorizations(
+            ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
+        )
+
+        response = self.client.get('/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        assert response.status_code == 200
+        assert response.get_json() == [
+            {'id': 'item1', 'userId': 'alice', 'data': 'example data 1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901}
+        ]
+
+    def test_get_user_items_with_deleted_item(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.__addUsers(alice)
+
+        self.__addItems(
             Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901),
-            Item('item2', 'alice', 'example data 2', True, 12345678904, 12345678903),
+            Item('item2', 'alice', 'example data 2', True, 12345678902, 12345678901),
+        )
+
+        self.__addItemAuthorizations(
+            ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901),
+            ItemAuthorization('itemAuthorization2', 'alice', 'item2', 'example item key 2', False, False, 12345678902, 12345678901)
         )
 
         response = self.client.get('/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         assert response.status_code == 200
+
+        ## The "item2" is deleted, but is listed of course
         assert response.get_json() == [
             {'id': 'item1', 'userId': 'alice', 'data': 'example data 1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
-            {'id': 'item2', 'userId': 'alice', 'data': 'example data 2', 'deleted': True, 'modified': 12345678904, 'created': 12345678903}
+            {'id': 'item2', 'userId': 'alice', 'data': 'example data 2', 'deleted': True, 'modified': 12345678902, 'created': 12345678901}
+        ]
+
+    def test_get_user_items_without_any_item_authorization(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.__addUsers(alice)
+
+        self.__addItems(
+            Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
+        )
+
+        response = self.client.get('/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        assert response.status_code == 200
+
+        ## Alice is not able to see "item1" because no item authorization exists
+        assert response.get_json() == []
+
+    def test_get_user_items_without_shared_item_authorization(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        self.__addUsers(alice, sandy)
+
+        self.__addItems(
+            Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901),
+            Item('item2', 'sandy', 'example data 2', False, 12345678902, 12345678901),
+        )
+
+        self.__addItemAuthorizations(
+            ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901),
+            ItemAuthorization('itemAuthorization2', 'sandy', 'item2', 'example item key 2', False, False, 12345678902, 12345678901)
+        )
+
+        response = self.client.get('/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        assert response.status_code == 200
+
+        ## Alice is only able to see "item1", because Sandy does not shared "item2" with her
+        assert response.get_json() == [
+            {'id': 'item1', 'userId': 'alice', 'data': 'example data 1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901}
+        ]
+
+    def test_get_user_items_with_shared_item_authorization(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        self.__addUsers(alice, sandy)
+
+        self.__addItems(
+            Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901),
+            Item('item2', 'sandy', 'example data 2', False, 12345678902, 12345678901),
+        )
+
+        self.__addItemAuthorizations(
+            ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901),
+            ItemAuthorization('itemAuthorization2', 'sandy', 'item2', 'example item key 2', False, False, 12345678902, 12345678901),
+            ItemAuthorization('itemAuthorization3', 'alice', 'item2', 'example item key 2', False, False, 12345678902, 12345678901)
+        )
+
+        response = self.client.get('/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        assert response.status_code == 200
+
+        ## The "item2" of Sandy is also accessible by Alice because she has a non-deleted item authorization
+        assert response.get_json() == [
+            {'id': 'item1', 'userId': 'alice', 'data': 'example data 1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
+            {'id': 'item2', 'userId': 'sandy', 'data': 'example data 2', 'deleted': False, 'modified': 12345678902, 'created': 12345678901}
+        ]
+
+    def test_get_user_items_with_deleted_shared_item_authorization(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        self.__addUsers(alice, sandy)
+
+        self.__addItems(
+            Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901),
+            Item('item2', 'sandy', 'example data 2', False, 12345678902, 12345678901),
+        )
+
+        self.__addItemAuthorizations(
+            ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901),
+            ItemAuthorization('itemAuthorization2', 'sandy', 'item2', 'example item key 2', False, False, 12345678902, 12345678901),
+            ItemAuthorization('itemAuthorization3', 'alice', 'item2', 'example item key 2', False, True, 12345678902, 12345678901)
+        )
+
+        response = self.client.get('/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        assert response.status_code == 200
+
+        ## The "item2" of Sandy is not accessible by Alice anymore because item authorization was deleted by Sandy
+        assert response.get_json() == [
+            {'id': 'item1', 'userId': 'alice', 'data': 'example data 1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901}
         ]
 
     """
