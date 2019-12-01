@@ -159,9 +159,6 @@ class User(db.Model):
     modified = db.Column(db.Integer, nullable=False)
     created = db.Column(db.Integer, nullable=False)
 
-    items = db.relationship('Item')
-    itemAuthorizations = db.relationship('ItemAuthorization')
-
     def __init__(
         self,
         username,
@@ -204,15 +201,14 @@ class DefaultUserSchema(ModelSchema):
     class Meta:
         model = User
 
-        ## Exclude the following fields for this schema
-        exclude = ('items', 'itemAuthorizations')
-
         ## Do not connect schema to SQLAlchemy database session to avoid models are implicitly changed when loading data
         transient = True
 
 class UpdateUserSchema(RestrictedUpdateModelSchema):
     class Meta:
         model = User
+
+        ## Only the following fields are allowed to update for this schema
         mutable_fields = ('masterPasswordAuthenticationHash', 'masterEncryptionKey', 'settings', 'modified')
 
         ## Do not connect schema to SQLAlchemy database session to avoid models are implicitly changed when loading data
@@ -383,7 +379,7 @@ def createApp(testConfig=None):
     @webTokenAuth.login_required
     def get_user_item_authorizations():
         user = g.authenticatedUser
-        allUserItemAuthorization = user.itemAuthorizations
+        allUserItemAuthorization = ItemAuthorization.query.filter_by(userId=user.username).all()
         result = DefaultItemAuthorizationSchema(many=True).dump(allUserItemAuthorization)
         return jsonify(result.data)
 
