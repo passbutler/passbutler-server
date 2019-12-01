@@ -335,7 +335,8 @@ def createApp(testConfig=None):
     @app.route('/token', methods=['GET'])
     @passwordAuth.login_required
     def get_token():
-        token = g.authenticatedUser.generateAuthenticationToken(tokenSerializer)
+        user = g.authenticatedUser
+        token = user.generateAuthenticationToken(tokenSerializer)
         return jsonify({'token': token})
 
     @app.route('/users', methods=['GET'])
@@ -345,35 +346,17 @@ def createApp(testConfig=None):
         result = PublicUserSchema(many=True).dump(allUsers)
         return jsonify(result.data)
 
-    @app.route('/user/<username>', methods=['GET'])
+    @app.route('/userdetails', methods=['GET'])
     @webTokenAuth.login_required
-    def get_user_details(username):
-        user = User.query.get(username)
-
-        ## Record exists check is needed because an authenticated user could request a non-existing record
-        if user is None:
-            abort(404)
-
-        ## A user only can see his own details
-        if (user.username != g.authenticatedUser.username):
-            abort(403)
-
+    def get_user_details():
+        user = g.authenticatedUser
         result = DefaultUserSchema().dump(user)
         return jsonify(result.data)
 
-    @app.route('/user/<username>', methods=['PUT'])
+    @app.route('/userdetails', methods=['PUT'])
     @webTokenAuth.login_required
-    def set_user_details(username):
-        user = User.query.get(username)
-
-        ## Record exists check is needed because an authenticated user could request a non-existing record
-        if user is None:
-            abort(404)
-
-        ## A user only can update his own details
-        if (user.username != g.authenticatedUser.username):
-            abort(403)
-
+    def set_user_details():
+        user = g.authenticatedUser
         updateUserSchema = UpdateUserSchema().load(request.json, session=db.session, instance=user, partial=True)
 
         if len(updateUserSchema.errors) > 0:
@@ -384,18 +367,10 @@ def createApp(testConfig=None):
 
         return ('', 204)
 
-    @app.route('/user/<username>/items', methods=['GET'])
+    @app.route('/items', methods=['GET'])
     @webTokenAuth.login_required
-    def get_user_items(username):
-        user = User.query.get(username)
-
-        ## Record exists check is needed because an authenticated user could request a non-existing record
-        if user is None:
-            abort(404)
-
-        ## A user only can see his own items
-        if (user.username != g.authenticatedUser.username):
-            abort(403)
+    def get_user_items():
+        user = g.authenticatedUser
 
         ## TODO: Return all items where user has access
 
@@ -403,19 +378,10 @@ def createApp(testConfig=None):
         result = DefaultItemSchema(many=True).dump(allUserItems)
         return jsonify(result.data)
 
-    @app.route('/user/<username>/itemauthorizations', methods=['GET'])
+    @app.route('/itemauthorizations', methods=['GET'])
     @webTokenAuth.login_required
-    def get_user_item_authorizations(username):
-        user = User.query.get(username)
-
-        ## Record exists check is needed because an authenticated user could request a non-existing record
-        if user is None:
-            abort(404)
-
-        ## A user only can see his own item authorzations
-        if (user.username != g.authenticatedUser.username):
-            abort(403)
-
+    def get_user_item_authorizations():
+        user = g.authenticatedUser
         allUserItemAuthorization = user.itemAuthorizations
         result = DefaultItemAuthorizationSchema(many=True).dump(allUserItemAuthorization)
         return jsonify(result.data)
