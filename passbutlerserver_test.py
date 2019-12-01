@@ -370,11 +370,7 @@ class UserTests(PassButlerTestCase):
 
         aliceJsonBefore = createUserJson(alice)
 
-        requestData = aliceJsonBefore.copy()
-
-        ## Change a value to invalid type
-        requestData['modified'] = 'a'
-
+        requestData = {'modified': 'a'}
         response = self.client.put('/user/alice', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
@@ -414,7 +410,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_user_item_authorizations(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        sandy = User('sandy', 'x', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
         self.__addUsers(alice, sandy)
 
         item1 = Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
