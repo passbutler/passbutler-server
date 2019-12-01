@@ -140,35 +140,6 @@ class UserTests(PassButlerTestCase):
         assert response.get_json() == {'error': 'Unauthorized'}
 
     """
-    Tests for GET /users
-
-    """
-
-    def test_get_users_one_user(self):
-        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__addUsers(alice)
-
-        response = self.client.get('/users', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
-
-        assert response.status_code == 200
-        assert response.get_json() == [
-            {'username': 'alice', 'itemEncryptionPublicKey': 'a3', 'deleted': False, 'modified': 12345678902, 'created': 12345678901}
-        ]
-
-    def test_get_users_multiple_users(self):
-        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678904, 12345678903)
-        self.__addUsers(alice, sandy)
-
-        response = self.client.get('/users', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
-
-        assert response.status_code == 200
-        assert response.get_json() == [
-            {'username': 'alice', 'itemEncryptionPublicKey': 'a3', 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
-            {'username': 'sandy', 'itemEncryptionPublicKey': 's3', 'deleted': False, 'modified': 12345678904, 'created': 12345678903}
-        ]
-
-    """
     Authentication tests (using GET /user/username)
 
     """
@@ -215,6 +186,34 @@ class UserTests(PassButlerTestCase):
         assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
 
+    """
+    Tests for GET /users
+
+    """
+
+    def test_get_users_one_user(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.__addUsers(alice)
+
+        response = self.client.get('/users', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        assert response.status_code == 200
+        assert response.get_json() == [
+            {'username': 'alice', 'itemEncryptionPublicKey': 'a3', 'deleted': False, 'modified': 12345678902, 'created': 12345678901}
+        ]
+
+    def test_get_users_multiple_users(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678904, 12345678903)
+        self.__addUsers(alice, sandy)
+
+        response = self.client.get('/users', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        assert response.status_code == 200
+        assert response.get_json() == [
+            {'username': 'alice', 'itemEncryptionPublicKey': 'a3', 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
+            {'username': 'sandy', 'itemEncryptionPublicKey': 's3', 'deleted': False, 'modified': 12345678904, 'created': 12345678903}
+        ]
 
     """
     Tests for GET /user/username
