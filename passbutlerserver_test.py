@@ -42,6 +42,18 @@ def createUserJson(user):
         'created': user.created
     }
 
+def createItemAuthorizationJson(itemAuthorization):
+    return {
+        'id': itemAuthorization.id,
+        'userId': itemAuthorization.userId,
+        'itemId': itemAuthorization.itemId,
+        'itemKey': itemAuthorization.itemKey,
+        'readOnly': itemAuthorization.readOnly,
+        'deleted': itemAuthorization.deleted,
+        'modified': itemAuthorization.modified,
+        'created': itemAuthorization.created
+    }
+
 def createHttpBasicAuthHeaders(username, password):
     credentialBytes = (username + ':' + password).encode()
     base64EncodedCredentials = base64.b64encode(credentialBytes).decode('utf-8')
@@ -52,40 +64,21 @@ def createHttpTokenAuthHeaders(secretKey, user, expiresIn=3600, signatureAlgorit
     token = user.generateAuthenticationToken(tokenSerializer)
     return {'Authorization': 'Bearer ' + token}
 
-def assertUserEquals(expectedUser, actualUser):
-    if expectedUser is None or actualUser is None:
-        raise AssertionError('The given user objects must not be None!')
-
-    equalChecks = [
-        expectedUser.username == actualUser.username,
-        expectedUser.masterKeyDerivationInformation == actualUser.masterKeyDerivationInformation,
-        expectedUser.masterEncryptionKey == actualUser.masterEncryptionKey,
-        expectedUser.itemEncryptionPublicKey == actualUser.itemEncryptionPublicKey,
-        expectedUser.itemEncryptionSecretKey == actualUser.itemEncryptionSecretKey,
-        expectedUser.settings == actualUser.settings,
-        expectedUser.deleted == actualUser.deleted,
-        expectedUser.modified == actualUser.modified,
-        expectedUser.created == actualUser.created
-    ]
-
-    if (all(equalChecks) == False):
-        raise AssertionError('The user objects are not equal!')
-
 class UserTests(PassButlerTestCase):
 
-    def __addUsers(self, *users):
+    def addUsers(self, *users):
         for user in users:
             db.session.add(user)
 
         db.session.commit()   
 
-    def __addItems(self, *items):
+    def addItems(self, *items):
         for item in items:
             db.session.add(item)
 
         db.session.commit()  
 
-    def __addItemAuthorizations(self, *itemAuthorizations):
+    def addItemAuthorizations(self, *itemAuthorizations):
         for itemAuthorization in itemAuthorizations:
             db.session.add(itemAuthorization)
 
@@ -98,7 +91,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_token_with_correct_credentials(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__addUsers(alice)
+        self.addUsers(alice)
 
         response = self.client.get('/token', headers=createHttpBasicAuthHeaders('alice', '1234'))
 
@@ -107,7 +100,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_token_with_invalid_credentials(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__addUsers(alice)
+        self.addUsers(alice)
 
         response = self.client.get('/token', headers=createHttpBasicAuthHeaders('alice', '1235'))
 
@@ -116,7 +109,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_token_with_valid_token(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__addUsers(alice)
+        self.addUsers(alice)
 
         response = self.client.get('/token', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
@@ -126,7 +119,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_token_without_authentication(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__addUsers(alice)
+        self.addUsers(alice)
 
         response = self.client.get('/token')
 
@@ -146,7 +139,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_user_details_without_authentication(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__addUsers(alice)
+        self.addUsers(alice)
 
         response = self.client.get('/userdetails')
 
@@ -161,7 +154,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_user_details_unaccepted_password_authentication(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__addUsers(alice)
+        self.addUsers(alice)
 
         response = self.client.get('/userdetails', headers=createHttpBasicAuthHeaders('alice', '1234'))
 
@@ -170,7 +163,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_user_details_expired_token(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__addUsers(alice)
+        self.addUsers(alice)
 
         response = self.client.get('/userdetails', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, -3600))
 
@@ -179,7 +172,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_user_details_token_without_signature(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__addUsers(alice)
+        self.addUsers(alice)
 
         response = self.client.get('/userdetails', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, signatureAlgorithm="none"))
 
@@ -193,7 +186,7 @@ class UserTests(PassButlerTestCase):
 
     def test_get_users_one_user(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__addUsers(alice)
+        self.addUsers(alice)
 
         response = self.client.get('/users', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
@@ -205,7 +198,7 @@ class UserTests(PassButlerTestCase):
     def test_get_users_multiple_users(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678904, 12345678903)
-        self.__addUsers(alice, sandy)
+        self.addUsers(alice, sandy)
 
         response = self.client.get('/users', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
@@ -222,14 +215,23 @@ class UserTests(PassButlerTestCase):
 
     def test_get_user_details(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__addUsers(alice)
+        self.addUsers(alice)
 
         response = self.client.get('/userdetails', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         assert response.status_code == 200
-
-        aliceJson = createUserJson(alice)
-        assert response.get_json() == aliceJson
+        assert response.get_json() == {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
 
     """
     Tests for PUT /user/username
@@ -238,10 +240,7 @@ class UserTests(PassButlerTestCase):
 
     def test_update_user_one_field(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__addUsers(alice)
-
-        ## Save user as JSON to be sure it is not connected to database
-        aliceJsonBefore = createUserJson(alice)
+        self.addUsers(alice)
 
         requestData = {'settings': 'a5a'}
         response = self.client.put('/userdetails', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
@@ -250,41 +249,45 @@ class UserTests(PassButlerTestCase):
         db.session.rollback()
 
         assert response.status_code == 204
-
-        ## Alter the JSON and compare users to be sure only the altered fields have changed
-        aliceJsonBefore['settings'] = 'a5a'
-
-        aliceJsonAfter = createUserJson(User.query.get('alice'))
-
-        assert aliceJsonBefore == aliceJsonAfter
+        assert createUserJson(User.query.get('alice')) == {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5a',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
 
     def test_update_user_multiple_fields(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__addUsers(alice)
+        self.addUsers(alice)
 
-        aliceJsonBefore = createUserJson(alice)
-
-        requestData = {'masterPasswordAuthenticationHash': 'x', 'masterEncryptionKey': 'a2a', 'settings': 'a5a', 'modified': 12345678903}
+        requestData = {'masterPasswordAuthenticationHash': 'xa', 'masterEncryptionKey': 'a2a', 'settings': 'a5a', 'modified': 12345678903}
         response = self.client.put('/userdetails', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
         assert response.status_code == 204
-
-        aliceJsonBefore['masterPasswordAuthenticationHash'] = 'x'
-        aliceJsonBefore['masterEncryptionKey'] = 'a2a'
-        aliceJsonBefore['settings'] = 'a5a'
-        aliceJsonBefore['modified'] = 12345678903
-
-        aliceJsonAfter = createUserJson(User.query.get('alice'))
-
-        assert aliceJsonBefore == aliceJsonAfter
+        assert createUserJson(User.query.get('alice')) == {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'xa',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2a',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5a',
+            'deleted': False,
+            'modified': 12345678903,
+            'created': 12345678901
+        }
 
     def test_update_user_unknown_field(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__addUsers(alice)
-
-        aliceJsonBefore = createUserJson(alice)
+        self.addUsers(alice)
 
         requestData = {'foo': 'bar'}
         response = self.client.put('/userdetails', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
@@ -292,15 +295,22 @@ class UserTests(PassButlerTestCase):
         db.session.rollback()
 
         assert response.status_code == 204
-
-        aliceJsonAfter = createUserJson(User.query.get('alice'))
-        assert aliceJsonBefore == aliceJsonAfter
+        assert createUserJson(User.query.get('alice')) == {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
 
     def test_update_user_immutable_field(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__addUsers(alice)
-
-        aliceJsonBefore = createUserJson(alice)
+        self.addUsers(alice)
 
         requestData = {'created': 12345678902}
         response = self.client.put('/userdetails', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
@@ -308,15 +318,22 @@ class UserTests(PassButlerTestCase):
         db.session.rollback()
 
         assert response.status_code == 204
-
-        aliceJsonAfter = createUserJson(User.query.get('alice'))
-        assert aliceJsonBefore == aliceJsonAfter
+        assert createUserJson(User.query.get('alice')) == {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
 
     def test_update_user_wrong_json_type(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__addUsers(alice)
-
-        aliceJsonBefore = createUserJson(alice)
+        self.addUsers(alice)
 
         requestData = {'modified': 'this is not an integer timestamp'}
         response = self.client.put('/userdetails', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
@@ -325,9 +342,18 @@ class UserTests(PassButlerTestCase):
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-
-        aliceJsonAfter = createUserJson(User.query.get('alice'))
-        assert aliceJsonBefore == aliceJsonAfter
+        assert createUserJson(User.query.get('alice')) == {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
 
     """
     Tests for GET /items
@@ -336,13 +362,13 @@ class UserTests(PassButlerTestCase):
 
     def test_get_user_items(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__addUsers(alice)
+        self.addUsers(alice)
 
-        self.__addItems(
+        self.addItems(
             Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
         )
 
-        self.__addItemAuthorizations(
+        self.addItemAuthorizations(
             ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
         )
 
@@ -354,14 +380,14 @@ class UserTests(PassButlerTestCase):
 
     def test_get_user_items_with_deleted_item(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__addUsers(alice)
+        self.addUsers(alice)
 
-        self.__addItems(
+        self.addItems(
             Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901),
             Item('item2', 'alice', 'example data 2', True, 12345678902, 12345678901),
         )
 
-        self.__addItemAuthorizations(
+        self.addItemAuthorizations(
             ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901),
             ItemAuthorization('itemAuthorization2', 'alice', 'item2', 'example item key 2', False, False, 12345678902, 12345678901)
         )
@@ -378,9 +404,9 @@ class UserTests(PassButlerTestCase):
 
     def test_get_user_items_without_any_item_authorization(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.__addUsers(alice)
+        self.addUsers(alice)
 
-        self.__addItems(
+        self.addItems(
             Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
         )
 
@@ -393,14 +419,14 @@ class UserTests(PassButlerTestCase):
     def test_get_user_items_without_shared_item_authorization(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
-        self.__addUsers(alice, sandy)
+        self.addUsers(alice, sandy)
 
-        self.__addItems(
+        self.addItems(
             Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901),
             Item('item2', 'sandy', 'example data 2', False, 12345678902, 12345678901),
         )
 
-        self.__addItemAuthorizations(
+        self.addItemAuthorizations(
             ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901),
             ItemAuthorization('itemAuthorization2', 'sandy', 'item2', 'example item key 2', False, False, 12345678902, 12345678901)
         )
@@ -417,14 +443,14 @@ class UserTests(PassButlerTestCase):
     def test_get_user_items_with_shared_item_authorization(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
-        self.__addUsers(alice, sandy)
+        self.addUsers(alice, sandy)
 
-        self.__addItems(
+        self.addItems(
             Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901),
             Item('item2', 'sandy', 'example data 2', False, 12345678902, 12345678901),
         )
 
-        self.__addItemAuthorizations(
+        self.addItemAuthorizations(
             ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901),
             ItemAuthorization('itemAuthorization2', 'sandy', 'item2', 'example item key 2', False, False, 12345678902, 12345678901),
             ItemAuthorization('itemAuthorization3', 'alice', 'item2', 'example item key 2', False, False, 12345678902, 12345678901)
@@ -443,14 +469,14 @@ class UserTests(PassButlerTestCase):
     def test_get_user_items_with_deleted_shared_item_authorization(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
-        self.__addUsers(alice, sandy)
+        self.addUsers(alice, sandy)
 
-        self.__addItems(
+        self.addItems(
             Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901),
             Item('item2', 'sandy', 'example data 2', False, 12345678902, 12345678901),
         )
 
-        self.__addItemAuthorizations(
+        self.addItemAuthorizations(
             ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901),
             ItemAuthorization('itemAuthorization2', 'sandy', 'item2', 'example item key 2', False, False, 12345678902, 12345678901),
             ItemAuthorization('itemAuthorization3', 'alice', 'item2', 'example item key 2', False, True, 12345678902, 12345678901)
@@ -473,12 +499,12 @@ class UserTests(PassButlerTestCase):
     def test_get_user_item_authorizations(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
-        self.__addUsers(alice, sandy)
+        self.addUsers(alice, sandy)
 
         item1 = Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
         item2 = Item('item2', 'sandy', 'example data 2', False, 12345678902, 12345678901)
         item3 = Item('item3', 'sandy', 'example data 3', False, 12345678902, 12345678901)
-        self.__addItems(item1, item2, item3)
+        self.addItems(item1, item2, item3)
 
         ## Item authorization for "alice" for her item
         itemAuthorization1 = ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
@@ -492,7 +518,7 @@ class UserTests(PassButlerTestCase):
         ## Item authorization for "sandy" for her item
         itemAuthorization4 = ItemAuthorization('itemAuthorization4', 'sandy', 'item2', 'example item key 2', False, False, 12345678902, 12345678901)
 
-        self.__addItemAuthorizations(itemAuthorization1, itemAuthorization2, itemAuthorization3, itemAuthorization4)
+        self.addItemAuthorizations(itemAuthorization1, itemAuthorization2, itemAuthorization3, itemAuthorization4)
 
         response = self.client.get('/itemauthorizations', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 

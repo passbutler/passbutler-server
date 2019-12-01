@@ -323,11 +323,7 @@ def createApp(testConfig=None):
         app.logger.error('Unexpected exception occured: %s', (exception))
         return make_response(jsonify({'error': 'Server error'}), 500)
 
-    """
-    Get a new token is only possible with password based authentication to be sure
-    tokens can't refresh themselfs for unlimited time.
-
-    """
+    ## Get a new token is only possible with password based authentication to be sure tokens can't refresh themselfs for unlimited time!
     @app.route('/token', methods=['GET'])
     @passwordAuth.login_required
     def get_token():
