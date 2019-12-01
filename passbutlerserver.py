@@ -3,7 +3,8 @@
 from flask import Flask, request, jsonify, abort, make_response, g
 from flask_marshmallow import Marshmallow, Schema
 from flask_sqlalchemy import SQLAlchemy
-from marshmallow_sqlalchemy import ModelSchema
+from marshmallow import fields, pre_load
+from marshmallow_sqlalchemy import ModelSchema, ModelSchemaOpts
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 from werkzeug.security import check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer
@@ -11,6 +12,28 @@ import os
 
 db = SQLAlchemy()
 ma = Marshmallow()
+
+class RestrictedUpdateModelSchemaOpts(ModelSchemaOpts):
+    def __init__(self, meta, *args, **kwargs):
+        super(RestrictedUpdateModelSchemaOpts, self).__init__(meta, *args, **kwargs)
+        self.mutable_fields = getattr(meta, 'mutable_fields', set())
+
+class RestrictedUpdateModelSchema(ModelSchema):
+    OPTIONS_CLASS = RestrictedUpdateModelSchemaOpts
+
+    @pre_load
+    def check_update_fields(self, data):
+        immutableFields = set(self.fields) - set(self.opts.mutable_fields)
+
+        return {
+            key: value for key, value in data.items()
+            if key not in immutableFields
+        }
+
+"""
+Models and schemas
+
+"""
 
 class Item(db.Model):
 
@@ -46,15 +69,20 @@ class DefaultItemSchema(ModelSchema):
     class Meta:
         model = Item
 
-        ## Also include foreign keys in JSON
+        ## Also include foreign keys for this schema
         include_fk = True
 
+        ## Do not connect schema to SQLAlchemy database session to avoid models are implicitly changed when loading data
         transient = True
 
-class UpdateItemSchema(ModelSchema):
+class UpdateItemSchema(RestrictedUpdateModelSchema):
     class Meta:
         model = Item
-        fields = ('data', 'deleted', 'modified')
+
+        ## Only the following fields are allowed to update for this schema
+        mutable_fields = ('data', 'deleted', 'modified')
+
+        ## Do not connect schema to SQLAlchemy database session to avoid models are implicitly changed when loading data
         transient = True
 
 class ItemAuthorization(db.Model):
@@ -97,15 +125,23 @@ class DefaultItemAuthorizationSchema(ModelSchema):
     class Meta:
         model = ItemAuthorization
 
-        ## Also include foreign keys in JSON
+        ## Also include foreign keys for this schema
         include_fk = True
 
+        ## Do not connect schema to SQLAlchemy database session to avoid models are implicitly changed when loading data
         transient = True
 
-class UpdateItemAuthorizationSchema(ModelSchema):
+class UpdateItemAuthorizationSchema(RestrictedUpdateModelSchema):
     class Meta:
         model = ItemAuthorization
-        fields = ('readOnly', 'deleted', 'modified')
+
+        ## Also include foreign keys for this schema
+        include_fk = True
+
+        ## Only the following fields are allowed to update for this schema
+        mutable_fields = ('readOnly', 'deleted', 'modified')
+
+        ## Do not connect schema to SQLAlchemy database session to avoid models are implicitly changed when loading data
         transient = True
 
 class User(db.Model):
@@ -161,26 +197,31 @@ class User(db.Model):
 
 class PublicUserSchema(Schema):
     class Meta:
+        ## Only the following fields are allowed to see for this schema
         fields = ('username', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
 
 class DefaultUserSchema(ModelSchema):
     class Meta:
         model = User
 
-        ## Do not include items in the JSON
+        ## Exclude the following fields for this schema
         exclude = ('items', 'itemAuthorizations')
 
+        ## Do not connect schema to SQLAlchemy database session to avoid models are implicitly changed when loading data
         transient = True
 
-class UpdateUserSchema(ModelSchema):
+class UpdateUserSchema(RestrictedUpdateModelSchema):
     class Meta:
         model = User
+        mutable_fields = ('masterPasswordAuthenticationHash', 'masterEncryptionKey', 'settings', 'modified')
 
-        ## Only the following fields are allowed to update
-        fields = ('masterPasswordAuthenticationHash', 'masterEncryptionKey', 'settings', 'modified')
-
-        ## Do not implicitly connect schema to SQLAlchemy database session
+        ## Do not connect schema to SQLAlchemy database session to avoid models are implicitly changed when loading data
         transient = True
+
+"""
+App implementation and routes
+
+"""
 
 def createApp(testConfig=None):
     app = Flask(__name__)
