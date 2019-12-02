@@ -131,19 +131,6 @@ class DefaultItemAuthorizationSchema(ModelSchema):
         ## Do not connect schema to SQLAlchemy database session to avoid models are implicitly changed when loading data
         transient = True
 
-class UpdateItemAuthorizationSchema(RestrictedUpdateModelSchema):
-    class Meta:
-        model = ItemAuthorization
-
-        ## Also include foreign keys for this schema
-        include_fk = True
-
-        ## Only the following fields are allowed to update for this schema
-        mutable_fields = ('readOnly', 'deleted', 'modified')
-
-        ## Do not connect schema to SQLAlchemy database session to avoid models are implicitly changed when loading data
-        transient = True
-
 class User(db.Model):
 
     __tablename__ = 'users'
@@ -379,6 +366,60 @@ def createApp(testConfig=None):
         allUserItemAuthorization = ItemAuthorization.query.filter_by(userId=user.username).all()
         result = DefaultItemAuthorizationSchema(many=True).dump(allUserItemAuthorization)
         return jsonify(result.data)
+
+    @app.route('/itemauthorizations', methods=['PUT'])
+    @webTokenAuth.login_required
+    def set_user_item_authorizations():
+        user = g.authenticatedUser
+
+        ## Do not set database session and instance yet to avoid implicit model modification
+        itemAuthorizationsSchema = DefaultItemAuthorizationSchema(many=True)
+        itemAuthorizationsSchemaResult = itemAuthorizationsSchema.load(request.json, session=None, instance=None, partial=True)
+
+        if len(itemAuthorizationsSchemaResult.errors) > 0:
+            app.logger.warning('Model validation failed with errors: {0}'.format(itemAuthorizationsSchemaResult.errors))
+            abort(400)
+
+        for itemAuthorization in itemAuthorizationsSchemaResult.data:
+            itemAuthorizationUser = User.query.get(itemAuthorization.userId)
+
+            ## Be sure, the foreign key user exists
+            if (itemAuthorizationUser is None):
+                app.logger.warning('The user "{0}" of item authorization "{1}" does not exists!'.format(itemAuthorizationUser, itemAuthorization))
+                abort(404)
+
+            itemAuthorizationItem = Item.query.get(itemAuthorization.itemId)
+
+            ## Be sure, the foreign key item exists
+            if (itemAuthorizationItem is None):
+                app.logger.warning('The item "{0}" of item authorization "{1}" does not exists!'.format(itemAuthorizationItem, itemAuthorization))
+                abort(404)
+
+            ## Only the owner of the corresponding item is able to create/update item
+            if (itemAuthorizationItem.userId != user.username):
+                app.logger.warning('The item "{0}" of item authorization "{1}" is not owned by requested user "{2}"!'.format(itemAuthorizationItem, itemAuthorization, user))
+                abort(403)
+
+            existingItemAuthorization = ItemAuthorization.query.get(itemAuthorization.id)
+
+            if (existingItemAuthorization is None):
+                ## If the item authorization is not existing, we need to check if any is already existing for user+item combination to avoid multiple item authorization for the same user and item
+                if (ItemAuthorization.query.filter_by(userId=user.username, itemId=itemAuthorization.itemId).count() > 0):
+                    app.logger.warning('The item authorization "{0}" already exists for item "{1}" and requested user "{2}"!'.format(itemAuthorization, itemAuthorization, user))
+                    abort(400)
+
+                ## TODO: More sanity checks?
+                db.session.add(itemAuthorization)
+
+            else:
+                ## Only update the listed fields
+                existingItemAuthorization.readOnly = itemAuthorization.readOnly
+                existingItemAuthorization.deleted = itemAuthorization.deleted
+                existingItemAuthorization.modified = itemAuthorization.modified 
+
+        db.session.commit()
+
+        return ('', 204)
 
     return app
 

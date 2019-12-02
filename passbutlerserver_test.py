@@ -518,5 +518,53 @@ class UserTests(PassButlerTestCase):
             {'id': 'itemAuthorization3', 'userId': 'alice', 'itemId': 'item3', 'itemKey': 'example item key 3', 'readOnly': True, 'deleted': True, 'modified': 12345678902,'created': 12345678901},
         ]
 
+    """
+    Tests for PUT /itemauthorizations
+
+    TODO:
+    - not allowed fields (immutable)
+    - missing mandatory fields
+    - wrong types
+    - create/update item authorizations of other user
+
+    """
+
+    def test_set_user_item_authorizations(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        item1 = Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
+        item2 = Item('item2', 'alice', 'example data 2', False, 12345678902, 12345678901)
+        self.addItems(item1, item2)
+
+        itemAuthorization1 = ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
+        itemAuthorization2 = ItemAuthorization('itemAuthorization2', 'alice', 'item2', 'example item key 2', False, False, 12345678902, 12345678901)
+        self.addItemAuthorizations(itemAuthorization1, itemAuthorization2)
+
+        itemAuthorization1Original = createItemAuthorizationJson(itemAuthorization1)
+
+        itemAuthorization1Modified = itemAuthorization1Original.copy()
+        itemAuthorization1Modified['readOnly'] = True
+        itemAuthorization1Modified['modified'] = 12345678903
+        #itemAuthorization1Modified['created'] = 0
+
+        itemAuthorization2Original = createItemAuthorizationJson(itemAuthorization2)
+
+        ## Change nothing, but send nevertheless
+        itemAuthorization2Modified = itemAuthorization2Original.copy()
+
+        requestData = [itemAuthorization1Modified, itemAuthorization2Modified]
+        response = self.client.put('/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 204
+
+        itemAuthorization1After = createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1'))
+        assert itemAuthorization1After == itemAuthorization1Modified
+
+        itemAuthorization2After = createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization2'))
+        assert itemAuthorization2After == itemAuthorization2Modified
+
 if __name__ == '__main__':
     unittest.main()
