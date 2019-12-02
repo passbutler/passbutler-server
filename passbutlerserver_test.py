@@ -501,28 +501,17 @@ class UserTests(PassButlerTestCase):
         sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
         self.addUsers(alice, sandy)
 
-        item1 = Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
-        item2 = Item('item2', 'sandy', 'example data 2', False, 12345678902, 12345678901)
-        item3 = Item('item3', 'sandy', 'example data 3', False, 12345678902, 12345678901)
-        self.addItems(item1, item2, item3)
-
-        ## Item authorization for "alice" for her item
         itemAuthorization1 = ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
-
-        ## Item authorization (readonly) for "alice" for item of "sandy"
         itemAuthorization2 = ItemAuthorization('itemAuthorization2', 'alice', 'item2', 'example item key 2', True, False, 12345678902, 12345678901)
-
-        ## Item authorization (readonly and deleted) for "alice" for item of "sandy"
         itemAuthorization3 = ItemAuthorization('itemAuthorization3', 'alice', 'item3', 'example item key 3', True, True, 12345678902, 12345678901)
-
-        ## Item authorization for "sandy" for her item
         itemAuthorization4 = ItemAuthorization('itemAuthorization4', 'sandy', 'item2', 'example item key 2', False, False, 12345678902, 12345678901)
-
         self.addItemAuthorizations(itemAuthorization1, itemAuthorization2, itemAuthorization3, itemAuthorization4)
 
         response = self.client.get('/itemauthorizations', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         assert response.status_code == 200
+
+        ## Alice see only her own item authorizations (also the deleted ones)
         assert response.get_json() == [
             {'id': 'itemAuthorization1', 'userId': 'alice', 'itemId': 'item1', 'itemKey': 'example item key 1', 'readOnly': False, 'deleted': False, 'modified': 12345678902,'created': 12345678901},
             {'id': 'itemAuthorization2', 'userId': 'alice', 'itemId': 'item2', 'itemKey': 'example item key 2', 'readOnly': True, 'deleted': False, 'modified': 12345678902,'created': 12345678901},
