@@ -365,10 +365,11 @@ def createApp(testConfig=None):
         user = g.authenticatedUser
 
         ## Returns items where the user has a non-deleted item authorization
-        nonDeletedUserItemAuthorizations = ItemAuthorization.query.filter_by(userId=user.username, deleted=False).all()
-        allAuthorizedUserItems = map(lambda itemAuthorization: Item.query.get(itemAuthorization.itemId), nonDeletedUserItemAuthorizations)
+        itemAuthorizations = ItemAuthorization.query.filter_by(userId=user.username, deleted=False).all()
+        itemAuthorizationItemIds = map(lambda itemAuthorization: itemAuthorization.itemId, itemAuthorizations)
+        userItems = Item.query.filter(Item.id.in_(itemAuthorizationItemIds))
 
-        result = DefaultItemSchema(many=True).dump(allAuthorizedUserItems)
+        result = DefaultItemSchema(many=True).dump(userItems)
         return jsonify(result.data)
 
     @app.route('/itemauthorizations', methods=['GET'])
