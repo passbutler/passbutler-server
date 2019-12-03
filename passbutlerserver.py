@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
 from flask import Flask, request, jsonify, abort, make_response, g
-from flask_marshmallow import Marshmallow, Schema
-from flask_sqlalchemy import SQLAlchemy
-from marshmallow import fields, pre_load
-from marshmallow_sqlalchemy import ModelSchema, ModelSchemaOpts
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
-from werkzeug.security import check_password_hash
+from flask_marshmallow import Marshmallow
+from flask_sqlalchemy import SQLAlchemy
 from itsdangerous import TimedJSONWebSignatureSerializer
+from marshmallow import Schema, fields, pre_load
+from marshmallow_sqlalchemy import ModelSchema, ModelSchemaOpts
+from werkzeug.security import check_password_hash
 import os
 
 db = SQLAlchemy()
