@@ -374,7 +374,7 @@ def createApp(testConfig=None):
 
         ## Do not set database session and instance yet to avoid implicit model modification
         itemAuthorizationsSchema = DefaultItemAuthorizationSchema(many=True)
-        itemAuthorizationsSchemaResult = itemAuthorizationsSchema.load(request.json, session=None, instance=None, partial=True)
+        itemAuthorizationsSchemaResult = itemAuthorizationsSchema.load(request.json, session=None, instance=None)
 
         if len(itemAuthorizationsSchemaResult.errors) > 0:
             app.logger.warning('Model validation failed with errors: {0}'.format(itemAuthorizationsSchemaResult.errors))
