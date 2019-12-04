@@ -531,43 +531,6 @@ class UserTests(PassButlerTestCase):
 
     """
 
-    # def test_set_user_item_authorizations(self):
-    #     alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-    #     self.addUsers(alice)
-
-    #     item1 = Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
-    #     item2 = Item('item2', 'alice', 'example data 2', False, 12345678902, 12345678901)
-    #     self.addItems(item1, item2)
-
-    #     itemAuthorization1 = ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
-    #     itemAuthorization2 = ItemAuthorization('itemAuthorization2', 'alice', 'item2', 'example item key 2', False, False, 12345678902, 12345678901)
-    #     self.addItemAuthorizations(itemAuthorization1, itemAuthorization2)
-
-    #     itemAuthorization1Original = createItemAuthorizationJson(itemAuthorization1)
-
-    #     itemAuthorization1Modified = itemAuthorization1Original.copy()
-    #     itemAuthorization1Modified['readOnly'] = True
-    #     itemAuthorization1Modified['modified'] = 12345678903
-    #     #itemAuthorization1Modified['created'] = 0
-
-    #     itemAuthorization2Original = createItemAuthorizationJson(itemAuthorization2)
-
-    #     ## Change nothing, but send nevertheless
-    #     itemAuthorization2Modified = itemAuthorization2Original.copy()
-
-    #     requestData = [itemAuthorization1Modified, itemAuthorization2Modified]
-    #     response = self.client.put('/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
-
-    #     db.session.rollback()
-
-    #     assert response.status_code == 204
-
-    #     itemAuthorization1After = createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1'))
-    #     assert itemAuthorization1After == itemAuthorization1Modified
-
-    #     itemAuthorization2After = createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization2'))
-    #     assert itemAuthorization2After == itemAuthorization2Modified
-
     def test_set_user_item_authorizations_one_item(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
@@ -657,47 +620,119 @@ class UserTests(PassButlerTestCase):
         ## Be sure, nothing was changed
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == createItemAuthorizationJson(itemAuthorization1)
 
-    def test_set_user_item_authorizations_wrong_field_type(self):
-        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.addUsers(alice)
+    def test_set_user_item_authorizations_wrong_field_type_id(self):
+        requestData = [{
+            'id': 1234,
+            'userId': 'alice',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        self.__test_set_user_item_authorizations_wrong_field_type(requestData)
 
-        self.addItems(Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901))
+    def test_set_user_item_authorizations_wrong_field_type_userId(self):
+        requestData = [{
+            'id': 'itemAuthorization1',
+            'userId': 1234,
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        self.__test_set_user_item_authorizations_wrong_field_type(requestData)
 
-        itemAuthorization1 = ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
-        self.addItemAuthorizations(itemAuthorization1)
+    def test_set_user_item_authorizations_wrong_field_type_itemId(self):
+        requestData = [{
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 1234,
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        self.__test_set_user_item_authorizations_wrong_field_type(requestData)
 
-        itemAuthorization1Json = createItemAuthorizationJson(itemAuthorization1)
-        itemAuthorization1Json['readOnly'] = 'this is not a boolean'
-        requestData = [itemAuthorization1Json]
-        response = self.client.put('/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
-
-        db.session.rollback()
-
-        assert response.status_code == 400
-        assert response.get_json() == {'error': 'Invalid request'}
-
-        ## Be sure, nothing was changed
-        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == createItemAuthorizationJson(itemAuthorization1)
-
-    def test_set_user_item_authorizations_missing_fields(self):
-        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.addUsers(alice)
-
-        self.addItems(Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901))
-
-        itemAuthorization1 = ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
-        self.addItemAuthorizations(itemAuthorization1)
-
-        ## The field `itemKey` is missing
+    def test_set_user_item_authorizations_wrong_field_type_itemKey(self):
         requestData = [{
             'id': 'itemAuthorization1',
             'userId': 'alice',
             'itemId': 'item1',
-            'readOnly': True,
-            'deleted': True,
-            'modified': 12345678904,
-            'created': 12345678903
+            'itemKey': None,
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
         }]
+        self.__test_set_user_item_authorizations_wrong_field_type(requestData)
+
+    def test_set_user_item_authorizations_wrong_field_type_readOnly(self):
+        requestData = [{
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': 'this is not a boolean',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        self.__test_set_user_item_authorizations_wrong_field_type(requestData)
+
+    def test_set_user_item_authorizations_wrong_field_type_deleted(self):
+        requestData = [{
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': 'this is not a boolean',
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        self.__test_set_user_item_authorizations_wrong_field_type(requestData)
+    
+    def test_set_user_item_authorizations_wrong_field_type_modified(self):
+        requestData = [{
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 'this is not an integer',
+            'created': 12345678901
+        }]
+        self.__test_set_user_item_authorizations_wrong_field_type(requestData)
+
+    def test_set_user_item_authorizations_wrong_field_type_created(self):
+        requestData = [{
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 'this is not an integer'
+        }]
+        self.__test_set_user_item_authorizations_wrong_field_type(requestData)
+
+    def __test_set_user_item_authorizations_wrong_field_type(self, requestData):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        self.addItems(Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901))
+
+        itemAuthorization1 = ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
+        self.addItemAuthorizations(itemAuthorization1)
+
         response = self.client.put('/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
