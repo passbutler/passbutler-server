@@ -660,7 +660,7 @@ class UserTests(PassButlerTestCase):
         requestData = [{
             'id': 'itemAuthorization1',
             'userId': 'alice',
-            'itemId': 'item3',
+            'itemId': 'notExistingItem',
             'itemKey': 'example item key 1',
             'readOnly': False,
             'deleted': False,
