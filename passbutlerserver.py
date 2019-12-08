@@ -385,14 +385,14 @@ def createApp(testConfig=None):
 
             ## Be sure, the foreign key user exists
             if (itemAuthorizationUser is None):
-                app.logger.warning('The user "{0}" of item authorization "{1}" does not exists!'.format(itemAuthorizationUser, itemAuthorization))
+                app.logger.warning('The user (id="{0}") of item authorization (id="{1}") does not exist!'.format(itemAuthorization.userId, itemAuthorization.id))
                 abort(404)
 
             itemAuthorizationItem = Item.query.get(itemAuthorization.itemId)
 
             ## Be sure, the foreign key item exists
             if (itemAuthorizationItem is None):
-                app.logger.warning('The item (id="{0}") of item authorization (id="{1}") does not exists!'.format(itemAuthorization.itemId, itemAuthorization.id))
+                app.logger.warning('The item (id="{0}") of item authorization (id="{1}") does not exist!'.format(itemAuthorization.itemId, itemAuthorization.id))
                 abort(404)
 
             ## Only the owner of the corresponding item is able to create/update item
