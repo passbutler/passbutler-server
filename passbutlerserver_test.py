@@ -547,7 +547,7 @@ class UserTests(PassButlerTestCase):
             'itemKey': 'example item key 1',
             'readOnly': False,
             'deleted': False,
-            'modified': 12345678903,
+            'modified': 12345678902,
             'created': 12345678901
         }
 
@@ -558,7 +558,7 @@ class UserTests(PassButlerTestCase):
             'itemKey': 'example item key 2',
             'readOnly': False,
             'deleted': False,
-            'modified': 12345678903,
+            'modified': 12345678902,
             'created': 12345678901
         }
 
@@ -789,7 +789,7 @@ class UserTests(PassButlerTestCase):
         expectedResponseJson = None
     ):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678904, 12345678903)
+        sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
         self.addUsers(alice, sandy)
 
         self.addItems(
@@ -945,8 +945,8 @@ class UserTests(PassButlerTestCase):
             'itemKey': 'example item key 1',
             'readOnly': True,
             'deleted': True,
-            'modified': 12345678904,
-            'created': 12345678903
+            'modified': 12345678902,
+            'created': 12345678901
         }]
         self.__test_set_user_item_authorizations_missing_field(requestData)
 
@@ -957,8 +957,8 @@ class UserTests(PassButlerTestCase):
             'itemKey': 'example item key 1',
             'readOnly': True,
             'deleted': True,
-            'modified': 12345678904,
-            'created': 12345678903
+            'modified': 12345678902,
+            'created': 12345678901
         }]
         self.__test_set_user_item_authorizations_missing_field(requestData)
 
@@ -969,8 +969,8 @@ class UserTests(PassButlerTestCase):
             'itemKey': 'example item key 1',
             'readOnly': True,
             'deleted': True,
-            'modified': 12345678904,
-            'created': 12345678903
+            'modified': 12345678902,
+            'created': 12345678901
         }]
         self.__test_set_user_item_authorizations_missing_field(requestData)
 
@@ -981,8 +981,8 @@ class UserTests(PassButlerTestCase):
             'itemId': 'item1',
             'readOnly': True,
             'deleted': True,
-            'modified': 12345678904,
-            'created': 12345678903
+            'modified': 12345678902,
+            'created': 12345678901
         }]
         self.__test_set_user_item_authorizations_missing_field(requestData)
 
@@ -993,8 +993,8 @@ class UserTests(PassButlerTestCase):
             'itemId': 'item1',
             'itemKey': 'example item key 1',
             'deleted': True,
-            'modified': 12345678904,
-            'created': 12345678903
+            'modified': 12345678902,
+            'created': 12345678901
         }]
         self.__test_set_user_item_authorizations_missing_field(requestData)
 
@@ -1005,8 +1005,8 @@ class UserTests(PassButlerTestCase):
             'itemId': 'item1',
             'itemKey': 'example item key 1',
             'readOnly': True,
-            'modified': 12345678904,
-            'created': 12345678903
+            'modified': 12345678902,
+            'created': 12345678901
         }]
         self.__test_set_user_item_authorizations_missing_field(requestData)
 
@@ -1018,7 +1018,7 @@ class UserTests(PassButlerTestCase):
             'itemKey': 'example item key 1',
             'readOnly': True,
             'deleted': True,
-            'created': 12345678903
+            'created': 12345678901
         }]
         self.__test_set_user_item_authorizations_missing_field(requestData)
 
@@ -1030,7 +1030,7 @@ class UserTests(PassButlerTestCase):
             'itemKey': 'example item key 1',
             'readOnly': True,
             'deleted': True,
-            'modified': 12345678904
+            'modified': 12345678902
         }]
         self.__test_set_user_item_authorizations_missing_field(requestData)
 
