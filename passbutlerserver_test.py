@@ -565,6 +565,143 @@ class UserTests(PassButlerTestCase):
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == itemAuthorization1Json
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization2')) == itemAuthorization2Json
 
+    def test_set_user_item_authorizations_create_authorization_with_not_existing_user(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        self.addItems(Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901))
+
+        requestData = [{
+            'id': 'itemAuthorization1',
+            'userId': 'notExistingUser',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        response = self.client.put('/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 404
+        assert response.get_json() == {'error': 'Not found'}
+        assert ItemAuthorization.query.get('itemAuthorization1') == None
+
+    def test_set_user_item_authorizations_create_authorization_with_not_existing_item(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        self.addItems(Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901))
+
+        requestData = [{
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'notExistingItem',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        response = self.client.put('/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 404
+        assert response.get_json() == {'error': 'Not found'}
+        assert ItemAuthorization.query.get('itemAuthorization1') == None
+
+    def test_set_user_item_authorizations_create_authorization_for_item_with_already_existing_item_authorization(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        self.addItems(Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901))
+        self.addItemAuthorizations(ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901))
+
+        requestData = [{
+            'id': 'itemAuthorization1a',
+            'userId': 'alice',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        response = self.client.put('/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 400
+        assert response.get_json() == {'error': 'Invalid request'}
+        assert ItemAuthorization.query.get('itemAuthorization1a') == None
+
+    ## Permission tests
+
+    def test_set_user_item_authorizations_create_authorization_for_item_is_owned_by_other_user(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        self.addUsers(alice, sandy)
+
+        self.addItems(Item('item1', 'sandy', 'example data 1', False, 12345678902, 12345678901))
+
+        requestData = [{
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        response = self.client.put('/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        ## Alice is not allowed to create a item authorization for an item that is not owned by her
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Forbidden'}
+        assert ItemAuthorization.query.get('itemAuthorization1') == None
+
+    def test_set_user_item_authorizations_update_authorization_for_item_is_owned_by_other_user(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        self.addUsers(alice, sandy)
+
+        self.addItems(Item('item1', 'sandy', 'example data 1', False, 12345678902, 12345678901))
+        self.addItemAuthorizations(ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', True, False, 12345678902, 12345678901))
+
+        requestData = [{
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        response = self.client.put('/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        ## Alice is not allowed to change item authorization for her for an item that is not owned by her
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Forbidden'}
+        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == {
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': True,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
     ## General modify field tests
 
     def test_set_user_item_authorizations_change_field_userId_existing(self):
