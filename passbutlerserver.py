@@ -392,12 +392,12 @@ def createApp(testConfig=None):
 
             ## Be sure, the foreign key item exists
             if (itemAuthorizationItem is None):
-                app.logger.warning('The item "{0}" of item authorization "{1}" does not exists!'.format(itemAuthorizationItem, itemAuthorization))
+                app.logger.warning('The item (id="{0}") of item authorization (id="{1}") does not exists!'.format(itemAuthorization.itemId, itemAuthorization.id))
                 abort(404)
 
             ## Only the owner of the corresponding item is able to create/update item
             if (itemAuthorizationItem.userId != user.username):
-                app.logger.warning('The item "{0}" of item authorization "{1}" is not owned by requested user "{2}"!'.format(itemAuthorizationItem, itemAuthorization, user))
+                app.logger.warning('The item (id="{0}") of item authorization (id="{1}") is not owned by requested user "{2}"!'.format(itemAuthorization.itemId, itemAuthorization.id, user))
                 abort(403)
 
             existingItemAuthorization = ItemAuthorization.query.get(itemAuthorization.id)
@@ -405,7 +405,7 @@ def createApp(testConfig=None):
             if (existingItemAuthorization is None):
                 ## If the item authorization is not existing, we need to check if any is already existing for user+item combination to avoid multiple item authorization for the same user and item
                 if (ItemAuthorization.query.filter_by(userId=user.username, itemId=itemAuthorization.itemId).count() > 0):
-                    app.logger.warning('The item authorization "{0}" already exists for item "{1}" and requested user "{2}"!'.format(itemAuthorization, itemAuthorization, user))
+                    app.logger.warning('An item authorization already exists for the item (id="{0}") and requested user (id="{1}") - do not created another one!'.format(itemAuthorization.itemId, user.username))
                     abort(400)
 
                 ## TODO: More sanity checks?
