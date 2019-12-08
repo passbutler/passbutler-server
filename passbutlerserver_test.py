@@ -531,6 +531,8 @@ class UserTests(PassButlerTestCase):
 
     """
 
+    ## Create new item authorization tests
+
     def test_set_user_item_authorizations_create_authorizations(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
@@ -571,7 +573,7 @@ class UserTests(PassButlerTestCase):
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == itemAuthorization1Json
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization2')) == itemAuthorization2Json
 
-    ## Modify field tests
+    ## General modify field tests
 
     def test_set_user_item_authorizations_change_field_userId_existing(self):
         requestData = [{
@@ -807,7 +809,7 @@ class UserTests(PassButlerTestCase):
         assert response.get_json() == expectedResponseJson
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == expected
 
-    ## Wrong field type tests
+    ## General wrong field type tests
 
     def test_set_user_item_authorizations_wrong_field_type_id(self):
         requestData = [{
@@ -932,7 +934,7 @@ class UserTests(PassButlerTestCase):
         ## Be sure, nothing was changed
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == createItemAuthorizationJson(itemAuthorization1)
 
-    ## Missing field tests
+    ## General missing field tests
 
     def test_set_user_item_authorizations_missing_field_all(self):
         requestData = [{}]
