@@ -797,9 +797,7 @@ class UserTests(PassButlerTestCase):
             Item('item2', 'alice', 'example data 2', False, 12345678902, 12345678901)
         )
 
-        self.addItemAuthorizations(
-            ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
-        )
+        self.addItemAuthorizations(ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901))
 
         response = self.client.put('/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
