@@ -531,38 +531,45 @@ class UserTests(PassButlerTestCase):
 
     """
 
-    def test_set_user_item_authorizations_one_item(self):
+    def test_set_user_item_authorizations_create_authorizations(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
-        self.addItems(Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901))
-        self.addItemAuthorizations(ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901))
+        self.addItems(
+            Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901),
+            Item('item2', 'alice', 'example data 2', False, 12345678902, 12345678901)
+        )
 
-        requestData = [{
+        itemAuthorization1Json = {
             'id': 'itemAuthorization1',
             'userId': 'alice',
             'itemId': 'item1',
             'itemKey': 'example item key 1',
             'readOnly': False,
-            'deleted': True,
+            'deleted': False,
             'modified': 12345678903,
             'created': 12345678901
-        }]
+        }
+
+        itemAuthorization2Json = {
+            'id': 'itemAuthorization2',
+            'userId': 'alice',
+            'itemId': 'item2',
+            'itemKey': 'example item key 2',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678903,
+            'created': 12345678901
+        }
+
+        requestData = [itemAuthorization1Json, itemAuthorization2Json]
         response = self.client.put('/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
         assert response.status_code == 204
-        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == {
-            'id': 'itemAuthorization1',
-            'userId': 'alice',
-            'itemId': 'item1',
-            'itemKey': 'example item key 1',
-            'readOnly': False,
-            'deleted': True,
-            'modified': 12345678903,
-            'created': 12345678901
-        }
+        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == itemAuthorization1Json
+        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization2')) == itemAuthorization2Json
 
     ## Modify field tests
 
