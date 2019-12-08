@@ -862,5 +862,25 @@ class UserTests(PassButlerTestCase):
         ## Be sure, nothing was changed
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == createItemAuthorizationJson(itemAuthorization1)
 
+    def test_set_user_item_authorizations_invalid_json(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        self.addItems(Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901))
+
+        itemAuthorization1 = ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
+        self.addItemAuthorizations(itemAuthorization1)
+
+        requestData = '[{this is not valid JSON]'
+        response = self.client.put('/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 400
+        assert response.get_json() == {'error': 'Invalid request'}
+
+        ## Be sure, nothing was changed
+        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == createItemAuthorizationJson(itemAuthorization1)
+
 if __name__ == '__main__':
     unittest.main()
