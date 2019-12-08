@@ -1060,6 +1060,8 @@ class UserTests(PassButlerTestCase):
         itemAuthorization1 = ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
         self.addItemAuthorizations(itemAuthorization1)
 
+        initialItemAuthorization1Json = createItemAuthorizationJson(itemAuthorization1)
+
         response = self.client.put('/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
@@ -1068,7 +1070,7 @@ class UserTests(PassButlerTestCase):
         assert response.get_json() == {'error': 'Invalid request'}
 
         ## Be sure, nothing was changed
-        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == createItemAuthorizationJson(itemAuthorization1)
+        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == initialItemAuthorization1Json
 
     ## General missing field tests
 
@@ -1181,6 +1183,8 @@ class UserTests(PassButlerTestCase):
         itemAuthorization1 = ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
         self.addItemAuthorizations(itemAuthorization1)
 
+        initialItemAuthorization1Json = createItemAuthorizationJson(itemAuthorization1)
+
         response = self.client.put('/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
@@ -1189,7 +1193,7 @@ class UserTests(PassButlerTestCase):
         assert response.get_json() == {'error': 'Invalid request'}
 
         ## Be sure, nothing was changed
-        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == createItemAuthorizationJson(itemAuthorization1)
+        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == initialItemAuthorization1Json
 
     ## Unknown field test
 
@@ -1202,6 +1206,8 @@ class UserTests(PassButlerTestCase):
         itemAuthorization1 = ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
         self.addItemAuthorizations(itemAuthorization1)
 
+        initialItemAuthorization1Json = createItemAuthorizationJson(itemAuthorization1)
+
         itemAuthorization1Json = createItemAuthorizationJson(itemAuthorization1)
         itemAuthorization1Json['foo'] = 'bar'
         requestData = [itemAuthorization1Json]
@@ -1212,7 +1218,7 @@ class UserTests(PassButlerTestCase):
         assert response.status_code == 204
 
         ## Be sure, nothing was changed
-        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == createItemAuthorizationJson(itemAuthorization1)
+        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == initialItemAuthorization1Json
 
     ## Invalid JSON test
 
@@ -1225,6 +1231,8 @@ class UserTests(PassButlerTestCase):
         itemAuthorization1 = ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
         self.addItemAuthorizations(itemAuthorization1)
 
+        initialItemAuthorization1Json = createItemAuthorizationJson(itemAuthorization1)
+
         requestData = '[{this is not valid JSON]'
         response = self.client.put('/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
@@ -1234,7 +1242,7 @@ class UserTests(PassButlerTestCase):
         assert response.get_json() == {'error': 'Invalid request'}
 
         ## Be sure, nothing was changed
-        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == createItemAuthorizationJson(itemAuthorization1)
+        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == initialItemAuthorization1Json
 
 if __name__ == '__main__':
     unittest.main()
