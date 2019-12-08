@@ -564,61 +564,245 @@ class UserTests(PassButlerTestCase):
             'created': 12345678901
         }
 
-    def test_set_user_item_authorizations_immutable_fields(self):
-        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.addUsers(alice)
+    ## Modify field tests
 
-        self.addItems(Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901))
-        self.addItemAuthorizations(ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901))
+    def test_set_user_item_authorizations_change_field_userId_existing(self):
+        requestData = [{
+            'id': 'itemAuthorization1',
+            'userId': 'sandy',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
 
+        ## The field `userId` is immutable
+        expected = {
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        self.__test_set_user_item_authorizations_change_field(requestData, expected)
+
+    def test_set_user_item_authorizations_change_field_userId_not_existing(self):
+        requestData = [{
+            'id': 'itemAuthorization1',
+            'userId': 'notExistingUser',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+
+        ## The field `userId` is immutable
+        expected = {
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        self.__test_set_user_item_authorizations_change_field(
+            requestData=requestData,
+            expected=expected,
+            expectedStatusCode = 404,
+            expectedResponseJson = {'error': 'Not found'}
+        )
+
+    def test_set_user_item_authorizations_change_field_itemId_existing(self):
+        requestData = [{
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'item2',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+
+        ## The field `itemId` is immutable
+        expected = {
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        self.__test_set_user_item_authorizations_change_field(requestData, expected)
+
+    def test_set_user_item_authorizations_change_field_itemId_not_existing(self):
+        requestData = [{
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'item3',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+
+        ## The field `itemId` is immutable
+        expected = {
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        self.__test_set_user_item_authorizations_change_field(
+            requestData=requestData,
+            expected=expected,
+            expectedStatusCode = 404,
+            expectedResponseJson = {'error': 'Not found'}
+        )
+
+    def test_set_user_item_authorizations_change_field_itemKey(self):
         requestData = [{
             'id': 'itemAuthorization1',
             'userId': 'alice',
             'itemId': 'item1',
-            'itemKey': 'changed example item key 1',
-            'readOnly': True,
-            'deleted': True,
-            'modified': 12345678904,
-            'created': 12345678903
+            'itemKey': 'example item key 1 changed',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
         }]
-        response = self.client.put('/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
-        db.session.rollback()
+        ## The field `itemKey` is immutable
+        expected = {
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
 
-        assert response.status_code == 204
+        self.__test_set_user_item_authorizations_change_field(requestData, expected)
 
-        ## Be sure, only the mutable fields are changed
-        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == {
+    def test_set_user_item_authorizations_change_field_readOnly(self):
+        requestData = [{
             'id': 'itemAuthorization1',
             'userId': 'alice',
             'itemId': 'item1',
             'itemKey': 'example item key 1',
             'readOnly': True,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        expected = requestData[0]
+        self.__test_set_user_item_authorizations_change_field(requestData, expected)
+
+    def test_set_user_item_authorizations_change_field_deleted(self):
+        requestData = [{
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
             'deleted': True,
-            'modified': 12345678904,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        expected = requestData[0]
+        self.__test_set_user_item_authorizations_change_field(requestData, expected)
+
+    def test_set_user_item_authorizations_change_field_modified(self):
+        requestData = [{
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678903,
+            'created': 12345678901
+        }]
+        expected = requestData[0]
+        self.__test_set_user_item_authorizations_change_field(requestData, expected)
+
+    def test_set_user_item_authorizations_change_field_created(self):
+        requestData = [{
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678902
+        }]
+
+        ## The field `created` is immutable
+        expected = {
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
             'created': 12345678901
         }
 
-    def test_set_user_item_authorizations_unknown_field(self):
+        self.__test_set_user_item_authorizations_change_field(requestData, expected)
+
+    def __test_set_user_item_authorizations_change_field(
+        self,
+        requestData,
+        expected,
+        expectedStatusCode = 204,
+        expectedResponseJson = None
+    ):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.addUsers(alice)
+        sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678904, 12345678903)
+        self.addUsers(alice, sandy)
 
-        self.addItems(Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901))
+        self.addItems(
+            Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901),
+            Item('item2', 'alice', 'example data 2', False, 12345678902, 12345678901)
+        )
 
-        itemAuthorization1 = ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
-        self.addItemAuthorizations(itemAuthorization1)
+        self.addItemAuthorizations(
+            ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
+        )
 
-        itemAuthorization1Json = createItemAuthorizationJson(itemAuthorization1)
-        itemAuthorization1Json['foo'] = 'bar'
-        requestData = [itemAuthorization1Json]
         response = self.client.put('/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
-        assert response.status_code == 204
+        assert response.status_code == expectedStatusCode
+        assert response.get_json() == expectedResponseJson
+        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == expected
 
-        ## Be sure, nothing was changed
-        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == createItemAuthorizationJson(itemAuthorization1)
+    ## Wrong field type tests
 
     def test_set_user_item_authorizations_wrong_field_type_id(self):
         requestData = [{
@@ -697,7 +881,7 @@ class UserTests(PassButlerTestCase):
             'created': 12345678901
         }]
         self.__test_set_user_item_authorizations_wrong_field_type(requestData)
-    
+
     def test_set_user_item_authorizations_wrong_field_type_modified(self):
         requestData = [{
             'id': 'itemAuthorization1',
@@ -742,6 +926,8 @@ class UserTests(PassButlerTestCase):
 
         ## Be sure, nothing was changed
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == createItemAuthorizationJson(itemAuthorization1)
+
+    ## Missing field tests
 
     def test_set_user_item_authorizations_missing_field_all(self):
         requestData = [{}]
@@ -861,6 +1047,31 @@ class UserTests(PassButlerTestCase):
 
         ## Be sure, nothing was changed
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == createItemAuthorizationJson(itemAuthorization1)
+
+    ## Unknown field test
+
+    def test_set_user_item_authorizations_unknown_field(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        self.addItems(Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901))
+
+        itemAuthorization1 = ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
+        self.addItemAuthorizations(itemAuthorization1)
+
+        itemAuthorization1Json = createItemAuthorizationJson(itemAuthorization1)
+        itemAuthorization1Json['foo'] = 'bar'
+        requestData = [itemAuthorization1Json]
+        response = self.client.put('/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 204
+
+        ## Be sure, nothing was changed
+        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == createItemAuthorizationJson(itemAuthorization1)
+
+    ## Invalid JSON test
 
     def test_set_user_item_authorizations_invalid_json(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
