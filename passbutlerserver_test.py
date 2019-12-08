@@ -492,6 +492,13 @@ class UserTests(PassButlerTestCase):
         ]
 
     """
+    Tests for PUT /items
+
+    """
+
+    ## TODO
+
+    """
     Tests for GET /itemauthorizations
 
     """
