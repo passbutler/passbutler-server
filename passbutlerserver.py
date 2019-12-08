@@ -2,33 +2,15 @@
 
 from flask import Flask, request, jsonify, abort, make_response, g
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
-from flask_marshmallow import Marshmallow
+from flask_marshmallow import Marshmallow, Schema
 from flask_sqlalchemy import SQLAlchemy
 from itsdangerous import TimedJSONWebSignatureSerializer
-from marshmallow import Schema, fields, pre_load
-from marshmallow_sqlalchemy import ModelSchema, ModelSchemaOpts
+from marshmallow_sqlalchemy import ModelSchema
 from werkzeug.security import check_password_hash
 import os
 
 db = SQLAlchemy()
 ma = Marshmallow()
-
-class RestrictedUpdateModelSchemaOpts(ModelSchemaOpts):
-    def __init__(self, meta, *args, **kwargs):
-        super(RestrictedUpdateModelSchemaOpts, self).__init__(meta, *args, **kwargs)
-        self.mutable_fields = getattr(meta, 'mutable_fields', set())
-
-class RestrictedUpdateModelSchema(ModelSchema):
-    OPTIONS_CLASS = RestrictedUpdateModelSchemaOpts
-
-    @pre_load
-    def check_update_fields(self, data):
-        immutableFields = set(self.fields) - set(self.opts.mutable_fields)
-
-        return {
-            key: value for key, value in data.items()
-            if key not in immutableFields
-        }
 
 """
 Models and schemas
@@ -71,16 +53,6 @@ class DefaultItemSchema(ModelSchema):
 
         ## Also include foreign keys for this schema
         include_fk = True
-
-        ## Do not connect schema to SQLAlchemy database session to avoid models are implicitly changed when loading data
-        transient = True
-
-class UpdateItemSchema(RestrictedUpdateModelSchema):
-    class Meta:
-        model = Item
-
-        ## Only the following fields are allowed to update for this schema
-        mutable_fields = ('data', 'deleted', 'modified')
 
         ## Do not connect schema to SQLAlchemy database session to avoid models are implicitly changed when loading data
         transient = True
@@ -187,16 +159,6 @@ class PublicUserSchema(Schema):
 class DefaultUserSchema(ModelSchema):
     class Meta:
         model = User
-
-        ## Do not connect schema to SQLAlchemy database session to avoid models are implicitly changed when loading data
-        transient = True
-
-class UpdateUserSchema(RestrictedUpdateModelSchema):
-    class Meta:
-        model = User
-
-        ## Only the following fields are allowed to update for this schema
-        mutable_fields = ('masterPasswordAuthenticationHash', 'masterEncryptionKey', 'settings', 'modified')
 
         ## Do not connect schema to SQLAlchemy database session to avoid models are implicitly changed when loading data
         transient = True
@@ -336,11 +298,20 @@ def createApp(testConfig=None):
     @webTokenAuth.login_required
     def set_user_details():
         user = g.authenticatedUser
-        updateUserSchema = UpdateUserSchema().load(request.json, session=db.session, instance=user, partial=True)
+
+        ## Do not set database session and instance yet to avoid implicit model modification
+        updateUserSchema = DefaultUserSchema().load(request.json, session=None, instance=None)
 
         if len(updateUserSchema.errors) > 0:
             app.logger.warning('Model validation failed with errors: {0}'.format(updateUserSchema.errors))
             abort(400)
+
+        updatedUser = updateUserSchema.data
+
+        user.masterPasswordAuthenticationHash = updatedUser.masterPasswordAuthenticationHash
+        user.masterEncryptionKey = updatedUser.masterEncryptionKey
+        user.settings = updatedUser.settings
+        user.modified = updatedUser.modified
 
         db.session.commit()
 

@@ -234,68 +234,240 @@ class UserTests(PassButlerTestCase):
         }
 
     """
-    Tests for PUT /user/username
+    Tests for PUT /userdetails
 
     """
 
-    def test_update_user_one_field(self):
+    def test_set_user_details_change_multiple_fields(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
-        requestData = {'settings': 'a5a'}
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x changed',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2 changed',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5 changed',
+            'deleted': False,
+            'modified': 12345678903,
+            'created': 12345678901
+        }
+
         response = self.client.put('/userdetails', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         ## Discard uncommited changes to check if the changes has been committed
         db.session.rollback()
 
         assert response.status_code == 204
-        assert createUserJson(User.query.get('alice')) == {
+        assert createUserJson(User.query.get('alice')) == requestData
+
+    ## General modify field tests
+
+    def test_set_user_details_change_field_masterPasswordAuthenticationHash(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x changed',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        expected = requestData
+
+        self.__test_set_user_details_change_field(requestData, expected)
+
+    def test_set_user_details_change_field_masterKeyDerivationInformation(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1 changed',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        expected = {
             'username': 'alice',
             'masterPasswordAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
             'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5a',
+            'settings': 'a5',
             'deleted': False,
             'modified': 12345678902,
             'created': 12345678901
         }
 
-    def test_update_user_multiple_fields(self):
-        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.addUsers(alice)
+        self.__test_set_user_details_change_field(requestData, expected)
 
-        requestData = {'masterPasswordAuthenticationHash': 'xa', 'masterEncryptionKey': 'a2a', 'settings': 'a5a', 'modified': 12345678903}
-        response = self.client.put('/userdetails', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
-
-        db.session.rollback()
-
-        assert response.status_code == 204
-        assert createUserJson(User.query.get('alice')) == {
+    def test_set_user_details_change_field_masterEncryptionKey(self):
+        requestData = {
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'xa',
+            'masterPasswordAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2a',
+            'masterEncryptionKey': 'a2 changed',
             'itemEncryptionPublicKey': 'a3',
             'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5a',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        expected = requestData
+
+        self.__test_set_user_details_change_field(requestData, expected)
+
+    def test_set_user_details_change_field_itemEncryptionPublicKey(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3 changed',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        expected = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        self.__test_set_user_details_change_field(requestData, expected)
+
+    def test_set_user_details_change_field_itemEncryptionSecretKey(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4 changed',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        expected = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        self.__test_set_user_details_change_field(requestData, expected)
+
+    def test_set_user_details_change_field_settings(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5 changed',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        expected = requestData
+
+        self.__test_set_user_details_change_field(requestData, expected)
+
+    def test_set_user_details_change_field_deleted(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': True,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        expected = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        self.__test_set_user_details_change_field(requestData, expected)
+
+    def test_set_user_details_change_field_modified(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
             'deleted': False,
             'modified': 12345678903,
             'created': 12345678901
         }
 
-    def test_update_user_unknown_field(self):
-        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.addUsers(alice)
+        expected = requestData
 
-        requestData = {'foo': 'bar'}
-        response = self.client.put('/userdetails', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        self.__test_set_user_details_change_field(requestData, expected)
 
-        db.session.rollback()
+    def test_set_user_details_change_field_created(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678902
+        }
 
-        assert response.status_code == 204
-        assert createUserJson(User.query.get('alice')) == {
+        expected = {
             'username': 'alice',
             'masterPasswordAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
@@ -308,18 +480,24 @@ class UserTests(PassButlerTestCase):
             'created': 12345678901
         }
 
-    def test_update_user_immutable_field(self):
+        self.__test_set_user_details_change_field(requestData, expected)
+
+    def __test_set_user_details_change_field(self, requestData, expected):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
-        requestData = {'created': 12345678902}
         response = self.client.put('/userdetails', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
         assert response.status_code == 204
-        assert createUserJson(User.query.get('alice')) == {
-            'username': 'alice',
+        assert createUserJson(User.query.get('alice')) == expected
+
+    ## General wrong field type tests
+
+    def test_set_user_details_wrong_field_type_username(self):
+        requestData = {
+            'username': 1234,
             'masterPasswordAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -330,20 +508,167 @@ class UserTests(PassButlerTestCase):
             'modified': 12345678902,
             'created': 12345678901
         }
+        self.__test_set_user_details_wrong_field_type(requestData)
 
-    def test_update_user_wrong_field_type(self):
+    def test_set_user_details_wrong_field_type_masterPasswordAuthenticationHash(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 1234,
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_set_user_details_wrong_field_type(requestData)
+
+    def test_set_user_details_wrong_field_type_masterKeyDerivationInformation(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': None,
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_set_user_details_wrong_field_type(requestData)
+
+    def test_set_user_details_wrong_field_type_masterEncryptionKey(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': None,
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_set_user_details_wrong_field_type(requestData)
+
+    def test_set_user_details_wrong_field_type_itemEncryptionPublicKey(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': None,
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_set_user_details_wrong_field_type(requestData)
+
+    def test_set_user_details_wrong_field_type_itemEncryptionSecretKey(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': None,
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_set_user_details_wrong_field_type(requestData)
+
+    def test_set_user_details_wrong_field_type_settings(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': None,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_set_user_details_wrong_field_type(requestData)
+
+    def test_set_user_details_wrong_field_type_deleted(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': 'this is not a boolean',
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_set_user_details_wrong_field_type(requestData)
+
+    def test_set_user_details_wrong_field_type_modified(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 'this is not an integer',
+            'created': 12345678901
+        }
+        self.__test_set_user_details_wrong_field_type(requestData)
+
+    def test_set_user_details_wrong_field_type_created(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 'this is not an integer'
+        }
+        self.__test_set_user_details_wrong_field_type(requestData)
+
+    def __test_set_user_details_wrong_field_type(self, requestData):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
-        requestData = {'modified': 'this is not an integer timestamp'}
+        initialUserJson = createUserJson(alice)
+
         response = self.client.put('/userdetails', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-        assert createUserJson(User.query.get('alice')) == {
-            'username': 'alice',
+
+        ## Be sure, nothing was changed
+        assert createUserJson(User.query.get('alice')) == initialUserJson
+
+    ## General missing field tests
+
+    def test_set_user_details_missing_field_all(self):
+        requestData = {}
+        self.__test_set_user_details_missing_field(requestData)
+
+    def test_set_user_details_missing_field_username(self):
+        requestData = {
             'masterPasswordAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -354,6 +679,188 @@ class UserTests(PassButlerTestCase):
             'modified': 12345678902,
             'created': 12345678901
         }
+        self.__test_set_user_details_missing_field(requestData)
+
+    def test_set_user_details_missing_field_masterPasswordAuthenticationHash(self):
+        requestData = {
+            'username': 'alice',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_set_user_details_missing_field(requestData)
+
+    def test_set_user_details_missing_field_masterKeyDerivationInformation(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_set_user_details_missing_field(requestData)
+
+    def test_set_user_details_missing_field_masterEncryptionKey(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_set_user_details_missing_field(requestData)
+
+    def test_set_user_details_missing_field_itemEncryptionPublicKey(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_set_user_details_missing_field(requestData)
+
+    def test_set_user_details_missing_field_itemEncryptionSecretKey(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_set_user_details_missing_field(requestData)
+
+    def test_set_user_details_missing_field_settings(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_set_user_details_missing_field(requestData)
+
+    def test_set_user_details_missing_field_deleted(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_set_user_details_missing_field(requestData)
+
+    def test_set_user_details_missing_field_modified(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'created': 12345678901
+        }
+        self.__test_set_user_details_missing_field(requestData)
+
+    def test_set_user_details_missing_field_created(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902
+        }
+        self.__test_set_user_details_missing_field(requestData)
+
+    def __test_set_user_details_missing_field(self, requestData):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        initialUserJson = createUserJson(alice)
+
+        response = self.client.put('/userdetails', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 400
+        assert response.get_json() == {'error': 'Invalid request'}
+
+        ## Be sure, nothing was changed
+        assert createUserJson(User.query.get('alice')) == initialUserJson
+
+    ## Unknown field test
+
+    def test_set_user_details_unknown_field(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        initialUserJson = createUserJson(alice)
+
+        userJson = createUserJson(alice)
+        userJson['foo'] = 'bar'
+        requestData = userJson
+        response = self.client.put('/userdetails', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 204
+
+        ## Be sure, nothing was changed
+        assert createUserJson(User.query.get('alice')) == initialUserJson
+
+    ## Invalid JSON test
+
+    def test_set_user_details_invalid_json(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        initialUserJson = createUserJson(alice)
+
+        requestData = '{this is not valid JSON}'
+        response = self.client.put('/userdetails', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 400
+        assert response.get_json() == {'error': 'Invalid request'}
+
+        ## Be sure, nothing was changed
+        assert createUserJson(User.query.get('alice')) == initialUserJson
 
     """
     Tests for GET /items
