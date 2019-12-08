@@ -381,45 +381,46 @@ def createApp(testConfig=None):
             abort(400)
 
         for itemAuthorization in itemAuthorizationsSchemaResult.data:
-            itemAuthorizationUser = User.query.get(itemAuthorization.userId)
-
-            ## Be sure, the foreign key user exists
-            if (itemAuthorizationUser is None):
-                app.logger.warning('The user (id="{0}") of item authorization (id="{1}") does not exist!'.format(itemAuthorization.userId, itemAuthorization.id))
-                abort(404)
-
-            itemAuthorizationItem = Item.query.get(itemAuthorization.itemId)
-
-            ## Be sure, the foreign key item exists
-            if (itemAuthorizationItem is None):
-                app.logger.warning('The item (id="{0}") of item authorization (id="{1}") does not exist!'.format(itemAuthorization.itemId, itemAuthorization.id))
-                abort(404)
-
-            ## Only the owner of the corresponding item is able to create/update item
-            if (itemAuthorizationItem.userId != user.username):
-                app.logger.warning('The item (id="{0}") of item authorization (id="{1}") is not owned by requested user "{2}"!'.format(itemAuthorization.itemId, itemAuthorization.id, user))
-                abort(403)
-
-            existingItemAuthorization = ItemAuthorization.query.get(itemAuthorization.id)
-
-            if (existingItemAuthorization is None):
-                ## If the item authorization is not existing, we need to check if any is already existing for user+item combination to avoid multiple item authorization for the same user and item
-                if (ItemAuthorization.query.filter_by(userId=user.username, itemId=itemAuthorization.itemId).count() > 0):
-                    app.logger.warning('An item authorization already exists for the item (id="{0}") and requested user (id="{1}") - do not created another one!'.format(itemAuthorization.itemId, user.username))
-                    abort(400)
-
-                ## TODO: More sanity checks?
-                db.session.add(itemAuthorization)
-
-            else:
-                ## Only update the listed fields
-                existingItemAuthorization.readOnly = itemAuthorization.readOnly
-                existingItemAuthorization.deleted = itemAuthorization.deleted
-                existingItemAuthorization.modified = itemAuthorization.modified 
+            createOrUpdateItemAuthorization(user, itemAuthorization)
 
         db.session.commit()
 
         return ('', 204)
+
+    def createOrUpdateItemAuthorization(user, itemAuthorization):
+        itemAuthorizationUser = User.query.get(itemAuthorization.userId)
+
+        ## Be sure, the foreign key user exists
+        if (itemAuthorizationUser is None):
+            app.logger.warning('The user (id="{0}") of item authorization (id="{1}") does not exist!'.format(itemAuthorization.userId, itemAuthorization.id))
+            abort(404)
+
+        itemAuthorizationItem = Item.query.get(itemAuthorization.itemId)
+
+        ## Be sure, the foreign key item exists
+        if (itemAuthorizationItem is None):
+            app.logger.warning('The item (id="{0}") of item authorization (id="{1}") does not exist!'.format(itemAuthorization.itemId, itemAuthorization.id))
+            abort(404)
+
+        ## Only the owner of the corresponding item is able to create/update item
+        if (itemAuthorizationItem.userId != user.username):
+            app.logger.warning('The item (id="{0}") of item authorization (id="{1}") is not owned by requested user "{2}"!'.format(itemAuthorization.itemId, itemAuthorization.id, user))
+            abort(403)
+
+        existingItemAuthorization = ItemAuthorization.query.get(itemAuthorization.id)
+
+        if (existingItemAuthorization is None):
+            ## If the item authorization is not existing, we need to check if any is already existing for user+item combination to avoid multiple item authorization for the same user and item
+            if (ItemAuthorization.query.filter_by(userId=user.username, itemId=itemAuthorization.itemId).count() > 0):
+                app.logger.warning('An item authorization already exists for the item (id="{0}") and requested user (id="{1}") - do not created another one!'.format(itemAuthorization.itemId, user.username))
+                abort(400)
+
+            db.session.add(itemAuthorization)
+        else:
+            ## Only update the listed fields
+            existingItemAuthorization.readOnly = itemAuthorization.readOnly
+            existingItemAuthorization.deleted = itemAuthorization.deleted
+            existingItemAuthorization.modified = itemAuthorization.modified
 
     return app
 
