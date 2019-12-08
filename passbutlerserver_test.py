@@ -521,14 +521,6 @@ class UserTests(PassButlerTestCase):
     """
     Tests for PUT /itemauthorizations
 
-    TODO:
-    - not allowed fields (immutable)
-    - missing mandatory fields / requestData = [{}]
-    - wrong types
-    - non-existing foreign keys
-    - create/update item authorizations of other user
-    - invalid JSON
-
     """
 
     ## Create new item authorization tests
