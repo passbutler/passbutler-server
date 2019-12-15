@@ -1097,6 +1097,31 @@ class UserTests(PassButlerTestCase):
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == itemAuthorization1Json
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization2')) == itemAuthorization2Json
 
+    def test_set_user_item_authorizations_create_deleted_authorization(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        self.addItems(Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901))
+
+        itemAuthorization1Json = {
+            'id': 'itemAuthorization1',
+            'userId': 'alice',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': True,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        requestData = [itemAuthorization1Json]
+        response = self.client.put('/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 204
+        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == itemAuthorization1Json
+
     def test_set_user_item_authorizations_create_authorization_with_not_existing_user(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)

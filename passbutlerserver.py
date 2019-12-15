@@ -378,6 +378,7 @@ def createApp(testConfig=None):
             app.logger.warning('The item (id="{0}") of item authorization (id="{1}") is not owned by requested user "{2}"!'.format(itemAuthorization.itemId, itemAuthorization.id, user))
             abort(403)
 
+        ## Do not check if is deleted (a deleted item authorization can be updated)
         existingItemAuthorization = ItemAuthorization.query.get(itemAuthorization.id)
 
         if (existingItemAuthorization is None):
