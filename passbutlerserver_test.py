@@ -98,6 +98,15 @@ class UserTests(PassButlerTestCase):
         assert response.status_code == 200
         assert len(response.get_json().get('token')) == 181
 
+    def test_get_token_with_deleted_user_record(self):
+        alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', True, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        response = self.client.get('/token', headers=createHttpBasicAuthHeaders('alice', '1234'))
+
+        assert response.status_code == 401
+        assert response.get_json() == {'error': 'Unauthorized'}
+
     def test_get_token_with_invalid_credentials(self):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
@@ -175,6 +184,15 @@ class UserTests(PassButlerTestCase):
         self.addUsers(alice)
 
         response = self.client.get('/userdetails', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, signatureAlgorithm="none"))
+
+        assert response.status_code == 401
+        assert response.get_json() == {'error': 'Unauthorized'}
+
+    def test_get_user_deleted_user_record(self):
+        alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', True, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        response = self.client.get('/userdetails', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}

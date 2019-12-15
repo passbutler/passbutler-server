@@ -212,7 +212,7 @@ def createApp(testConfig=None):
         wasSuccessful = False
         g.authenticatedUser = None
 
-        requestingUser = User.query.get(username)
+        requestingUser = User.query.filter_by(username=username, deleted=False).first()
 
         if requestingUser is not None and requestingUser.checkAuthenticationPassword(password):
             g.authenticatedUser = requestingUser
@@ -230,7 +230,7 @@ def createApp(testConfig=None):
             username = tokenData.get('username')
 
             if username is not None:
-                user = User.query.get(username)
+                user = User.query.filter_by(username=username, deleted=False).first()
 
                 if user is not None:
                     g.authenticatedUser = user
