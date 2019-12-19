@@ -1033,6 +1033,12 @@ class UserTests(PassButlerTestCase):
         sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
         self.addUsers(alice, sandy)
 
+        self.addItems(
+            Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901),
+            Item('item2', 'alice', 'example data 2', False, 12345678902, 12345678901),
+            Item('item3', 'sandy', 'example data 3', False, 12345678902, 12345678901)
+        )
+
         itemAuthorization1 = ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
         itemAuthorization2 = ItemAuthorization('itemAuthorization2', 'alice', 'item2', 'example item key 2', True, False, 12345678902, 12345678901)
         itemAuthorization3 = ItemAuthorization('itemAuthorization3', 'alice', 'item3', 'example item key 3', True, True, 12345678902, 12345678901)

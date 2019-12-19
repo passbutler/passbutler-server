@@ -6,6 +6,7 @@ from flask_marshmallow import Marshmallow, Schema
 from flask_sqlalchemy import SQLAlchemy
 from itsdangerous import TimedJSONWebSignatureSerializer
 from marshmallow_sqlalchemy import ModelSchema
+from sqlalchemy import event
 from werkzeug.security import check_password_hash
 import os
 
@@ -196,6 +197,14 @@ def createApp(testConfig=None):
 
     db.init_app(app)
     ma.init_app(app)
+
+    ## Enables foreign key enforcing which is disabled by default in SQLite
+    if 'sqlite' in app.config['SQLALCHEMY_DATABASE_URI']:
+        def _fk_pragma_on_connect(dbapi_con, con_record):
+            dbapi_con.execute('pragma foreign_keys=ON')
+
+        with app.app_context():
+            event.listen(db.engine, 'connect', _fk_pragma_on_connect)
 
     ## Create database tables if not in unit test mode
     if testConfig is None:
