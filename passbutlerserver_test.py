@@ -1314,7 +1314,11 @@ class UserTests(PassButlerTestCase):
         self.addUsers(alice, sandy)
 
         self.addItems(Item('item1', 'sandy', 'example data 1', False, 12345678902, 12345678901))
-        self.addItemAuthorizations(ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', True, False, 12345678902, 12345678901))
+
+        itemAuthorization1 = ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', True, False, 12345678902, 12345678901)
+        self.addItemAuthorizations(itemAuthorization1)
+
+        initialItemAuthorization1Json = createItemAuthorizationJson(itemAuthorization1)
 
         requestData = [{
             'id': 'itemAuthorization1',
@@ -1333,16 +1337,7 @@ class UserTests(PassButlerTestCase):
         ## Alice is not allowed to change item authorization for her for an item that is not owned by her
         assert response.status_code == 403
         assert response.get_json() == {'error': 'Forbidden'}
-        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == {
-            'id': 'itemAuthorization1',
-            'userId': 'alice',
-            'itemId': 'item1',
-            'itemKey': 'example item key 1',
-            'readOnly': True,
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901
-        }
+        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == initialItemAuthorization1Json
 
     ## General modify field tests
 
