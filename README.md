@@ -8,8 +8,8 @@ Install packages:
 
 Setup virtual env:
 
-    $ virtualenv ~/passbutler-server-venv --python=python3
-    $ source ~/passbutler-server-venv/bin/activate
+    $ virtualenv ./passbutler-server-venv --python=python3
+    $ source ./passbutler-server-venv/bin/activate
 
 Install dependencies:
 
