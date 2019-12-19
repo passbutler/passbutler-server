@@ -54,6 +54,9 @@ def createItemAuthorizationJson(itemAuthorization):
         'created': itemAuthorization.created
     }
 
+def sortItemAuthorizationList(itemAuthorizationList):
+    return sorted(itemAuthorizationList, key=lambda k: k['id'])
+
 def createHttpBasicAuthHeaders(username, password):
     credentialBytes = (username + ':' + password).encode()
     base64EncodedCredentials = base64.b64encode(credentialBytes).decode('utf-8')
@@ -1039,22 +1042,29 @@ class UserTests(PassButlerTestCase):
             Item('item3', 'sandy', 'example data 3', False, 12345678902, 12345678901)
         )
 
-        itemAuthorization1 = ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
-        itemAuthorization2 = ItemAuthorization('itemAuthorization2', 'alice', 'item2', 'example item key 2', True, False, 12345678902, 12345678901)
-        itemAuthorization3 = ItemAuthorization('itemAuthorization3', 'alice', 'item3', 'example item key 3', True, True, 12345678902, 12345678901)
-        itemAuthorization4 = ItemAuthorization('itemAuthorization4', 'sandy', 'item2', 'example item key 2', False, False, 12345678902, 12345678901)
-        self.addItemAuthorizations(itemAuthorization1, itemAuthorization2, itemAuthorization3, itemAuthorization4)
+        self.addItemAuthorizations(
+            ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901),
+
+            ## Alice gave herself and Sandy access to "item2"
+            ItemAuthorization('itemAuthorization2', 'alice', 'item2', 'example item key 2', False, False, 12345678902, 12345678901),
+            ItemAuthorization('itemAuthorization3', 'sandy', 'item2', 'example item key 2', False, False, 12345678902, 12345678901),
+
+            ## Sandy gave herself and Alice access to "item3" but deleted Alice item authorization
+            ItemAuthorization('itemAuthorization4', 'sandy', 'item3', 'example item key 3', False, False, 12345678902, 12345678901),
+            ItemAuthorization('itemAuthorization5', 'alice', 'item3', 'example item key 3', False, True, 12345678902, 12345678901)
+        )
 
         response = self.client.get('/itemauthorizations', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         assert response.status_code == 200
 
-        ## Alice see only her own item authorizations (also the deleted ones)
-        assert response.get_json() == [
+        ## Alice see the item authorizations created from and for her (also the deleted ones)
+        assert sortItemAuthorizationList(response.get_json()) == sortItemAuthorizationList([
             {'id': 'itemAuthorization1', 'userId': 'alice', 'itemId': 'item1', 'itemKey': 'example item key 1', 'readOnly': False, 'deleted': False, 'modified': 12345678902,'created': 12345678901},
-            {'id': 'itemAuthorization2', 'userId': 'alice', 'itemId': 'item2', 'itemKey': 'example item key 2', 'readOnly': True, 'deleted': False, 'modified': 12345678902,'created': 12345678901},
-            {'id': 'itemAuthorization3', 'userId': 'alice', 'itemId': 'item3', 'itemKey': 'example item key 3', 'readOnly': True, 'deleted': True, 'modified': 12345678902,'created': 12345678901},
-        ]
+            {'id': 'itemAuthorization2', 'userId': 'alice', 'itemId': 'item2', 'itemKey': 'example item key 2', 'readOnly': False, 'deleted': False, 'modified': 12345678902,'created': 12345678901},
+            {'id': 'itemAuthorization3', 'userId': 'sandy', 'itemId': 'item2', 'itemKey': 'example item key 2', 'readOnly': False, 'deleted': False, 'modified': 12345678902,'created': 12345678901},
+            {'id': 'itemAuthorization5', 'userId': 'alice', 'itemId': 'item3', 'itemKey': 'example item key 3', 'readOnly': False, 'deleted': True, 'modified': 12345678902,'created': 12345678901}
+        ])
 
     """
     Tests for PUT /itemauthorizations

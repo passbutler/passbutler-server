@@ -6,7 +6,7 @@ from flask_marshmallow import Marshmallow, Schema
 from flask_sqlalchemy import SQLAlchemy
 from itsdangerous import TimedJSONWebSignatureSerializer
 from marshmallow_sqlalchemy import ModelSchema
-from sqlalchemy import event
+from sqlalchemy import event, and_
 from werkzeug.security import check_password_hash
 import os
 
@@ -347,12 +347,14 @@ def createApp(testConfig=None):
         user = g.authenticatedUser
 
         ## Item authorization created for current user: do not check deleted-flag (the information of deletion must be available to user, e.g. to avoid try update according items)
-        allUserItemAuthorization = ItemAuthorization.query.filter_by(userId=user.username).all()
+        itemAuthorizationsForUser = ItemAuthorization.query.filter_by(userId=user.username).all()
 
         ## Item authorization created by current user for other users: do not check deleted-flag (the information of deletion must be available to user, e.g. to reflect in UI)
-        ## TODO: check if item/user is deleted?
+        userItems = Item.query.filter_by(userId=user.username).all()
+        userItemsIds = map(lambda item: item.id, userItems)
+        itemAuthorizationsCreatedByUser = ItemAuthorization.query.filter(and_(ItemAuthorization.itemId.in_(userItemsIds), ItemAuthorization.userId != user.username)).all()
 
-        result = DefaultItemAuthorizationSchema(many=True).dump(allUserItemAuthorization)
+        result = DefaultItemAuthorizationSchema(many=True).dump(itemAuthorizationsForUser + itemAuthorizationsCreatedByUser)
         return jsonify(result.data)
 
     @app.route('/itemauthorizations', methods=['PUT'])
