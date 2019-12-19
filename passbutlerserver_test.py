@@ -349,6 +349,7 @@ class UserTests(PassButlerTestCase):
             'created': 12345678901
         }
 
+        ## The field is immutable
         expected = {
             'username': 'alice',
             'masterPasswordAuthenticationHash': 'x',
@@ -396,6 +397,7 @@ class UserTests(PassButlerTestCase):
             'created': 12345678901
         }
 
+        ## The field is immutable
         expected = {
             'username': 'alice',
             'masterPasswordAuthenticationHash': 'x',
@@ -425,6 +427,7 @@ class UserTests(PassButlerTestCase):
             'created': 12345678901
         }
 
+        ## The field is immutable
         expected = {
             'username': 'alice',
             'masterPasswordAuthenticationHash': 'x',
@@ -472,6 +475,7 @@ class UserTests(PassButlerTestCase):
             'created': 12345678901
         }
 
+        ## The field is immutable
         expected = {
             'username': 'alice',
             'masterPasswordAuthenticationHash': 'x',
@@ -519,6 +523,7 @@ class UserTests(PassButlerTestCase):
             'created': 12345678902
         }
 
+        ## The field is immutable
         expected = {
             'username': 'alice',
             'masterPasswordAuthenticationHash': 'x',
@@ -709,8 +714,6 @@ class UserTests(PassButlerTestCase):
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-
-        ## Be sure, nothing was changed
         assert createUserJson(User.query.get('alice')) == initialUserJson
 
     ## General missing field tests
@@ -871,8 +874,6 @@ class UserTests(PassButlerTestCase):
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-
-        ## Be sure, nothing was changed
         assert createUserJson(User.query.get('alice')) == initialUserJson
 
     ## Unknown field test
@@ -891,8 +892,6 @@ class UserTests(PassButlerTestCase):
         db.session.rollback()
 
         assert response.status_code == 204
-
-        ## Be sure, nothing was changed
         assert createUserJson(User.query.get('alice')) == initialUserJson
 
     ## Invalid JSON test
@@ -910,8 +909,6 @@ class UserTests(PassButlerTestCase):
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-
-        ## Be sure, nothing was changed
         assert createUserJson(User.query.get('alice')) == initialUserJson
 
     """
@@ -1353,7 +1350,7 @@ class UserTests(PassButlerTestCase):
             'created': 12345678901
         }]
 
-        ## The field `userId` is immutable
+        ## The field is immutable
         expected = {
             'id': 'itemAuthorization1',
             'userId': 'alice',
@@ -1379,7 +1376,7 @@ class UserTests(PassButlerTestCase):
             'created': 12345678901
         }]
 
-        ## The field `userId` is immutable
+        ## The field is immutable
         expected = {
             'id': 'itemAuthorization1',
             'userId': 'alice',
@@ -1410,7 +1407,7 @@ class UserTests(PassButlerTestCase):
             'created': 12345678901
         }]
 
-        ## The field `itemId` is immutable
+        ## The field is immutable
         expected = {
             'id': 'itemAuthorization1',
             'userId': 'alice',
@@ -1436,7 +1433,7 @@ class UserTests(PassButlerTestCase):
             'created': 12345678901
         }]
 
-        ## The field `itemId` is immutable
+        ## The field is immutable
         expected = {
             'id': 'itemAuthorization1',
             'userId': 'alice',
@@ -1467,7 +1464,7 @@ class UserTests(PassButlerTestCase):
             'created': 12345678901
         }]
 
-        ## The field `itemKey` is immutable
+        ## The field is immutable
         expected = {
             'id': 'itemAuthorization1',
             'userId': 'alice',
@@ -1535,7 +1532,7 @@ class UserTests(PassButlerTestCase):
             'created': 12345678902
         }]
 
-        ## The field `created` is immutable
+        ## The field is immutable
         expected = {
             'id': 'itemAuthorization1',
             'userId': 'alice',
@@ -1698,8 +1695,6 @@ class UserTests(PassButlerTestCase):
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-
-        ## Be sure, nothing was changed
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == initialItemAuthorization1Json
 
     ## General missing field tests
@@ -1821,8 +1816,6 @@ class UserTests(PassButlerTestCase):
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-
-        ## Be sure, nothing was changed
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == initialItemAuthorization1Json
 
     ## Unknown field test
@@ -1846,8 +1839,6 @@ class UserTests(PassButlerTestCase):
         db.session.rollback()
 
         assert response.status_code == 204
-
-        ## Be sure, nothing was changed
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == initialItemAuthorization1Json
 
     ## Invalid JSON test
@@ -1870,8 +1861,6 @@ class UserTests(PassButlerTestCase):
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-
-        ## Be sure, nothing was changed
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == initialItemAuthorization1Json
 
 if __name__ == '__main__':
