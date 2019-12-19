@@ -28,6 +28,11 @@ class PassButlerTestCase(TestCase):
         db.session.remove()
         db.drop_all()
 
+"""
+Model to JSON functions
+
+"""
+
 def createUserJson(user):
     return {
         'username': user.username,
@@ -54,8 +59,24 @@ def createItemAuthorizationJson(itemAuthorization):
         'created': itemAuthorization.created
     }
 
+"""
+Model list sorting functions
+
+"""
+
+def sortUserList(userList):
+    return sorted(userList, key=lambda k: k['username'])
+
+def sortItemList(itemList):
+    return sorted(itemList, key=lambda k: k['id'])
+
 def sortItemAuthorizationList(itemAuthorizationList):
     return sorted(itemAuthorizationList, key=lambda k: k['id'])
+
+"""
+Authentication helpers
+
+"""
 
 def createHttpBasicAuthHeaders(username, password):
     credentialBytes = (username + ':' + password).encode()
@@ -212,9 +233,9 @@ class UserTests(PassButlerTestCase):
         response = self.client.get('/users', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         assert response.status_code == 200
-        assert response.get_json() == [
+        assert sortUserList(response.get_json()) == sortUserList([
             {'username': 'alice', 'itemEncryptionPublicKey': 'a3', 'deleted': False, 'modified': 12345678902, 'created': 12345678901}
-        ]
+        ])
 
     def test_get_users_multiple_users(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -224,10 +245,10 @@ class UserTests(PassButlerTestCase):
         response = self.client.get('/users', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         assert response.status_code == 200
-        assert response.get_json() == [
+        assert sortUserList(response.get_json()) == sortUserList([
             {'username': 'alice', 'itemEncryptionPublicKey': 'a3', 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
             {'username': 'sandy', 'itemEncryptionPublicKey': 's3', 'deleted': False, 'modified': 12345678904, 'created': 12345678903}
-        ]
+        ])
 
     """
     Tests for GET /userdetails
@@ -902,9 +923,9 @@ class UserTests(PassButlerTestCase):
 
         response = self.client.get('/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
         assert response.status_code == 200
-        assert response.get_json() == [
+        assert sortItemList(response.get_json()) == sortItemList([
             {'id': 'item1', 'userId': 'alice', 'data': 'example data 1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901}
-        ]
+        ])
 
     def test_get_user_items_with_deleted_item(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -925,10 +946,10 @@ class UserTests(PassButlerTestCase):
         assert response.status_code == 200
 
         ## The "item2" is deleted, but is listed of course
-        assert response.get_json() == [
+        assert sortItemList(response.get_json()) == sortItemList([
             {'id': 'item1', 'userId': 'alice', 'data': 'example data 1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
             {'id': 'item2', 'userId': 'alice', 'data': 'example data 2', 'deleted': True, 'modified': 12345678902, 'created': 12345678901}
-        ]
+        ])
 
     def test_get_user_items_without_any_item_authorization(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -942,7 +963,7 @@ class UserTests(PassButlerTestCase):
         assert response.status_code == 200
 
         ## Alice is not able to see "item1" because no item authorization exists
-        assert response.get_json() == []
+        assert sortItemList(response.get_json()) == sortItemList([])
 
     def test_get_user_items_without_shared_item_authorization(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -964,9 +985,9 @@ class UserTests(PassButlerTestCase):
         assert response.status_code == 200
 
         ## Alice is only able to see "item1", because Sandy does not shared "item2" with her
-        assert response.get_json() == [
+        assert sortItemList(response.get_json()) == sortItemList([
             {'id': 'item1', 'userId': 'alice', 'data': 'example data 1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901}
-        ]
+        ])
 
     def test_get_user_items_with_shared_item_authorization(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -989,10 +1010,10 @@ class UserTests(PassButlerTestCase):
         assert response.status_code == 200
 
         ## The "item2" of Sandy is also accessible by Alice because she has a non-deleted item authorization
-        assert response.get_json() == [
+        assert sortItemList(response.get_json()) == sortItemList([
             {'id': 'item1', 'userId': 'alice', 'data': 'example data 1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
             {'id': 'item2', 'userId': 'sandy', 'data': 'example data 2', 'deleted': False, 'modified': 12345678902, 'created': 12345678901}
-        ]
+        ])
 
     def test_get_user_items_with_deleted_shared_item_authorization(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -1015,9 +1036,9 @@ class UserTests(PassButlerTestCase):
         assert response.status_code == 200
 
         ## The "item2" of Sandy is not accessible by Alice anymore because item authorization was deleted by Sandy
-        assert response.get_json() == [
+        assert sortItemList(response.get_json()) == sortItemList([
             {'id': 'item1', 'userId': 'alice', 'data': 'example data 1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901}
-        ]
+        ])
 
     """
     Tests for PUT /items
