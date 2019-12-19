@@ -47,6 +47,16 @@ def createUserJson(user):
         'created': user.created
     }
 
+def createItemJson(item):
+    return {
+        'id': item.id,
+        'userId': item.userId,
+        'data': item.data,
+        'deleted': item.deleted,
+        'modified': item.modified,
+        'created': item.created
+    }
+
 def createItemAuthorizationJson(itemAuthorization):
     return {
         'id': itemAuthorization.id,
@@ -1045,7 +1055,45 @@ class UserTests(PassButlerTestCase):
 
     """
 
-    ## TODO
+    ## Create new items tests
+
+    def test_set_user_items_create_items(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        item1Json = {
+            'id': 'item1',
+            'userId': 'alice',
+            'data': 'example item data 1',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        item2Json = {
+            'id': 'item2',
+            'userId': 'alice',
+            'data': 'example item data 2',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        requestData = [item1Json, item2Json]
+        response = self.client.put('/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 204
+        assert createItemJson(Item.query.get('item1')) == item1Json
+        assert createItemJson(Item.query.get('item2')) == item2Json
+
+    ## Permission tests (create for other users)
+    ## General modify field tests
+    ## General wrong field type tests
+    ## General missing field tests
+    ## Unknown field test
+    ## Invalid JSON test
 
     """
     Tests for GET /itemauthorizations

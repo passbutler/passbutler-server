@@ -364,7 +364,37 @@ def createApp(testConfig=None):
     def createOrUpdateItem(user, item):
         itemUser = User.query.get(item.userId)
 
-        ## TODO
+        ## Be sure, the foreign key user exists: do not check deleted-flag of the user (not necessary because a deleted-flagged user can't authenticate anyway)
+        if (itemUser is None):
+            app.logger.warning('The user (id="{0}") of item (id="{1}") does not exist!'.format(item.userId, item.id))
+            abort(404)
+
+        ## Determine to create or update the item: do not check deleted-flag of the item (a deleted item must be updatable, e.g. to revert deletion)
+        existingItem = Item.query.get(item.id)
+
+        if (existingItem is None):
+            ## It is not allowed to create items for other users
+            if (item.userId != user.username):
+                app.logger.warning('The user of the creating item ({0}) is not the current user ({1}) - this is not allowed!'.format(item.userId, user.username))
+                abort(403)
+
+            db.session.add(item)
+        else:
+            itemAuthorization = ItemAuthorization.query.filter_by(userId=user.username, itemId=item.id).first()
+
+            if (itemAuthorization is None):
+                app.logger.warning('The user has no item authorization for item (id="{0}") - modification is not allowed!'.format(item.id))
+                abort(403)
+
+            if (itemAuthorization.readOnly == True):
+                app.logger.warning('The user has only a read-only item authorization for item (id="{0}") - modification is not allowed!'.format(item.id))
+                abort(403)
+
+            ## Only update the allowed mutable fields
+            existingItem.data = item.data
+            existingItem.readOnly = item.readOnly
+            existingItem.deleted = item.deleted
+            existingItem.modified = item.modified
 
     @app.route('/itemauthorizations', methods=['GET'])
     @webTokenAuth.login_required
