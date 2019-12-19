@@ -341,6 +341,31 @@ def createApp(testConfig=None):
         result = DefaultItemSchema(many=True).dump(userItems)
         return jsonify(result.data)
 
+    @app.route('/items', methods=['PUT'])
+    @webTokenAuth.login_required
+    def set_user_items():
+        user = g.authenticatedUser
+
+        ## Do not set database session and instance yet to avoid implicit model modification
+        itemsSchema = DefaultItemSchema(many=True)
+        itemsSchemaResult = itemsSchema.load(request.json, session=None, instance=None)
+
+        if len(itemsSchemaResult.errors) > 0:
+            app.logger.warning('Model validation failed with errors: {0}'.format(itemsSchemaResult.errors))
+            abort(400)
+
+        for item in itemsSchemaResult.data:
+            createOrUpdateItem(user, item)
+
+        db.session.commit()
+
+        return ('', 204)
+
+    def createOrUpdateItem(user, item):
+        itemUser = User.query.get(item.userId)
+
+        ## TODO
+
     @app.route('/itemauthorizations', methods=['GET'])
     @webTokenAuth.login_required
     def get_user_item_authorizations():
