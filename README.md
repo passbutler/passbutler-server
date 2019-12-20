@@ -13,11 +13,15 @@ Setup virtual env:
 
 Install dependencies:
 
-    $ pip install flask-sqlalchemy flask-marshmallow marshmallow-sqlalchemy flask-httpauth
+    $ pip install flask-httpauth flask-sqlalchemy flask-marshmallow marshmallow-sqlalchemy
 
 Install unit testing dependencies:
 
     $ pip install pytest flask-testing
+
+Change to path of this repository:
+
+    $ cd /path/to/passbuttler-server/
 
 ## Unit testing
 
