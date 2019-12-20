@@ -176,7 +176,7 @@ class UserTests(PassButlerTestCase):
         assert response.get_json() == {'error': 'Unauthorized'}
 
     """
-    Authentication tests (using GET /userdetails)
+    Authentication tests (using GET /user)
 
     """
 
@@ -184,13 +184,13 @@ class UserTests(PassButlerTestCase):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
-        response = self.client.get('/' + API_VERSION_PREFIX + '/userdetails')
+        response = self.client.get('/' + API_VERSION_PREFIX + '/user')
 
         assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
 
     def test_get_user_details_without_authentication_no_user_record(self):
-        response = self.client.get('/' + API_VERSION_PREFIX + '/userdetails')
+        response = self.client.get('/' + API_VERSION_PREFIX + '/user')
 
         assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
@@ -199,7 +199,7 @@ class UserTests(PassButlerTestCase):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
-        response = self.client.get('/' + API_VERSION_PREFIX + '/userdetails', headers=createHttpBasicAuthHeaders('alice', '1234'))
+        response = self.client.get('/' + API_VERSION_PREFIX + '/user', headers=createHttpBasicAuthHeaders('alice', '1234'))
 
         assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
@@ -208,7 +208,7 @@ class UserTests(PassButlerTestCase):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
-        response = self.client.get('/' + API_VERSION_PREFIX + '/userdetails', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, -3600))
+        response = self.client.get('/' + API_VERSION_PREFIX + '/user', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, -3600))
 
         assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
@@ -217,7 +217,7 @@ class UserTests(PassButlerTestCase):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
-        response = self.client.get('/' + API_VERSION_PREFIX + '/userdetails', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, signatureAlgorithm="none"))
+        response = self.client.get('/' + API_VERSION_PREFIX + '/user', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, signatureAlgorithm="none"))
 
         assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
@@ -226,7 +226,7 @@ class UserTests(PassButlerTestCase):
         alice = User('alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', True, 12345678902, 12345678901)
         self.addUsers(alice)
 
-        response = self.client.get('/' + API_VERSION_PREFIX + '/userdetails', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.get('/' + API_VERSION_PREFIX + '/user', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
@@ -261,7 +261,7 @@ class UserTests(PassButlerTestCase):
         ])
 
     """
-    Tests for GET /userdetails
+    Tests for GET /user
 
     """
 
@@ -269,7 +269,7 @@ class UserTests(PassButlerTestCase):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
-        response = self.client.get('/' + API_VERSION_PREFIX + '/userdetails', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.get('/' + API_VERSION_PREFIX + '/user', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         assert response.status_code == 200
         assert response.get_json() == {
@@ -286,7 +286,7 @@ class UserTests(PassButlerTestCase):
         }
 
     """
-    Tests for PUT /userdetails
+    Tests for PUT /user
 
     """
 
@@ -307,7 +307,7 @@ class UserTests(PassButlerTestCase):
             'created': 12345678901
         }
 
-        response = self.client.put('/' + API_VERSION_PREFIX + '/userdetails', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         ## Discard uncommited changes to check if the changes has been committed
         db.session.rollback()
@@ -543,7 +543,7 @@ class UserTests(PassButlerTestCase):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
-        response = self.client.put('/' + API_VERSION_PREFIX + '/userdetails', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -708,7 +708,7 @@ class UserTests(PassButlerTestCase):
 
         initialUserJson = createUserJson(alice)
 
-        response = self.client.put('/' + API_VERSION_PREFIX + '/userdetails', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -868,7 +868,7 @@ class UserTests(PassButlerTestCase):
 
         initialUserJson = createUserJson(alice)
 
-        response = self.client.put('/' + API_VERSION_PREFIX + '/userdetails', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -887,7 +887,7 @@ class UserTests(PassButlerTestCase):
         userJson = createUserJson(alice)
         userJson['foo'] = 'bar'
         requestData = userJson
-        response = self.client.put('/' + API_VERSION_PREFIX + '/userdetails', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -904,7 +904,7 @@ class UserTests(PassButlerTestCase):
         initialUserJson = createUserJson(alice)
 
         requestData = '{this is not valid JSON}'
-        response = self.client.put('/' + API_VERSION_PREFIX + '/userdetails', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -913,7 +913,7 @@ class UserTests(PassButlerTestCase):
         assert createUserJson(User.query.get('alice')) == initialUserJson
 
     """
-    Tests for GET /items
+    Tests for GET /user/items
 
     """
 
@@ -929,7 +929,7 @@ class UserTests(PassButlerTestCase):
             ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
         )
 
-        response = self.client.get('/' + API_VERSION_PREFIX + '/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.get('/' + API_VERSION_PREFIX + '/user/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
         assert response.status_code == 200
         assert sortItemList(response.get_json()) == sortItemList([
             {'id': 'item1', 'userId': 'alice', 'data': 'example data 1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901}
@@ -949,7 +949,7 @@ class UserTests(PassButlerTestCase):
             ItemAuthorization('itemAuthorization2', 'alice', 'item2', 'example item key 2', False, False, 12345678902, 12345678901)
         )
 
-        response = self.client.get('/' + API_VERSION_PREFIX + '/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.get('/' + API_VERSION_PREFIX + '/user/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         assert response.status_code == 200
 
@@ -967,7 +967,7 @@ class UserTests(PassButlerTestCase):
             Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
         )
 
-        response = self.client.get('/' + API_VERSION_PREFIX + '/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.get('/' + API_VERSION_PREFIX + '/user/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
         assert response.status_code == 200
 
         ## Alice is not able to see "item1" because no item authorization exists
@@ -988,7 +988,7 @@ class UserTests(PassButlerTestCase):
             ItemAuthorization('itemAuthorization2', 'sandy', 'item2', 'example item key 2', False, False, 12345678902, 12345678901)
         )
 
-        response = self.client.get('/' + API_VERSION_PREFIX + '/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.get('/' + API_VERSION_PREFIX + '/user/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         assert response.status_code == 200
 
@@ -1013,7 +1013,7 @@ class UserTests(PassButlerTestCase):
             ItemAuthorization('itemAuthorization3', 'alice', 'item2', 'example item key 2', False, False, 12345678902, 12345678901)
         )
 
-        response = self.client.get('/' + API_VERSION_PREFIX + '/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.get('/' + API_VERSION_PREFIX + '/user/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         assert response.status_code == 200
 
@@ -1039,7 +1039,7 @@ class UserTests(PassButlerTestCase):
             ItemAuthorization('itemAuthorization3', 'alice', 'item2', 'example item key 2', False, True, 12345678902, 12345678901)
         )
 
-        response = self.client.get('/' + API_VERSION_PREFIX + '/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.get('/' + API_VERSION_PREFIX + '/user/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         assert response.status_code == 200
 
@@ -1049,7 +1049,7 @@ class UserTests(PassButlerTestCase):
         ])
 
     """
-    Tests for PUT /items
+    Tests for PUT /user/items
 
     """
 
@@ -1078,7 +1078,7 @@ class UserTests(PassButlerTestCase):
         }
 
         requestData = [item1Json, item2Json]
-        response = self.client.put('/' + API_VERSION_PREFIX + '/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -1100,7 +1100,7 @@ class UserTests(PassButlerTestCase):
         }
 
         requestData = [item1Json]
-        response = self.client.put('/' + API_VERSION_PREFIX + '/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -1121,7 +1121,7 @@ class UserTests(PassButlerTestCase):
         }
 
         requestData = [item1Json]
-        response = self.client.put('/' + API_VERSION_PREFIX + '/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -1146,7 +1146,7 @@ class UserTests(PassButlerTestCase):
         }
 
         requestData = [item1Json]
-        response = self.client.put('/' + API_VERSION_PREFIX + '/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -1174,7 +1174,7 @@ class UserTests(PassButlerTestCase):
         }
 
         requestData = [item1Json]
-        response = self.client.put('/' + API_VERSION_PREFIX + '/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -1205,7 +1205,7 @@ class UserTests(PassButlerTestCase):
         }
 
         requestData = [item1Json]
-        response = self.client.put('/' + API_VERSION_PREFIX + '/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -1336,7 +1336,7 @@ class UserTests(PassButlerTestCase):
         self.addItems(Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901))
         self.addItemAuthorizations(ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901))
 
-        response = self.client.put('/' + API_VERSION_PREFIX + '/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -1423,7 +1423,7 @@ class UserTests(PassButlerTestCase):
 
         self.addItemAuthorizations(ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901))
 
-        response = self.client.put('/' + API_VERSION_PREFIX + '/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -1508,7 +1508,7 @@ class UserTests(PassButlerTestCase):
 
         self.addItemAuthorizations(ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901))
 
-        response = self.client.put('/' + API_VERSION_PREFIX + '/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -1532,7 +1532,7 @@ class UserTests(PassButlerTestCase):
         item1Json = createItemJson(item1)
         item1Json['foo'] = 'bar'
         requestData = [item1Json]
-        response = self.client.put('/' + API_VERSION_PREFIX + '/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -1554,7 +1554,7 @@ class UserTests(PassButlerTestCase):
         self.addItemAuthorizations(ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901))
 
         requestData = '[{this is not valid JSON]'
-        response = self.client.put('/' + API_VERSION_PREFIX + '/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -1563,7 +1563,7 @@ class UserTests(PassButlerTestCase):
         assert createItemJson(Item.query.get('item1')) == initialItem1Json
 
     """
-    Tests for GET /itemauthorizations
+    Tests for GET /user/itemauthorizations
 
     """
 
@@ -1590,7 +1590,7 @@ class UserTests(PassButlerTestCase):
             ItemAuthorization('itemAuthorization5', 'alice', 'item3', 'example item key 3', False, True, 12345678902, 12345678901)
         )
 
-        response = self.client.get('/' + API_VERSION_PREFIX + '/itemauthorizations', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.get('/' + API_VERSION_PREFIX + '/user/itemauthorizations', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         assert response.status_code == 200
 
@@ -1603,7 +1603,7 @@ class UserTests(PassButlerTestCase):
         ])
 
     """
-    Tests for PUT /itemauthorizations
+    Tests for PUT /user/itemauthorizations
 
     """
 
@@ -1641,7 +1641,7 @@ class UserTests(PassButlerTestCase):
         }
 
         requestData = [itemAuthorization1Json, itemAuthorization2Json]
-        response = self.client.put('/' + API_VERSION_PREFIX + '/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -1667,7 +1667,7 @@ class UserTests(PassButlerTestCase):
         }
 
         requestData = [itemAuthorization1Json]
-        response = self.client.put('/' + API_VERSION_PREFIX + '/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -1690,7 +1690,7 @@ class UserTests(PassButlerTestCase):
             'modified': 12345678902,
             'created': 12345678901
         }]
-        response = self.client.put('/' + API_VERSION_PREFIX + '/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -1714,7 +1714,7 @@ class UserTests(PassButlerTestCase):
             'modified': 12345678902,
             'created': 12345678901
         }]
-        response = self.client.put('/' + API_VERSION_PREFIX + '/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -1739,7 +1739,7 @@ class UserTests(PassButlerTestCase):
             'modified': 12345678902,
             'created': 12345678901
         }]
-        response = self.client.put('/' + API_VERSION_PREFIX + '/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -1766,7 +1766,7 @@ class UserTests(PassButlerTestCase):
             'modified': 12345678902,
             'created': 12345678901
         }]
-        response = self.client.put('/' + API_VERSION_PREFIX + '/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -1797,7 +1797,7 @@ class UserTests(PassButlerTestCase):
             'modified': 12345678902,
             'created': 12345678901
         }]
-        response = self.client.put('/' + API_VERSION_PREFIX + '/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -2034,7 +2034,7 @@ class UserTests(PassButlerTestCase):
 
         self.addItemAuthorizations(ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901))
 
-        response = self.client.put('/' + API_VERSION_PREFIX + '/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -2159,7 +2159,7 @@ class UserTests(PassButlerTestCase):
 
         initialItemAuthorization1Json = createItemAuthorizationJson(itemAuthorization1)
 
-        response = self.client.put('/' + API_VERSION_PREFIX + '/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -2280,7 +2280,7 @@ class UserTests(PassButlerTestCase):
 
         initialItemAuthorization1Json = createItemAuthorizationJson(itemAuthorization1)
 
-        response = self.client.put('/' + API_VERSION_PREFIX + '/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -2304,7 +2304,7 @@ class UserTests(PassButlerTestCase):
         itemAuthorization1Json = createItemAuthorizationJson(itemAuthorization1)
         itemAuthorization1Json['foo'] = 'bar'
         requestData = [itemAuthorization1Json]
-        response = self.client.put('/' + API_VERSION_PREFIX + '/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 
@@ -2326,7 +2326,7 @@ class UserTests(PassButlerTestCase):
         initialItemAuthorization1Json = createItemAuthorizationJson(itemAuthorization1)
 
         requestData = '[{this is not valid JSON]'
-        response = self.client.put('/' + API_VERSION_PREFIX + '/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         db.session.rollback()
 

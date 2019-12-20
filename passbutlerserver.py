@@ -297,14 +297,14 @@ def createApp(testConfig=None):
         result = PublicUserSchema(many=True).dump(allUsers)
         return jsonify(result)
 
-    @app.route('/' + API_VERSION_PREFIX + '/userdetails', methods=['GET'])
+    @app.route('/' + API_VERSION_PREFIX + '/user', methods=['GET'])
     @webTokenAuth.login_required
     def get_user_details():
         user = g.authenticatedUser
         result = DefaultUserSchema().dump(user)
         return jsonify(result)
 
-    @app.route('/' + API_VERSION_PREFIX + '/userdetails', methods=['PUT'])
+    @app.route('/' + API_VERSION_PREFIX + '/user', methods=['PUT'])
     @webTokenAuth.login_required
     def set_user_details():
         user = g.authenticatedUser
@@ -326,7 +326,7 @@ def createApp(testConfig=None):
 
         return ('', 204)
 
-    @app.route('/' + API_VERSION_PREFIX + '/items', methods=['GET'])
+    @app.route('/' + API_VERSION_PREFIX + '/user/items', methods=['GET'])
     @webTokenAuth.login_required
     def get_user_items():
         user = g.authenticatedUser
@@ -341,7 +341,7 @@ def createApp(testConfig=None):
         result = DefaultItemSchema(many=True).dump(userItems)
         return jsonify(result)
 
-    @app.route('/' + API_VERSION_PREFIX + '/items', methods=['PUT'])
+    @app.route('/' + API_VERSION_PREFIX + '/user/items', methods=['PUT'])
     @webTokenAuth.login_required
     def set_user_items():
         user = g.authenticatedUser
@@ -406,7 +406,7 @@ def createApp(testConfig=None):
             existingItem.deleted = item.deleted
             existingItem.modified = item.modified
 
-    @app.route('/' + API_VERSION_PREFIX + '/itemauthorizations', methods=['GET'])
+    @app.route('/' + API_VERSION_PREFIX + '/user/itemauthorizations', methods=['GET'])
     @webTokenAuth.login_required
     def get_user_item_authorizations():
         user = g.authenticatedUser
@@ -435,7 +435,7 @@ def createApp(testConfig=None):
         )
         return jsonify(result)
 
-    @app.route('/' + API_VERSION_PREFIX + '/itemauthorizations', methods=['PUT'])
+    @app.route('/' + API_VERSION_PREFIX + '/user/itemauthorizations', methods=['PUT'])
     @webTokenAuth.login_required
     def set_user_item_authorizations():
         user = g.authenticatedUser
