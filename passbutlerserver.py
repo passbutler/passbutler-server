@@ -51,11 +51,7 @@ class Item(db.Model):
 class DefaultItemSchema(ModelSchema):
     class Meta:
         model = Item
-
-        ## Also include foreign keys for this schema
         include_fk = True
-
-        ## Do not connect schema to SQLAlchemy database session to avoid models are implicitly changed when loading data
         transient = True
 
 class ItemAuthorization(db.Model):
@@ -97,11 +93,7 @@ class ItemAuthorization(db.Model):
 class DefaultItemAuthorizationSchema(ModelSchema):
     class Meta:
         model = ItemAuthorization
-
-        ## Also include foreign keys for this schema
         include_fk = True
-
-        ## Do not connect schema to SQLAlchemy database session to avoid models are implicitly changed when loading data
         transient = True
 
 class User(db.Model):
@@ -160,8 +152,6 @@ class PublicUserSchema(Schema):
 class DefaultUserSchema(ModelSchema):
     class Meta:
         model = User
-
-        ## Do not connect schema to SQLAlchemy database session to avoid models are implicitly changed when loading data
         transient = True
 
 """
@@ -211,7 +201,11 @@ def createApp(testConfig=None):
         with app.app_context():
             db.create_all()
 
-    tokenSerializer = TimedJSONWebSignatureSerializer(app.config['SECRET_KEY'], expires_in=3600, algorithm_name="HS512")
+    tokenSerializer = TimedJSONWebSignatureSerializer(
+        app.config['SECRET_KEY'],
+        expires_in=3600,
+        algorithm_name="HS512"
+    )
 
     passwordAuth = HTTPBasicAuth()
     webTokenAuth = HTTPTokenAuth('Bearer')
@@ -281,7 +275,10 @@ def createApp(testConfig=None):
         app.logger.error('Unexpected exception occured: %s', (exception))
         return make_response(jsonify({'error': 'Server error'}), 500)
 
-    ## Get a new token is only possible with password based authentication to be sure tokens can't refresh themselfs for unlimited time!
+    """
+    Get a new token is only possible with password based authentication
+    to be sure tokens can't refresh themselfs for unlimited time!
+    """
     @app.route('/token', methods=['GET'])
     @passwordAuth.login_required
     def get_token():
@@ -335,7 +332,7 @@ def createApp(testConfig=None):
         itemAuthorizations = ItemAuthorization.query.filter_by(userId=user.username, deleted=False).all()
         itemAuthorizationItemIds = map(lambda itemAuthorization: itemAuthorization.itemId, itemAuthorizations)
 
-        ## Do not check deleted-flag of the items (the information of deletion must be available to user, e.g. to reflect in UI)
+        ## No deleted-flag check (the deletion status must be available to user, e.g. to reflect in UI)
         userItems = Item.query.filter(Item.id.in_(itemAuthorizationItemIds))
 
         result = DefaultItemSchema(many=True).dump(userItems)
@@ -362,20 +359,25 @@ def createApp(testConfig=None):
         return ('', 204)
 
     def createOrUpdateItem(user, item):
+        ## No deleted-flag check (not necessary because a deleted-flagged user can't authenticate anyway)
         itemUser = User.query.get(item.userId)
 
-        ## Be sure, the foreign key user exists: do not check deleted-flag of the user (not necessary because a deleted-flagged user can't authenticate anyway)
+        ## Be sure, the foreign key user exists
         if (itemUser is None):
             app.logger.warning('The user (id="{0}") of item (id="{1}") does not exist!'.format(item.userId, item.id))
             abort(404)
 
-        ## Determine to create or update the item: do not check deleted-flag of the item (a deleted item must be updatable, e.g. to revert deletion)
+        ## No deleted-flag check (a deleted item must be updatable, e.g. to undo deletion)
         existingItem = Item.query.get(item.id)
 
+        ## Determine to create or update the item
         if (existingItem is None):
             ## It is not allowed to create items for other users
             if (item.userId != user.username):
-                app.logger.warning('The user of the creating item ({0}) is not the current user ({1}) - this is not allowed!'.format(item.userId, user.username))
+                app.logger.warning(
+                    'The owner user of the item ({0}) is not the requesting user ({1}) - this is not allowed!'
+                    .format(item.userId, user.username)
+                )
                 abort(403)
 
             db.session.add(item)
@@ -383,11 +385,17 @@ def createApp(testConfig=None):
             itemAuthorization = ItemAuthorization.query.filter_by(userId=user.username, itemId=item.id).first()
 
             if (itemAuthorization is None):
-                app.logger.warning('The user has no item authorization for item (id="{0}") - modification is not allowed!'.format(item.id))
+                app.logger.warning(
+                    'The user has no item authorization for item (id="{0}") - modification is not allowed!'
+                    .format(item.id)
+                )
                 abort(403)
 
             if (itemAuthorization.readOnly == True):
-                app.logger.warning('The user has only a read-only item authorization for item (id="{0}") - modification is not allowed!'.format(item.id))
+                app.logger.warning(
+                    'The user has a read-only item authorization for item (id="{0}") - modification is not allowed!'
+                    .format(item.id)
+                )
                 abort(403)
 
             ## Only update the allowed mutable fields
@@ -401,15 +409,28 @@ def createApp(testConfig=None):
     def get_user_item_authorizations():
         user = g.authenticatedUser
 
-        ## Item authorization created for current user: do not check deleted-flag (the information of deletion must be available to user, e.g. to avoid try update according items)
+        """
+        1) Item authorization created for current user:
+        No deleted-flag check (the deletion status must be available to user, e.g. to avoid try update according item)
+        """
         itemAuthorizationsForUser = ItemAuthorization.query.filter_by(userId=user.username).all()
 
-        ## Item authorization created by current user for other users: do not check deleted-flag (the information of deletion must be available to user, e.g. to reflect in UI)
+        """
+        2) Item authorization created by current user for other users:
+        No deleted-flag check (the deletion status must be available to user, e.g. to reflect in UI)
+        """
         userItems = Item.query.filter_by(userId=user.username).all()
         userItemsIds = map(lambda item: item.id, userItems)
-        itemAuthorizationsCreatedByUser = ItemAuthorization.query.filter(and_(ItemAuthorization.itemId.in_(userItemsIds), ItemAuthorization.userId != user.username)).all()
+        itemAuthorizationsCreatedByUser = ItemAuthorization.query.filter(
+            and_(
+                ItemAuthorization.itemId.in_(userItemsIds),
+                ItemAuthorization.userId != user.username
+            )
+        ).all()
 
-        result = DefaultItemAuthorizationSchema(many=True).dump(itemAuthorizationsForUser + itemAuthorizationsCreatedByUser)
+        result = DefaultItemAuthorizationSchema(many=True).dump(
+            itemAuthorizationsForUser + itemAuthorizationsCreatedByUser
+        )
         return jsonify(result.data)
 
     @app.route('/itemauthorizations', methods=['PUT'])
@@ -421,7 +442,7 @@ def createApp(testConfig=None):
         itemAuthorizationsSchema = DefaultItemAuthorizationSchema(many=True)
         itemAuthorizationsSchemaResult = itemAuthorizationsSchema.load(request.json, session=None, instance=None)
 
-        if len(itemAuthorizationsSchemaResult.errors) > 0:
+        if (len(itemAuthorizationsSchemaResult.errors) > 0):
             app.logger.warning('Model validation failed with errors: {0}'.format(itemAuthorizationsSchemaResult.errors))
             abort(400)
 
@@ -433,32 +454,54 @@ def createApp(testConfig=None):
         return ('', 204)
 
     def createOrUpdateItemAuthorization(user, itemAuthorization):
+        ## No deleted-flag check (not necessary because a deleted-flagged user can't authenticate anyway)
         itemAuthorizationUser = User.query.get(itemAuthorization.userId)
 
-        ## Be sure, the foreign key user exists: do not check deleted-flag of the user (not necessary because a deleted-flagged user can't authenticate anyway)
+        ## Be sure, the foreign key user exists
         if (itemAuthorizationUser is None):
-            app.logger.warning('The user (id="{0}") of item authorization (id="{1}") does not exist!'.format(itemAuthorization.userId, itemAuthorization.id))
+            app.logger.warning(
+                'The user (id="{0}") of item authorization (id="{1}") does not exist!'
+                .format(itemAuthorization.userId, itemAuthorization.id)
+            )
             abort(404)
 
+        """
+        No deleted-flag check
+        (item authorizations of a deleted item must be updatable, e.g. to later revoke access of users)
+        """
         itemAuthorizationItem = Item.query.get(itemAuthorization.itemId)
 
-        ## Be sure, the foreign key item exists: do not check deleted-flag of the item (item authorizations of a deleted item must be updatable, e.g. to later revoke access of users)
+        ## Be sure, the foreign key user exists
         if (itemAuthorizationItem is None):
-            app.logger.warning('The item (id="{0}") of item authorization (id="{1}") does not exist!'.format(itemAuthorization.itemId, itemAuthorization.id))
+            app.logger.warning(
+                'The item (id="{0}") of item authorization (id="{1}") does not exist!'
+                .format(itemAuthorization.itemId, itemAuthorization.id)
+            )
             abort(404)
 
         ## Only the owner of the corresponding item is able to create/update item
         if (itemAuthorizationItem.userId != user.username):
-            app.logger.warning('The item (id="{0}") of item authorization (id="{1}") is not owned by requesting user "{2}"!'.format(itemAuthorization.itemId, itemAuthorization.id, user))
+            app.logger.warning(
+                'The item (id="{0}") of item authorization (id="{1}") is not owned by requesting user "{2}"!'
+                .format(itemAuthorization.itemId, itemAuthorization.id, user)
+            )
             abort(403)
 
-        ## Determine to create or update the item authorization: do not check deleted-flag of the item authorization (a deleted item authorization must be updatable, e.g. to revert deletion)
+        ## No deleted-flag check (a deleted item authorization must be updatable, e.g. to undo deletion)
         existingItemAuthorization = ItemAuthorization.query.get(itemAuthorization.id)
 
+        ## Determine to create or update the item authorization
         if (existingItemAuthorization is None):
-            ## If the item authorization is not existing, check if any is already existing for user+item combination to avoid multiple item authorization for the same user and item
+            """
+            If the item authorization is not existing, check if any is already existing for user+item combination
+            to avoid multiple item authorization for the same user and item:
+            """
             if (ItemAuthorization.query.filter_by(userId=user.username, itemId=itemAuthorization.itemId).count() > 0):
-                app.logger.warning('An item authorization already exists for the item (id="{0}") and requesting user (id="{1}") - do not created another one!'.format(itemAuthorization.itemId, user.username))
+                app.logger.warning(
+                    'An item authorization already exists for the item (id="{0}") and requesting user (id="{1}") ' + 
+                    '- do not created another one!'
+                    .format(itemAuthorization.itemId, user.username)
+                )
                 abort(400)
 
             db.session.add(itemAuthorization)
