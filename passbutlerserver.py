@@ -189,12 +189,13 @@ def createApp(testConfig=None):
     ma.init_app(app)
 
     ## Enables foreign key enforcing which is disabled by default in SQLite
-    if 'sqlite' in app.config['SQLALCHEMY_DATABASE_URI']:
-        def _fk_pragma_on_connect(dbapi_con, con_record):
-            dbapi_con.execute('pragma foreign_keys=ON')
+    with app.app_context():
+        def enableForeignKeySupport(dbApiConnection, connectionRecord):
+            cursor = dbApiConnection.cursor()
+            cursor.execute('PRAGMA foreign_keys=ON;')
+            cursor.close()
 
-        with app.app_context():
-            event.listen(db.engine, 'connect', _fk_pragma_on_connect)
+        event.listen(db.engine, 'connect', enableForeignKeySupport)
 
     ## Create database tables if not in unit test mode
     if testConfig is None:
