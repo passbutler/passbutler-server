@@ -11,6 +11,8 @@ from sqlalchemy import event, and_
 from werkzeug.security import check_password_hash
 import os
 
+API_VERSION_PREFIX = 'v1'
+
 db = SQLAlchemy()
 ma = Marshmallow()
 
@@ -281,28 +283,28 @@ def createApp(testConfig=None):
     Get a new token is only possible with password based authentication
     to be sure tokens can't refresh themselfs for unlimited time!
     """
-    @app.route('/token', methods=['GET'])
+    @app.route('/' + API_VERSION_PREFIX + '/token', methods=['GET'])
     @passwordAuth.login_required
     def get_token():
         user = g.authenticatedUser
         token = user.generateAuthenticationToken(tokenSerializer)
         return jsonify({'token': token})
 
-    @app.route('/users', methods=['GET'])
+    @app.route('/' + API_VERSION_PREFIX + '/users', methods=['GET'])
     @webTokenAuth.login_required
     def get_users():
         allUsers = User.query.all()
         result = PublicUserSchema(many=True).dump(allUsers)
         return jsonify(result)
 
-    @app.route('/userdetails', methods=['GET'])
+    @app.route('/' + API_VERSION_PREFIX + '/userdetails', methods=['GET'])
     @webTokenAuth.login_required
     def get_user_details():
         user = g.authenticatedUser
         result = DefaultUserSchema().dump(user)
         return jsonify(result)
 
-    @app.route('/userdetails', methods=['PUT'])
+    @app.route('/' + API_VERSION_PREFIX + '/userdetails', methods=['PUT'])
     @webTokenAuth.login_required
     def set_user_details():
         user = g.authenticatedUser
@@ -324,7 +326,7 @@ def createApp(testConfig=None):
 
         return ('', 204)
 
-    @app.route('/items', methods=['GET'])
+    @app.route('/' + API_VERSION_PREFIX + '/items', methods=['GET'])
     @webTokenAuth.login_required
     def get_user_items():
         user = g.authenticatedUser
@@ -339,7 +341,7 @@ def createApp(testConfig=None):
         result = DefaultItemSchema(many=True).dump(userItems)
         return jsonify(result)
 
-    @app.route('/items', methods=['PUT'])
+    @app.route('/' + API_VERSION_PREFIX + '/items', methods=['PUT'])
     @webTokenAuth.login_required
     def set_user_items():
         user = g.authenticatedUser
@@ -404,7 +406,7 @@ def createApp(testConfig=None):
             existingItem.deleted = item.deleted
             existingItem.modified = item.modified
 
-    @app.route('/itemauthorizations', methods=['GET'])
+    @app.route('/' + API_VERSION_PREFIX + '/itemauthorizations', methods=['GET'])
     @webTokenAuth.login_required
     def get_user_item_authorizations():
         user = g.authenticatedUser
@@ -433,7 +435,7 @@ def createApp(testConfig=None):
         )
         return jsonify(result)
 
-    @app.route('/itemauthorizations', methods=['PUT'])
+    @app.route('/' + API_VERSION_PREFIX + '/itemauthorizations', methods=['PUT'])
     @webTokenAuth.login_required
     def set_user_item_authorizations():
         user = g.authenticatedUser
