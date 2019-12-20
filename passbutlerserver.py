@@ -5,6 +5,7 @@ from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 from flask_marshmallow import Marshmallow, Schema
 from flask_sqlalchemy import SQLAlchemy
 from itsdangerous import TimedJSONWebSignatureSerializer
+from marshmallow.exceptions import ValidationError
 from marshmallow_sqlalchemy import ModelSchema
 from sqlalchemy import event, and_
 from werkzeug.security import check_password_hash
@@ -292,35 +293,34 @@ def createApp(testConfig=None):
     def get_users():
         allUsers = User.query.all()
         result = PublicUserSchema(many=True).dump(allUsers)
-        return jsonify(result.data)
+        return jsonify(result)
 
     @app.route('/userdetails', methods=['GET'])
     @webTokenAuth.login_required
     def get_user_details():
         user = g.authenticatedUser
         result = DefaultUserSchema().dump(user)
-        return jsonify(result.data)
+        return jsonify(result)
 
     @app.route('/userdetails', methods=['PUT'])
     @webTokenAuth.login_required
     def set_user_details():
         user = g.authenticatedUser
 
-        ## Do not set database session and instance yet to avoid implicit model modification
-        updateUserSchema = DefaultUserSchema().load(request.json, session=None, instance=None)
+        try:
+            ## Do not set database session and instance yet to avoid implicit model modification
+            userSchemaResult = DefaultUserSchema().load(request.json, session=None, instance=None)
 
-        if len(updateUserSchema.errors) > 0:
-            app.logger.warning('Model validation failed with errors: {0}'.format(updateUserSchema.errors))
+            user.masterPasswordAuthenticationHash = userSchemaResult.masterPasswordAuthenticationHash
+            user.masterEncryptionKey = userSchemaResult.masterEncryptionKey
+            user.settings = userSchemaResult.settings
+            user.modified = userSchemaResult.modified
+
+            db.session.commit()
+
+        except ValidationError as e:
+            app.logger.warning('Model validation failed with errors: {0}'.format(e))
             abort(400)
-
-        updatedUser = updateUserSchema.data
-
-        user.masterPasswordAuthenticationHash = updatedUser.masterPasswordAuthenticationHash
-        user.masterEncryptionKey = updatedUser.masterEncryptionKey
-        user.settings = updatedUser.settings
-        user.modified = updatedUser.modified
-
-        db.session.commit()
 
         return ('', 204)
 
@@ -337,25 +337,25 @@ def createApp(testConfig=None):
         userItems = Item.query.filter(Item.id.in_(itemAuthorizationItemIds))
 
         result = DefaultItemSchema(many=True).dump(userItems)
-        return jsonify(result.data)
+        return jsonify(result)
 
     @app.route('/items', methods=['PUT'])
     @webTokenAuth.login_required
     def set_user_items():
         user = g.authenticatedUser
 
-        ## Do not set database session and instance yet to avoid implicit model modification
-        itemsSchema = DefaultItemSchema(many=True)
-        itemsSchemaResult = itemsSchema.load(request.json, session=None, instance=None)
+        try:
+            ## Do not set database session and instance yet to avoid implicit model modification
+            itemsSchemaResult = DefaultItemSchema(many=True).load(request.json, session=None, instance=None)
 
-        if len(itemsSchemaResult.errors) > 0:
-            app.logger.warning('Model validation failed with errors: {0}'.format(itemsSchemaResult.errors))
+            for item in itemsSchemaResult:
+                createOrUpdateItem(user, item)
+
+            db.session.commit()
+
+        except ValidationError as e:
+            app.logger.warning('Model validation failed with errors: {0}'.format(e))
             abort(400)
-
-        for item in itemsSchemaResult.data:
-            createOrUpdateItem(user, item)
-
-        db.session.commit()
 
         return ('', 204)
 
@@ -431,25 +431,27 @@ def createApp(testConfig=None):
         result = DefaultItemAuthorizationSchema(many=True).dump(
             itemAuthorizationsForUser + itemAuthorizationsCreatedByUser
         )
-        return jsonify(result.data)
+        return jsonify(result)
 
     @app.route('/itemauthorizations', methods=['PUT'])
     @webTokenAuth.login_required
     def set_user_item_authorizations():
         user = g.authenticatedUser
 
-        ## Do not set database session and instance yet to avoid implicit model modification
-        itemAuthorizationsSchema = DefaultItemAuthorizationSchema(many=True)
-        itemAuthorizationsSchemaResult = itemAuthorizationsSchema.load(request.json, session=None, instance=None)
+        try:
+            itemAuthorizationsSchema = DefaultItemAuthorizationSchema(many=True)
 
-        if (len(itemAuthorizationsSchemaResult.errors) > 0):
-            app.logger.warning('Model validation failed with errors: {0}'.format(itemAuthorizationsSchemaResult.errors))
+            ## Do not set database session and instance yet to avoid implicit model modification
+            itemAuthorizationsSchemaResult = itemAuthorizationsSchema.load(request.json, session=None, instance=None)
+
+            for itemAuthorization in itemAuthorizationsSchemaResult:
+                createOrUpdateItemAuthorization(user, itemAuthorization)
+
+            db.session.commit()
+
+        except ValidationError as e:
+            app.logger.warning('Model validation failed with errors: {0}'.format(e))
             abort(400)
-
-        for itemAuthorization in itemAuthorizationsSchemaResult.data:
-            createOrUpdateItemAuthorization(user, itemAuthorization)
-
-        db.session.commit()
 
         return ('', 204)
 

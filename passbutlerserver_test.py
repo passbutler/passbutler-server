@@ -891,7 +891,8 @@ class UserTests(PassButlerTestCase):
 
         db.session.rollback()
 
-        assert response.status_code == 204
+        assert response.status_code == 400
+        assert response.get_json() == {'error': 'Invalid request'}
         assert createUserJson(User.query.get('alice')) == initialUserJson
 
     ## Invalid JSON test
@@ -1535,7 +1536,8 @@ class UserTests(PassButlerTestCase):
 
         db.session.rollback()
 
-        assert response.status_code == 204
+        assert response.status_code == 400
+        assert response.get_json() == {'error': 'Invalid request'}
         assert createItemJson(Item.query.get('item1')) == initialItem1Json
 
     ## Invalid JSON test
@@ -2306,7 +2308,8 @@ class UserTests(PassButlerTestCase):
 
         db.session.rollback()
 
-        assert response.status_code == 204
+        assert response.status_code == 400
+        assert response.get_json() == {'error': 'Invalid request'}
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == initialItemAuthorization1Json
 
     ## Invalid JSON test
