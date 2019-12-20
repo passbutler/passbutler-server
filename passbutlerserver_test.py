@@ -1085,12 +1085,480 @@ class UserTests(PassButlerTestCase):
         assert createItemJson(Item.query.get('item1')) == item1Json
         assert createItemJson(Item.query.get('item2')) == item2Json
 
-    ## Permission tests (create for other users)
+    def test_set_user_items_create_deleted_item(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        item1Json = {
+            'id': 'item1',
+            'userId': 'alice',
+            'data': 'example item data 1',
+            'deleted': True,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        requestData = [item1Json]
+        response = self.client.put('/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 204
+        assert createItemJson(Item.query.get('item1')) == item1Json
+
+    def test_set_user_items_create_item_with_not_existing_user(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        item1Json = {
+            'id': 'item1',
+            'userId': 'notExistingUser',
+            'data': 'example item data 1',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        requestData = [item1Json]
+        response = self.client.put('/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 404
+        assert response.get_json() == {'error': 'Not found'}
+        assert Item.query.get('item1') == None
+
+    ## Permission tests
+
+    def test_set_user_items_create_item_for_other_user(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        self.addUsers(alice, sandy)
+
+        item1Json = {
+            'id': 'item1',
+            'userId': 'sandy',
+            'data': 'example item data 1',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        requestData = [item1Json]
+        response = self.client.put('/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        ## Alice is not allowed to create a item for another user (Sandy)
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Forbidden'}
+        assert Item.query.get('item1') == None
+
+    def test_set_user_items_create_item_without_item_authorization(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        item1 = Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
+        self.addItems(item1)
+
+        initialItem1Json = createItemJson(item1)
+
+        item1Json = {
+            'id': 'item1',
+            'userId': 'alice',
+            'data': 'example item data 1a',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        requestData = [item1Json]
+        response = self.client.put('/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Forbidden'}
+        assert createItemJson(Item.query.get('item1')) == initialItem1Json
+
+    def test_set_user_items_create_item_with_readonly_item_authorization(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        item1 = Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
+        self.addItems(item1)
+
+        initialItem1Json = createItemJson(item1)
+
+        self.addItemAuthorizations(
+            ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', True, False, 12345678902, 12345678901)
+        )
+
+        item1Json = {
+            'id': 'item1',
+            'userId': 'alice',
+            'data': 'example item data 1a',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        requestData = [item1Json]
+        response = self.client.put('/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Forbidden'}
+        assert createItemJson(Item.query.get('item1')) == initialItem1Json
+
     ## General modify field tests
+
+    def test_set_user_items_change_field_userId_existing(self):
+        requestData = [{
+            'id': 'item1',
+            'userId': 'sandy',
+            'data': 'example data 1',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+
+        ## The field is immutable
+        expected = {
+            'id': 'item1',
+            'userId': 'alice',
+            'data': 'example data 1',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        self.__test_set_user_items_change_field(requestData, expected)
+
+    def test_set_user_items_change_field_userId_not_existing(self):
+        requestData = [{
+            'id': 'item1',
+            'userId': 'notExistingUser',
+            'data': 'example data 1',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+
+        ## The field is immutable
+        expected = {
+            'id': 'item1',
+            'userId': 'alice',
+            'data': 'example data 1',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        self.__test_set_user_items_change_field(
+            requestData=requestData,
+            expected=expected,
+            expectedStatusCode = 404,
+            expectedResponseJson = {'error': 'Not found'}
+        )
+
+    def test_set_user_items_change_field_data(self):
+        requestData = [{
+            'id': 'item1',
+            'userId': 'alice',
+            'data': 'example data 1 changed',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        expected = requestData[0]
+        self.__test_set_user_items_change_field(requestData, expected)
+
+    def test_set_user_items_change_field_deleted(self):
+        requestData = [{
+            'id': 'item1',
+            'userId': 'alice',
+            'data': 'example data 1',
+            'deleted': True,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        expected = requestData[0]
+        self.__test_set_user_items_change_field(requestData, expected)
+
+    def test_set_user_items_change_field_modified(self):
+        requestData = [{
+            'id': 'item1',
+            'userId': 'alice',
+            'data': 'example data 1',
+            'deleted': False,
+            'modified': 12345678903,
+            'created': 12345678901
+        }]
+        expected = requestData[0]
+        self.__test_set_user_items_change_field(requestData, expected)
+
+    def test_set_user_items_change_field_created(self):
+        requestData = [{
+            'id': 'item1',
+            'userId': 'alice',
+            'data': 'example data 1',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678903
+        }]
+
+        ## The field is immutable
+        expected = {
+            'id': 'item1',
+            'userId': 'alice',
+            'data': 'example data 1',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        self.__test_set_user_items_change_field(requestData, expected)
+
+    def __test_set_user_items_change_field(
+        self,
+        requestData,
+        expected,
+        expectedStatusCode = 204,
+        expectedResponseJson = None
+    ):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        self.addUsers(alice, sandy)
+
+        self.addItems(Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901))
+        self.addItemAuthorizations(ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901))
+
+        response = self.client.put('/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == expectedStatusCode
+        assert response.get_json() == expectedResponseJson
+        assert createItemJson(Item.query.get('item1')) == expected
+
     ## General wrong field type tests
+
+    def test_set_user_items_wrong_field_type_id(self):
+        requestData = [{
+            'id': 1234,
+            'userId': 'alice',
+            'data': 'example data 1',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        self.__test_set_user_items_wrong_field_type(requestData)
+
+    def test_set_user_items_wrong_field_type_userId(self):
+        requestData = [{
+            'id': 'item1',
+            'userId': 1234,
+            'data': 'example data 1',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        self.__test_set_user_items_wrong_field_type(requestData)
+
+    def test_set_user_items_wrong_field_type_data(self):
+        requestData = [{
+            'id': 'item1',
+            'userId': 'alice',
+            'data': None,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        self.__test_set_user_items_wrong_field_type(requestData)
+
+    def test_set_user_items_wrong_field_type_deleted(self):
+        requestData = [{
+            'id': 'item1',
+            'userId': 'alice',
+            'data': 'example data 1',
+            'deleted': 'this is not a boolean',
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        self.__test_set_user_items_wrong_field_type(requestData)
+
+    def test_set_user_items_wrong_field_type_modified(self):
+        requestData = [{
+            'id': 'item1',
+            'userId': 'alice',
+            'data': 'example data 1',
+            'deleted': False,
+            'modified': 'this is not an integer',
+            'created': 12345678901
+        }]
+        self.__test_set_user_items_wrong_field_type(requestData)
+
+    def test_set_user_items_wrong_field_type_created(self):
+        requestData = [{
+            'id': 'item1',
+            'userId': 'alice',
+            'data': 'example data 1',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 'this is not an integer'
+        }]
+        self.__test_set_user_items_wrong_field_type(requestData)
+
+    def __test_set_user_items_wrong_field_type(self, requestData):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        item1 = Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
+        self.addItems(item1)
+
+        initialItem1Json = createItemJson(item1)
+
+        self.addItemAuthorizations(ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901))
+
+        response = self.client.put('/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 400
+        assert response.get_json() == {'error': 'Invalid request'}
+        assert createItemJson(Item.query.get('item1')) == initialItem1Json
+
     ## General missing field tests
+
+    def test_set_user_items_missing_field_all(self):
+        requestData = [{}]
+        self.__test_set_user_items_missing_field(requestData)
+
+    def test_set_user_items_missing_field_id(self):
+        requestData = [{
+            'userId': 'alice',
+            'data': 'example data 1',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        self.__test_set_user_items_missing_field(requestData)
+
+    def test_set_user_items_missing_field_userId(self):
+        requestData = [{
+            'id': 'item1',
+            'data': 'example data 1',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        self.__test_set_user_items_missing_field(requestData)
+
+    def test_set_user_items_missing_field_data(self):
+        requestData = [{
+            'id': 'item1',
+            'userId': 'alice',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        self.__test_set_user_items_missing_field(requestData)
+
+    def test_set_user_items_missing_field_deleted(self):
+        requestData = [{
+            'id': 'item1',
+            'userId': 'alice',
+            'data': 'example data 1',
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        self.__test_set_user_items_missing_field(requestData)
+
+    def test_set_user_items_missing_field_modified(self):
+        requestData = [{
+            'id': 'item1',
+            'userId': 'alice',
+            'data': 'example data 1',
+            'deleted': False,
+            'created': 12345678901
+        }]
+        self.__test_set_user_items_missing_field(requestData)
+
+    def test_set_user_items_missing_field_created(self):
+        requestData = [{
+            'id': 'item1',
+            'userId': 'alice',
+            'data': 'example data 1',
+            'deleted': False,
+            'modified': 12345678902
+        }]
+        self.__test_set_user_items_missing_field(requestData)
+
+    def __test_set_user_items_missing_field(self, requestData):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        item1 = Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
+        self.addItems(item1)
+
+        initialItem1Json = createItemJson(item1)
+
+        self.addItemAuthorizations(ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901))
+
+        response = self.client.put('/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 400
+        assert response.get_json() == {'error': 'Invalid request'}
+        assert createItemJson(Item.query.get('item1')) == initialItem1Json
+
     ## Unknown field test
+
+    def test_set_user_items_unknown_field(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        item1 = Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
+        self.addItems(item1)
+
+        initialItem1Json = createItemJson(item1)
+
+        self.addItemAuthorizations(ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901))
+
+        item1Json = createItemJson(item1)
+        item1Json['foo'] = 'bar'
+        requestData = [item1Json]
+        response = self.client.put('/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 204
+        assert createItemJson(Item.query.get('item1')) == initialItem1Json
+
     ## Invalid JSON test
+
+    def test_set_user_items_invalid_json(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        item1 = Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
+        self.addItems(item1)
+
+        initialItem1Json = createItemJson(item1)
+
+        self.addItemAuthorizations(ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901))
+
+        requestData = '[{this is not valid JSON]'
+        response = self.client.put('/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 400
+        assert response.get_json() == {'error': 'Invalid request'}
+        assert createItemJson(Item.query.get('item1')) == initialItem1Json
 
     """
     Tests for GET /itemauthorizations

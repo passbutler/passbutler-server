@@ -401,7 +401,6 @@ def createApp(testConfig=None):
 
             ## Only update the allowed mutable fields
             existingItem.data = item.data
-            existingItem.readOnly = item.readOnly
             existingItem.deleted = item.deleted
             existingItem.modified = item.modified
 
