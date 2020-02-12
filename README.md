@@ -13,11 +13,11 @@ Setup virtual env:
 
 Install dependencies:
 
-    $ pip install flask-httpauth flask-sqlalchemy flask-marshmallow marshmallow marshmallow-sqlalchemy==0.18.0
+    $ pip install flask==1.1.1 flask-httpauth==3.3.0 flask-sqlalchemy==2.4.1 flask-marshmallow==0.11.0 marshmallow==3.4.0 marshmallow-sqlalchemy==0.18.0
 
 Install unit testing dependencies:
 
-    $ pip install pytest flask-testing
+    $ pip install pytest==5.3.5 Werkzeug==0.16.1 flask-testing==0.7.1
 
 Change to path of this repository:
 
