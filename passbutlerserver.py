@@ -279,6 +279,24 @@ def createApp(testConfig=None):
         app.logger.error('Unexpected exception occured: %s', (exception))
         return make_response(jsonify({'error': 'Server error'}), 500)
 
+    # @app.after_request
+    # def logRequestResponse(response):
+    #     app.logger.debug(
+    #         'Response for request %s %s: %s\n' +
+    #         '--------------------------------------------------------------------------------\n' +
+    #         '%s' +
+    #         '--------------------------------------------------------------------------------\n' +
+    #         '%s\n' +
+    #         '--------------------------------------------------------------------------------\n',
+    #         request.method,
+    #         request.path,
+    #         response.status,
+    #         request.headers,
+    #         response.data.decode('utf-8')
+    #     )
+
+    #     return response
+
     """
     Get a new token is only possible with password based authentication
     to be sure tokens can't refresh themselfs for unlimited time!
