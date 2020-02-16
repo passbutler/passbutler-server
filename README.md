@@ -1,4 +1,4 @@
-# PassButler API
+# Pass Butler server
 
 ## Development setup (tested on Ubuntu 16.04)
 
@@ -21,7 +21,7 @@ Install unit testing dependencies:
 
 Change to path of this repository:
 
-    $ cd /path/to/passbuttler-server/
+    $ cd /path/to/passbutler-server/
 
 ## Unit testing
 
