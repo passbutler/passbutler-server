@@ -315,6 +315,34 @@ def createApp(testConfig=None):
         result = PublicUserSchema(many=True).dump(allUsers)
         return jsonify(result)
 
+    @app.route('/' + API_VERSION_PREFIX + '/users', methods=['PUT'])
+    def set_users():
+        if (app.config.get('ENABLE_REGISTRATION', False) == False):
+            app.logger.warning('The user registration is not enabled!')
+            abort(403)
+
+        try:
+            ## Do not set database session and instance yet to avoid implicit model modification
+            userSchemaResult = DefaultUserSchema().load(request.json, session=None, instance=None)
+
+            username = userSchemaResult.username
+
+            ## Be sure, the user does not exists
+            if (User.query.get(username) is not None):
+                app.logger.warning(
+                    'The user (id="{0}") already exists - registration is not allowed!'.format(username)
+                )
+                abort(403)
+
+            db.session.add(userSchemaResult)
+            db.session.commit()
+
+        except ValidationError as e:
+            app.logger.warning('Model validation failed with errors: {0}'.format(e))
+            abort(400)
+
+        return ('', 204)
+
     @app.route('/' + API_VERSION_PREFIX + '/user', methods=['GET'])
     @webTokenAuth.login_required
     def get_user_details():
@@ -538,3 +566,4 @@ def createApp(testConfig=None):
 if __name__ == '__main__':
     app = createApp()
     app.run(host=app.config['SERVER_HOST'], port=app.config['SERVER_PORT'])
+

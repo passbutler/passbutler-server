@@ -261,6 +261,93 @@ class PassButlerTestCase(TestConfigurationTestCase):
         ])
 
     """
+    Tests for PUT /users
+
+    """
+
+    def test_add_users_non_existing_user(self):
+        ## Enable registration in config
+        self.app.config['ENABLE_REGISTRATION'] = True
+
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        response = self.client.put('/' + API_VERSION_PREFIX + '/users', json=requestData)
+
+        ## Discard uncommited changes to check if the changes has been committed
+        db.session.rollback()
+
+        assert response.status_code == 204
+        assert createUserJson(User.query.get('alice')) == requestData
+
+    def test_add_users_disabled_registration(self):
+        ## Disable registration in config
+        self.app.config['ENABLE_REGISTRATION'] = False
+
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        response = self.client.put('/' + API_VERSION_PREFIX + '/users', json=requestData)
+
+        ## Discard uncommited changes to check if the changes has been committed
+        db.session.rollback()
+
+        assert response.status_code == 403
+        assert User.query.get('alice') == None
+
+    def test_add_users_already_existing_user(self):
+        ## Enable registration in config
+        self.app.config['ENABLE_REGISTRATION'] = True
+
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        initialUserJson = createUserJson(alice)
+
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        response = self.client.put('/' + API_VERSION_PREFIX + '/users', json=requestData)
+
+        ## Discard uncommited changes to check if the changes has been committed
+        db.session.rollback()
+
+        assert response.status_code == 403
+        assert createUserJson(User.query.get('alice')) == initialUserJson
+
+    ## TODO: Invalid model tests
+
+    """
     Tests for GET /user
 
     """
