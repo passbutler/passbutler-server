@@ -7,7 +7,7 @@ from itsdangerous import TimedJSONWebSignatureSerializer
 import base64
 import unittest
 
-class PassButlerTestCase(TestCase):
+class TestConfigurationTestCase(TestCase):
 
     TESTING = True
 
@@ -98,7 +98,7 @@ def createHttpTokenAuthHeaders(secretKey, user, expiresIn=3600, signatureAlgorit
     token = user.generateAuthenticationToken(tokenSerializer)
     return {'Authorization': 'Bearer ' + token}
 
-class UserTests(PassButlerTestCase):
+class PassButlerTestCase(TestConfigurationTestCase):
 
     def addUsers(self, *users):
         for user in users:
