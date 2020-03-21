@@ -119,6 +119,456 @@ class PassButlerTestCase(TestConfigurationTestCase):
         db.session.commit() 
 
     """
+    Tests for PUT /register
+
+    """
+
+    def test_register_user_non_existing_user(self):
+        ## Enable registration in config
+        self.app.config['ENABLE_REGISTRATION'] = True
+
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData)
+
+        ## Discard uncommited changes to check if the changes has been committed
+        db.session.rollback()
+
+        assert response.status_code == 204
+        assert createUserJson(User.query.get('alice')) == requestData
+
+    def test_register_user_disabled_registration(self):
+        ## Disable registration in config
+        self.app.config['ENABLE_REGISTRATION'] = False
+
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData)
+
+        ## Discard uncommited changes to check if the changes has been committed
+        db.session.rollback()
+
+        assert response.status_code == 403
+        assert User.query.get('alice') == None
+
+    def test_register_user_already_existing_user(self):
+        ## Enable registration in config
+        self.app.config['ENABLE_REGISTRATION'] = True
+
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        initialUserJson = createUserJson(alice)
+
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData)
+
+        ## Discard uncommited changes to check if the changes has been committed
+        db.session.rollback()
+
+        assert response.status_code == 403
+        assert createUserJson(User.query.get('alice')) == initialUserJson
+
+    ## General wrong field type tests
+
+    def test_register_user_wrong_field_type_username(self):
+        requestData = {
+            'username': 1234,
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_register_user_wrong_field_type(requestData)
+
+    def test_register_user_wrong_field_type_masterPasswordAuthenticationHash(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 1234,
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_register_user_wrong_field_type(requestData)
+
+    def test_register_user_wrong_field_type_masterKeyDerivationInformation(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': None,
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_register_user_wrong_field_type(requestData)
+
+    def test_register_user_wrong_field_type_masterEncryptionKey(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': None,
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_register_user_wrong_field_type(requestData)
+
+    def test_register_user_wrong_field_type_itemEncryptionPublicKey(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': None,
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_register_user_wrong_field_type(requestData)
+
+    def test_register_user_wrong_field_type_itemEncryptionSecretKey(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': None,
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_register_user_wrong_field_type(requestData)
+
+    def test_register_user_wrong_field_type_settings(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': None,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_register_user_wrong_field_type(requestData)
+
+    def test_register_user_wrong_field_type_deleted(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': 'this is not a boolean',
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_register_user_wrong_field_type(requestData)
+
+    def test_register_user_wrong_field_type_modified(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 'this is not an integer',
+            'created': 12345678901
+        }
+        self.__test_register_user_wrong_field_type(requestData)
+
+    def test_register_user_wrong_field_type_created(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 'this is not an integer'
+        }
+        self.__test_register_user_wrong_field_type(requestData)
+
+    def __test_register_user_wrong_field_type(self, requestData):
+        ## Enable registration in config
+        self.app.config['ENABLE_REGISTRATION'] = True
+
+        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData)
+
+        db.session.rollback()
+
+        assert response.status_code == 400
+        assert response.get_json() == {'error': 'Invalid request'}
+        assert User.query.get('alice') == None
+
+    ## General missing field tests
+
+    def test_register_user_missing_field_all(self):
+        requestData = {}
+        self.__test_register_user_missing_field(requestData)
+
+    def test_register_user_missing_field_username(self):
+        requestData = {
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_register_user_missing_field(requestData)
+
+    def test_register_user_missing_field_masterPasswordAuthenticationHash(self):
+        requestData = {
+            'username': 'alice',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_register_user_missing_field(requestData)
+
+    def test_register_user_missing_field_masterKeyDerivationInformation(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_register_user_missing_field(requestData)
+
+    def test_register_user_missing_field_masterEncryptionKey(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_register_user_missing_field(requestData)
+
+    def test_register_user_missing_field_itemEncryptionPublicKey(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_register_user_missing_field(requestData)
+
+    def test_register_user_missing_field_itemEncryptionSecretKey(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_register_user_missing_field(requestData)
+
+    def test_register_user_missing_field_settings(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_register_user_missing_field(requestData)
+
+    def test_register_user_missing_field_deleted(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_register_user_missing_field(requestData)
+
+    def test_register_user_missing_field_modified(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'created': 12345678901
+        }
+        self.__test_register_user_missing_field(requestData)
+
+    def test_register_user_missing_field_created(self):
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902
+        }
+        self.__test_register_user_missing_field(requestData)
+
+    def __test_register_user_missing_field(self, requestData):
+        ## Enable registration in config
+        self.app.config['ENABLE_REGISTRATION'] = True
+
+        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData)
+
+        db.session.rollback()
+
+        assert response.status_code == 400
+        assert response.get_json() == {'error': 'Invalid request'}
+        assert User.query.get('alice') == None
+
+    ## Unknown field test
+
+    def test_register_user_unknown_field(self):
+        ## Enable registration in config
+        self.app.config['ENABLE_REGISTRATION'] = True
+
+        requestData = {
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901,
+            'foo': 'bar'
+        }
+
+        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData)
+
+        db.session.rollback()
+
+        assert response.status_code == 400
+        assert response.get_json() == {'error': 'Invalid request'}
+        assert User.query.get('alice') == None
+
+    ## Invalid JSON test
+
+    def test_register_user_invalid_json(self):
+        ## Enable registration in config
+        self.app.config['ENABLE_REGISTRATION'] = True
+
+        requestData = '{this is not valid JSON}'
+        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData)
+
+        db.session.rollback()
+
+        assert response.status_code == 400
+        assert response.get_json() == {'error': 'Invalid request'}
+        assert User.query.get('alice') == None
+
+    """
     Tests for GET /token
 
     """
@@ -259,456 +709,6 @@ class PassButlerTestCase(TestConfigurationTestCase):
             {'username': 'alice', 'itemEncryptionPublicKey': 'a3', 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
             {'username': 'sandy', 'itemEncryptionPublicKey': 's3', 'deleted': False, 'modified': 12345678904, 'created': 12345678903}
         ])
-
-    """
-    Tests for PUT /users
-
-    """
-
-    def test_add_users_non_existing_user(self):
-        ## Enable registration in config
-        self.app.config['ENABLE_REGISTRATION'] = True
-
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901
-        }
-
-        response = self.client.put('/' + API_VERSION_PREFIX + '/users', json=requestData)
-
-        ## Discard uncommited changes to check if the changes has been committed
-        db.session.rollback()
-
-        assert response.status_code == 204
-        assert createUserJson(User.query.get('alice')) == requestData
-
-    def test_add_users_disabled_registration(self):
-        ## Disable registration in config
-        self.app.config['ENABLE_REGISTRATION'] = False
-
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901
-        }
-
-        response = self.client.put('/' + API_VERSION_PREFIX + '/users', json=requestData)
-
-        ## Discard uncommited changes to check if the changes has been committed
-        db.session.rollback()
-
-        assert response.status_code == 403
-        assert User.query.get('alice') == None
-
-    def test_add_users_already_existing_user(self):
-        ## Enable registration in config
-        self.app.config['ENABLE_REGISTRATION'] = True
-
-        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        self.addUsers(alice)
-
-        initialUserJson = createUserJson(alice)
-
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901
-        }
-
-        response = self.client.put('/' + API_VERSION_PREFIX + '/users', json=requestData)
-
-        ## Discard uncommited changes to check if the changes has been committed
-        db.session.rollback()
-
-        assert response.status_code == 403
-        assert createUserJson(User.query.get('alice')) == initialUserJson
-
-    ## General wrong field type tests
-
-    def test_add_users_wrong_field_type_username(self):
-        requestData = {
-            'username': 1234,
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901
-        }
-        self.__test_add_users_wrong_field_type(requestData)
-
-    def test_add_users_wrong_field_type_masterPasswordAuthenticationHash(self):
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 1234,
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901
-        }
-        self.__test_add_users_wrong_field_type(requestData)
-
-    def test_add_users_wrong_field_type_masterKeyDerivationInformation(self):
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': None,
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901
-        }
-        self.__test_add_users_wrong_field_type(requestData)
-
-    def test_add_users_wrong_field_type_masterEncryptionKey(self):
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': None,
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901
-        }
-        self.__test_add_users_wrong_field_type(requestData)
-
-    def test_add_users_wrong_field_type_itemEncryptionPublicKey(self):
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': None,
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901
-        }
-        self.__test_add_users_wrong_field_type(requestData)
-
-    def test_add_users_wrong_field_type_itemEncryptionSecretKey(self):
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': None,
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901
-        }
-        self.__test_add_users_wrong_field_type(requestData)
-
-    def test_add_users_wrong_field_type_settings(self):
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': None,
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901
-        }
-        self.__test_add_users_wrong_field_type(requestData)
-
-    def test_add_users_wrong_field_type_deleted(self):
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': 'this is not a boolean',
-            'modified': 12345678902,
-            'created': 12345678901
-        }
-        self.__test_add_users_wrong_field_type(requestData)
-
-    def test_add_users_wrong_field_type_modified(self):
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 'this is not an integer',
-            'created': 12345678901
-        }
-        self.__test_add_users_wrong_field_type(requestData)
-
-    def test_add_users_wrong_field_type_created(self):
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 'this is not an integer'
-        }
-        self.__test_add_users_wrong_field_type(requestData)
-
-    def __test_add_users_wrong_field_type(self, requestData):
-        ## Enable registration in config
-        self.app.config['ENABLE_REGISTRATION'] = True
-
-        response = self.client.put('/' + API_VERSION_PREFIX + '/users', json=requestData)
-
-        db.session.rollback()
-
-        assert response.status_code == 400
-        assert response.get_json() == {'error': 'Invalid request'}
-        assert User.query.get('alice') == None
-
-    ## General missing field tests
-
-    def test_add_users_missing_field_all(self):
-        requestData = {}
-        self.__test_add_users_missing_field(requestData)
-
-    def test_add_users_missing_field_username(self):
-        requestData = {
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901
-        }
-        self.__test_add_users_missing_field(requestData)
-
-    def test_add_users_missing_field_masterPasswordAuthenticationHash(self):
-        requestData = {
-            'username': 'alice',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901
-        }
-        self.__test_add_users_missing_field(requestData)
-
-    def test_add_users_missing_field_masterKeyDerivationInformation(self):
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901
-        }
-        self.__test_add_users_missing_field(requestData)
-
-    def test_add_users_missing_field_masterEncryptionKey(self):
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901
-        }
-        self.__test_add_users_missing_field(requestData)
-
-    def test_add_users_missing_field_itemEncryptionPublicKey(self):
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901
-        }
-        self.__test_add_users_missing_field(requestData)
-
-    def test_add_users_missing_field_itemEncryptionSecretKey(self):
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901
-        }
-        self.__test_add_users_missing_field(requestData)
-
-    def test_add_users_missing_field_settings(self):
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901
-        }
-        self.__test_add_users_missing_field(requestData)
-
-    def test_add_users_missing_field_deleted(self):
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'modified': 12345678902,
-            'created': 12345678901
-        }
-        self.__test_add_users_missing_field(requestData)
-
-    def test_add_users_missing_field_modified(self):
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': False,
-            'created': 12345678901
-        }
-        self.__test_add_users_missing_field(requestData)
-
-    def test_add_users_missing_field_created(self):
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 12345678902
-        }
-        self.__test_add_users_missing_field(requestData)
-
-    def __test_add_users_missing_field(self, requestData):
-        ## Enable registration in config
-        self.app.config['ENABLE_REGISTRATION'] = True
-
-        response = self.client.put('/' + API_VERSION_PREFIX + '/users', json=requestData)
-
-        db.session.rollback()
-
-        assert response.status_code == 400
-        assert response.get_json() == {'error': 'Invalid request'}
-        assert User.query.get('alice') == None
-
-    ## Unknown field test
-
-    def test_add_users_unknown_field(self):
-        ## Enable registration in config
-        self.app.config['ENABLE_REGISTRATION'] = True
-
-        requestData = {
-            'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901,
-            'foo': 'bar'
-        }
-
-        response = self.client.put('/' + API_VERSION_PREFIX + '/users', json=requestData)
-
-        db.session.rollback()
-
-        assert response.status_code == 400
-        assert response.get_json() == {'error': 'Invalid request'}
-        assert User.query.get('alice') == None
-
-    ## Invalid JSON test
-
-    def test_add_users_invalid_json(self):
-        ## Enable registration in config
-        self.app.config['ENABLE_REGISTRATION'] = True
-
-        requestData = '{this is not valid JSON}'
-        response = self.client.put('/' + API_VERSION_PREFIX + '/users', json=requestData)
-
-        db.session.rollback()
-
-        assert response.status_code == 400
-        assert response.get_json() == {'error': 'Invalid request'}
-        assert User.query.get('alice') == None    
 
     """
     Tests for GET /user

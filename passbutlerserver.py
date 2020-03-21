@@ -297,26 +297,8 @@ def createApp(testConfig=None):
 
     #     return response
 
-    """
-    Get a new token is only possible with password based authentication
-    to be sure tokens can't refresh themselfs for unlimited time!
-    """
-    @app.route('/' + API_VERSION_PREFIX + '/token', methods=['GET'])
-    @passwordAuth.login_required
-    def get_token():
-        user = g.authenticatedUser
-        token = user.generateAuthenticationToken(tokenSerializer)
-        return jsonify({'token': token})
-
-    @app.route('/' + API_VERSION_PREFIX + '/users', methods=['GET'])
-    @webTokenAuth.login_required
-    def get_users():
-        allUsers = User.query.all()
-        result = PublicUserSchema(many=True).dump(allUsers)
-        return jsonify(result)
-
-    @app.route('/' + API_VERSION_PREFIX + '/users', methods=['PUT'])
-    def set_users():
+    @app.route('/' + API_VERSION_PREFIX + '/register', methods=['PUT'])
+    def register_user():
         if (app.config.get('ENABLE_REGISTRATION', False) == False):
             app.logger.warning('The user registration is not enabled!')
             abort(403)
@@ -342,6 +324,24 @@ def createApp(testConfig=None):
             abort(400)
 
         return ('', 204)
+
+    """
+    Get a new token is only possible with password based authentication
+    to be sure tokens can't refresh themselfs for unlimited time!
+    """
+    @app.route('/' + API_VERSION_PREFIX + '/token', methods=['GET'])
+    @passwordAuth.login_required
+    def get_token():
+        user = g.authenticatedUser
+        token = user.generateAuthenticationToken(tokenSerializer)
+        return jsonify({'token': token})
+
+    @app.route('/' + API_VERSION_PREFIX + '/users', methods=['GET'])
+    @webTokenAuth.login_required
+    def get_users():
+        allUsers = User.query.all()
+        result = PublicUserSchema(many=True).dump(allUsers)
+        return jsonify(result)
 
     @app.route('/' + API_VERSION_PREFIX + '/user', methods=['GET'])
     @webTokenAuth.login_required
