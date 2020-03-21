@@ -279,23 +279,24 @@ def createApp(testConfig=None):
         app.logger.error('Unexpected exception occured: %s', (exception))
         return make_response(jsonify({'error': 'Server error'}), 500)
 
-    # @app.after_request
-    # def logRequestResponse(response):
-    #     app.logger.debug(
-    #         'Response for request %s %s: %s\n' +
-    #         '--------------------------------------------------------------------------------\n' +
-    #         '%s' +
-    #         '--------------------------------------------------------------------------------\n' +
-    #         '%s\n' +
-    #         '--------------------------------------------------------------------------------\n',
-    #         request.method,
-    #         request.path,
-    #         response.status,
-    #         request.headers,
-    #         response.data.decode('utf-8')
-    #     )
+    @app.after_request
+    def logRequestResponse(response):
+        if (app.config.get('ENABLE_REQUEST_LOGGING', False) == True):
+            app.logger.debug(
+                'Response for request %s %s: %s\n' +
+                '--------------------------------------------------------------------------------\n' +
+                '%s' +
+                '--------------------------------------------------------------------------------\n' +
+                '%s\n' +
+                '--------------------------------------------------------------------------------\n',
+                request.method,
+                request.path,
+                response.status,
+                request.headers,
+                response.data.decode('utf-8')
+            )
 
-    #     return response
+        return response
 
     @app.route('/' + API_VERSION_PREFIX + '/register', methods=['PUT'])
     def register_user():
