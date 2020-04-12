@@ -279,23 +279,52 @@ def createApp(testConfig=None):
         app.logger.error('Unexpected exception occured: %s', (exception))
         return make_response(jsonify({'error': 'Server error'}), 500)
 
-    # @app.after_request
-    # def logRequestResponse(response):
-    #     app.logger.debug(
-    #         'Response for request %s %s: %s\n' +
-    #         '--------------------------------------------------------------------------------\n' +
-    #         '%s' +
-    #         '--------------------------------------------------------------------------------\n' +
-    #         '%s\n' +
-    #         '--------------------------------------------------------------------------------\n',
-    #         request.method,
-    #         request.path,
-    #         response.status,
-    #         request.headers,
-    #         response.data.decode('utf-8')
-    #     )
+    @app.after_request
+    def logRequestResponse(response):
+        if (app.config.get('ENABLE_REQUEST_LOGGING', False) == True):
+            app.logger.debug(
+                'Response for request %s %s: %s\n' +
+                '--------------------------------------------------------------------------------\n' +
+                '%s' +
+                '--------------------------------------------------------------------------------\n' +
+                '%s\n' +
+                '--------------------------------------------------------------------------------\n',
+                request.method,
+                request.path,
+                response.status,
+                request.headers,
+                response.data.decode('utf-8')
+            )
 
-    #     return response
+        return response
+
+    @app.route('/' + API_VERSION_PREFIX + '/register', methods=['PUT'])
+    def register_user():
+        if (app.config.get('ENABLE_REGISTRATION', False) == False):
+            app.logger.warning('The user registration is not enabled!')
+            abort(403)
+
+        try:
+            ## Do not set database session and instance yet to avoid implicit model modification
+            userSchemaResult = DefaultUserSchema().load(request.json, session=None, instance=None)
+
+            username = userSchemaResult.username
+
+            ## Be sure, the user does not exists
+            if (User.query.get(username) is not None):
+                app.logger.warning(
+                    'The user (id="{0}") already exists - registration is not allowed!'.format(username)
+                )
+                abort(403)
+
+            db.session.add(userSchemaResult)
+            db.session.commit()
+
+        except ValidationError as e:
+            app.logger.warning('Model validation failed with errors: {0}'.format(e))
+            abort(400)
+
+        return ('', 204)
 
     """
     Get a new token is only possible with password based authentication
@@ -538,3 +567,4 @@ def createApp(testConfig=None):
 if __name__ == '__main__':
     app = createApp()
     app.run(host=app.config['SERVER_HOST'], port=app.config['SERVER_PORT'])
+
