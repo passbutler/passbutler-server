@@ -549,8 +549,7 @@ def createApp(testConfig=None):
             """
             if (ItemAuthorization.query.filter_by(userId=user.username, itemId=itemAuthorization.itemId).count() > 0):
                 app.logger.warning(
-                    'An item authorization already exists for the item (id="{0}") and requesting user (id="{1}") ' + 
-                    '- do not created another one!'
+                    'An item authorization already exists for the item (id="{0}") and user (id="{1}")!'
                     .format(itemAuthorization.itemId, user.username)
                 )
                 abort(400)
