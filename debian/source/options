@@ -1,0 +1,6 @@
+tar-ignore = "passbutler-server-venv"
+tar-ignore = ".git"
+tar-ignore = "*.egg-info"
+tar-ignore = "*_test.py"
+tar-ignore = "*.py[co]"
+tar-ignore = "*.sqlite"

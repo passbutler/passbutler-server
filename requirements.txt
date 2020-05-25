@@ -1,0 +1,6 @@
+flask==1.1.1
+flask-httpauth==3.3.0
+flask-sqlalchemy==2.4.1
+flask-marshmallow==0.11.0
+marshmallow==2.21
+marshmallow-sqlalchemy==0.18.0
