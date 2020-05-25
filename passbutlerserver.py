@@ -219,6 +219,7 @@ def createApp(testConfig=None):
         wasSuccessful = False
         g.authenticatedUser = None
 
+        ## Authentication is only possible for non-deleted users
         requestingUser = User.query.filter_by(username=username, deleted=False).first()
 
         if requestingUser is not None and requestingUser.checkAuthenticationPassword(password):
@@ -237,6 +238,7 @@ def createApp(testConfig=None):
             username = tokenData.get('username')
 
             if username is not None:
+                ## Authentication is only possible for non-deleted users
                 user = User.query.filter_by(username=username, deleted=False).first()
 
                 if user is not None:
@@ -378,7 +380,7 @@ def createApp(testConfig=None):
     def get_user_items():
         user = g.authenticatedUser
 
-        ## Returns items where the user has a non-deleted item authorization
+        ## Returns only the items where the user has a non-deleted item authorization
         itemAuthorizations = ItemAuthorization.query.filter_by(userId=user.username, deleted=False).all()
         itemAuthorizationItemIds = map(lambda itemAuthorization: itemAuthorization.itemId, itemAuthorizations)
 
