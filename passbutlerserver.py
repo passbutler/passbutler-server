@@ -452,7 +452,7 @@ def createApp(testConfig=None):
 
             if (itemAuthorization.deleted == True):
                 app.logger.warning(
-                    'The requesting user (id={0}) tried to update item (id="{1}") but has only deleted item authorization!'
+                    'The requesting user (id={0}) tried to update item (id="{1}") but has only a deleted item authorization!'
                     .format(authenticatedUser.username, item.id)
                 )
                 abort(403)
