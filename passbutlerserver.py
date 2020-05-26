@@ -450,6 +450,13 @@ def createApp(testConfig=None):
                 )
                 abort(403)
 
+            if (itemAuthorization.deleted == True):
+                app.logger.warning(
+                    'The requesting user (id={0}) tried to update item (id="{1}") but has only deleted item authorization!'
+                    .format(authenticatedUser.username, item.id)
+                )
+                abort(403)
+
             ## Only update the allowed mutable fields
             existingItem.data = item.data
             existingItem.deleted = item.deleted

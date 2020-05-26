@@ -1663,6 +1663,37 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Forbidden'}
         assert createItemJson(Item.query.get('item1')) == initialItem1Json
 
+    def test_set_user_items_create_item_with_deleted_item_authorization(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        item1 = Item('item1', 'alice', 'example item data 1', False, 12345678902, 12345678901)
+        self.addItems(item1)
+
+        initialItem1Json = createItemJson(item1)
+
+        self.addItemAuthorizations(
+            ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, True, 12345678902, 12345678901)
+        )
+
+        item1Json = {
+            'id': 'item1',
+            'userId': 'alice',
+            'data': 'example item data 1a',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        requestData = [item1Json]
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Forbidden'}
+        assert createItemJson(Item.query.get('item1')) == initialItem1Json
+
     ## General modify field tests
 
     def test_set_user_items_change_field_userId_existing(self):
