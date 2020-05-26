@@ -460,10 +460,10 @@ def createApp(testConfig=None):
     def get_user_item_authorizations():
         authenticatedUser = g.authenticatedUser
 
-        ## 1) Item authorization created for requesting user
+        ## 1) Item authorizations created for requesting user
         itemAuthorizationsForUser = ItemAuthorization.query.filter_by(userId=authenticatedUser.username).all()
 
-        ## 2) Item authorization created by requesting user for other users
+        ## 2) Item authorizations created by requesting user for other users
         userItems = Item.query.filter_by(userId=authenticatedUser.username).all()
         userItemsIds = map(lambda item: item.id, userItems)
         itemAuthorizationsCreatedByUser = ItemAuthorization.query.filter(
