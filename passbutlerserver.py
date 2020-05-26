@@ -539,7 +539,7 @@ def createApp(testConfig=None):
         ## Determine to create or update the item authorization
         if (existingItemAuthorization is None):
             ## Check for already existing user+item combination to avoid multiple item authorization for the same user and item
-            if (ItemAuthorization.query.filter_by(userId=authenticatedUser.username, itemId=itemAuthorization.itemId).count() > 0):
+            if (ItemAuthorization.query.filter_by(userId=itemAuthorization.userId, itemId=itemAuthorization.itemId).count() > 0):
                 app.logger.warning(
                     'An item authorization already exists for the item (id="{0}") and user (id="{1}")!'
                     .format(itemAuthorization.itemId, authenticatedUser.username)
