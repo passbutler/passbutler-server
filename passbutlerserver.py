@@ -219,6 +219,7 @@ def createApp(testConfig=None):
         wasSuccessful = False
         g.authenticatedUser = None
 
+        ## Authentication is only possible for non-deleted users
         requestingUser = User.query.filter_by(username=username, deleted=False).first()
 
         if requestingUser is not None and requestingUser.checkAuthenticationPassword(password):
@@ -237,6 +238,7 @@ def createApp(testConfig=None):
             username = tokenData.get('username')
 
             if username is not None:
+                ## Authentication is only possible for non-deleted users
                 user = User.query.filter_by(username=username, deleted=False).first()
 
                 if user is not None:
@@ -313,7 +315,8 @@ def createApp(testConfig=None):
             ## Be sure, the user does not exists
             if (User.query.get(username) is not None):
                 app.logger.warning(
-                    'The user (id="{0}") already exists - registration is not allowed!'.format(username)
+                    'The user (id="{0}") already exists - registration is not possible!'
+                    .format(username)
                 )
                 abort(403)
 
@@ -333,8 +336,8 @@ def createApp(testConfig=None):
     @app.route('/' + API_VERSION_PREFIX + '/token', methods=['GET'])
     @passwordAuth.login_required
     def get_token():
-        user = g.authenticatedUser
-        token = user.generateAuthenticationToken(tokenSerializer)
+        authenticatedUser = g.authenticatedUser
+        token = authenticatedUser.generateAuthenticationToken(tokenSerializer)
         return jsonify({'token': token})
 
     @app.route('/' + API_VERSION_PREFIX + '/users', methods=['GET'])
@@ -347,23 +350,23 @@ def createApp(testConfig=None):
     @app.route('/' + API_VERSION_PREFIX + '/user', methods=['GET'])
     @webTokenAuth.login_required
     def get_user_details():
-        user = g.authenticatedUser
-        result = DefaultUserSchema().dump(user)
+        authenticatedUser = g.authenticatedUser
+        result = DefaultUserSchema().dump(authenticatedUser)
         return jsonify(result)
 
     @app.route('/' + API_VERSION_PREFIX + '/user', methods=['PUT'])
     @webTokenAuth.login_required
     def set_user_details():
-        user = g.authenticatedUser
+        authenticatedUser = g.authenticatedUser
 
         try:
             ## Do not set database session and instance yet to avoid implicit model modification
             userSchemaResult = DefaultUserSchema().load(request.json, session=None, instance=None)
 
-            user.masterPasswordAuthenticationHash = userSchemaResult.masterPasswordAuthenticationHash
-            user.masterEncryptionKey = userSchemaResult.masterEncryptionKey
-            user.settings = userSchemaResult.settings
-            user.modified = userSchemaResult.modified
+            authenticatedUser.masterPasswordAuthenticationHash = userSchemaResult.masterPasswordAuthenticationHash
+            authenticatedUser.masterEncryptionKey = userSchemaResult.masterEncryptionKey
+            authenticatedUser.settings = userSchemaResult.settings
+            authenticatedUser.modified = userSchemaResult.modified
 
             db.session.commit()
 
@@ -376,13 +379,11 @@ def createApp(testConfig=None):
     @app.route('/' + API_VERSION_PREFIX + '/user/items', methods=['GET'])
     @webTokenAuth.login_required
     def get_user_items():
-        user = g.authenticatedUser
+        authenticatedUser = g.authenticatedUser
 
-        ## Returns items where the user has a non-deleted item authorization
-        itemAuthorizations = ItemAuthorization.query.filter_by(userId=user.username, deleted=False).all()
+        ## Returns only the items where the user has a non-deleted item authorization
+        itemAuthorizations = ItemAuthorization.query.filter_by(userId=authenticatedUser.username, deleted=False).all()
         itemAuthorizationItemIds = map(lambda itemAuthorization: itemAuthorization.itemId, itemAuthorizations)
-
-        ## No deleted-flag check (the deletion status must be available to user, e.g. to reflect in UI)
         userItems = Item.query.filter(Item.id.in_(itemAuthorizationItemIds))
 
         result = DefaultItemSchema(many=True).dump(userItems)
@@ -391,14 +392,14 @@ def createApp(testConfig=None):
     @app.route('/' + API_VERSION_PREFIX + '/user/items', methods=['PUT'])
     @webTokenAuth.login_required
     def set_user_items():
-        user = g.authenticatedUser
+        authenticatedUser = g.authenticatedUser
 
         try:
             ## Do not set database session and instance yet to avoid implicit model modification
             itemsSchemaResult = DefaultItemSchema(many=True).load(request.json, session=None, instance=None)
 
             for item in itemsSchemaResult:
-                createOrUpdateItem(user, item)
+                createOrUpdateItem(authenticatedUser, item)
 
             db.session.commit()
 
@@ -408,43 +409,44 @@ def createApp(testConfig=None):
 
         return ('', 204)
 
-    def createOrUpdateItem(user, item):
-        ## No deleted-flag check (not necessary because a deleted-flagged user can't authenticate anyway)
-        itemUser = User.query.get(item.userId)
-
-        ## Be sure, the foreign key user exists
-        if (itemUser is None):
-            app.logger.warning('The user (id="{0}") of item (id="{1}") does not exist!'.format(item.userId, item.id))
+    def createOrUpdateItem(authenticatedUser, item):
+        ## Be sure, the foreign key `userId` exists
+        if (User.query.get(item.userId) is None):
+            app.logger.warning(
+                'The user (id="{0}") of item (id="{1}") does not exist!'
+                .format(item.userId, item.id)
+            )
             abort(404)
 
-        ## No deleted-flag check (a deleted item must be updatable, e.g. to undo deletion)
         existingItem = Item.query.get(item.id)
 
         ## Determine to create or update the item
         if (existingItem is None):
             ## It is not allowed to create items for other users
-            if (item.userId != user.username):
+            if (item.userId != authenticatedUser.username):
                 app.logger.warning(
-                    'The owner user of the item ({0}) is not the requesting user ({1}) - this is not allowed!'
-                    .format(item.userId, user.username)
+                    'The requesting user (id={0}) tried to create item for another user (id={1})!'
+                    .format(authenticatedUser.username, item.userId)
                 )
                 abort(403)
 
+            ## When an item is created, the item authorization can't be checked because it is still not existing
+
             db.session.add(item)
         else:
-            itemAuthorization = ItemAuthorization.query.filter_by(userId=user.username, itemId=item.id).first()
+            itemAuthorization = ItemAuthorization.query.filter_by(userId=authenticatedUser.username, itemId=item.id).first()
 
             if (itemAuthorization is None):
                 app.logger.warning(
-                    'The user has no item authorization for item (id="{0}") - modification is not allowed!'
-                    .format(item.id)
+                    'The requesting user (id={0}) tried to update item (id="{1}") but has no item authorization!'
+                    .format(authenticatedUser.username, item.id)
                 )
                 abort(403)
 
             if (itemAuthorization.readOnly == True):
                 app.logger.warning(
-                    'The user has a read-only item authorization for item (id="{0}") - modification is not allowed!'
-                    .format(item.id)
+                    'The requesting user (id={0}) tried to update item (id="{1}") but has only a read-only item authorization!'
+                    .format(authenticatedUser.username, item.id)
                 )
                 abort(403)
 
@@ -456,24 +458,18 @@ def createApp(testConfig=None):
     @app.route('/' + API_VERSION_PREFIX + '/user/itemauthorizations', methods=['GET'])
     @webTokenAuth.login_required
     def get_user_item_authorizations():
-        user = g.authenticatedUser
+        authenticatedUser = g.authenticatedUser
 
-        """
-        1) Item authorization created for current user:
-        No deleted-flag check (the deletion status must be available to user, e.g. to avoid try update according item)
-        """
-        itemAuthorizationsForUser = ItemAuthorization.query.filter_by(userId=user.username).all()
+        ## 1) Item authorizations created for requesting user
+        itemAuthorizationsForUser = ItemAuthorization.query.filter_by(userId=authenticatedUser.username).all()
 
-        """
-        2) Item authorization created by current user for other users:
-        No deleted-flag check (the deletion status must be available to user, e.g. to reflect in UI)
-        """
-        userItems = Item.query.filter_by(userId=user.username).all()
+        ## 2) Item authorizations created by requesting user for other users
+        userItems = Item.query.filter_by(userId=authenticatedUser.username).all()
         userItemsIds = map(lambda item: item.id, userItems)
         itemAuthorizationsCreatedByUser = ItemAuthorization.query.filter(
             and_(
                 ItemAuthorization.itemId.in_(userItemsIds),
-                ItemAuthorization.userId != user.username
+                ItemAuthorization.userId != authenticatedUser.username
             )
         ).all()
 
@@ -485,7 +481,7 @@ def createApp(testConfig=None):
     @app.route('/' + API_VERSION_PREFIX + '/user/itemauthorizations', methods=['PUT'])
     @webTokenAuth.login_required
     def set_user_item_authorizations():
-        user = g.authenticatedUser
+        authenticatedUser = g.authenticatedUser
 
         try:
             itemAuthorizationsSchema = DefaultItemAuthorizationSchema(many=True)
@@ -494,7 +490,7 @@ def createApp(testConfig=None):
             itemAuthorizationsSchemaResult = itemAuthorizationsSchema.load(request.json, session=None, instance=None)
 
             for itemAuthorization in itemAuthorizationsSchemaResult:
-                createOrUpdateItemAuthorization(user, itemAuthorization)
+                createOrUpdateItemAuthorization(authenticatedUser, itemAuthorization)
 
             db.session.commit()
 
@@ -504,54 +500,42 @@ def createApp(testConfig=None):
 
         return ('', 204)
 
-    def createOrUpdateItemAuthorization(user, itemAuthorization):
-        ## No deleted-flag check (not necessary because a deleted-flagged user can't authenticate anyway)
-        itemAuthorizationUser = User.query.get(itemAuthorization.userId)
-
-        ## Be sure, the foreign key user exists
-        if (itemAuthorizationUser is None):
+    def createOrUpdateItemAuthorization(authenticatedUser, itemAuthorization):
+        ## Be sure, the foreign key `userId` exists
+        if (User.query.get(itemAuthorization.userId) is None):
             app.logger.warning(
                 'The user (id="{0}") of item authorization (id="{1}") does not exist!'
                 .format(itemAuthorization.userId, itemAuthorization.id)
             )
             abort(404)
 
-        """
-        No deleted-flag check
-        (item authorizations of a deleted item must be updatable, e.g. to later revoke access of users)
-        """
-        itemAuthorizationItem = Item.query.get(itemAuthorization.itemId)
+        item = Item.query.get(itemAuthorization.itemId)
 
-        ## Be sure, the foreign key user exists
-        if (itemAuthorizationItem is None):
+        ## Be sure, the foreign key `itemId` exists
+        if (item is None):
             app.logger.warning(
                 'The item (id="{0}") of item authorization (id="{1}") does not exist!'
                 .format(itemAuthorization.itemId, itemAuthorization.id)
             )
             abort(404)
 
-        ## Only the owner of the corresponding item is able to create/update item
-        if (itemAuthorizationItem.userId != user.username):
+        ## Only the owner of the corresponding item is able to create/update item authorizations
+        if (item.userId != authenticatedUser.username):
             app.logger.warning(
-                'The item (id="{0}") of item authorization (id="{1}") is not owned by requesting user "{2}"!'
-                .format(itemAuthorization.itemId, itemAuthorization.id, user)
+                'The requesting user (id="{0}") tried to create/update item authorization (id="{1}") for item (id="{2}") that is owned by other user (id={3})!'
+                .format(authenticatedUser.username, itemAuthorization.id, item.id, item.userId)
             )
             abort(403)
 
-        ## No deleted-flag check (a deleted item authorization must be updatable, e.g. to undo deletion)
         existingItemAuthorization = ItemAuthorization.query.get(itemAuthorization.id)
 
         ## Determine to create or update the item authorization
         if (existingItemAuthorization is None):
-            """
-            If the item authorization is not existing, check if any is already existing for user+item combination
-            to avoid multiple item authorization for the same user and item:
-            """
-            if (ItemAuthorization.query.filter_by(userId=user.username, itemId=itemAuthorization.itemId).count() > 0):
+            ## Check for already existing user+item combination to avoid multiple item authorization for the same user and item
+            if (ItemAuthorization.query.filter_by(userId=authenticatedUser.username, itemId=itemAuthorization.itemId).count() > 0):
                 app.logger.warning(
-                    'An item authorization already exists for the item (id="{0}") and requesting user (id="{1}") ' + 
-                    '- do not created another one!'
-                    .format(itemAuthorization.itemId, user.username)
+                    'An item authorization already exists for the item (id="{0}") and user (id="{1}")!'
+                    .format(itemAuthorization.itemId, authenticatedUser.username)
                 )
                 abort(400)
 
