@@ -1609,7 +1609,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
-        item1 = Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
+        item1 = Item('item1', 'alice', 'example item data 1', False, 12345678902, 12345678901)
         self.addItems(item1)
 
         initialItem1Json = createItemJson(item1)
@@ -1636,7 +1636,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
-        item1 = Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
+        item1 = Item('item1', 'alice', 'example item data 1', False, 12345678902, 12345678901)
         self.addItems(item1)
 
         initialItem1Json = createItemJson(item1)
