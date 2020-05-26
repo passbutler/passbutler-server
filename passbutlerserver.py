@@ -450,6 +450,13 @@ def createApp(testConfig=None):
                 )
                 abort(403)
 
+            if (itemAuthorization.deleted == True):
+                app.logger.warning(
+                    'The requesting user (id={0}) tried to update item (id="{1}") but has only a deleted item authorization!'
+                    .format(authenticatedUser.username, item.id)
+                )
+                abort(403)
+
             ## Only update the allowed mutable fields
             existingItem.data = item.data
             existingItem.deleted = item.deleted
@@ -532,7 +539,7 @@ def createApp(testConfig=None):
         ## Determine to create or update the item authorization
         if (existingItemAuthorization is None):
             ## Check for already existing user+item combination to avoid multiple item authorization for the same user and item
-            if (ItemAuthorization.query.filter_by(userId=authenticatedUser.username, itemId=itemAuthorization.itemId).count() > 0):
+            if (ItemAuthorization.query.filter_by(userId=itemAuthorization.userId, itemId=itemAuthorization.itemId).count() > 0):
                 app.logger.warning(
                     'An item authorization already exists for the item (id="{0}") and user (id="{1}")!'
                     .format(itemAuthorization.itemId, authenticatedUser.username)

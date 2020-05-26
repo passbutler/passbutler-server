@@ -1609,7 +1609,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
-        item1 = Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
+        item1 = Item('item1', 'alice', 'example item data 1', False, 12345678902, 12345678901)
         self.addItems(item1)
 
         initialItem1Json = createItemJson(item1)
@@ -1636,13 +1636,44 @@ class PassButlerTestCase(TestConfigurationTestCase):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
-        item1 = Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901)
+        item1 = Item('item1', 'alice', 'example item data 1', False, 12345678902, 12345678901)
         self.addItems(item1)
 
         initialItem1Json = createItemJson(item1)
 
         self.addItemAuthorizations(
             ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', True, False, 12345678902, 12345678901)
+        )
+
+        item1Json = {
+            'id': 'item1',
+            'userId': 'alice',
+            'data': 'example item data 1a',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        requestData = [item1Json]
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/items', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 403
+        assert response.get_json() == {'error': 'Forbidden'}
+        assert createItemJson(Item.query.get('item1')) == initialItem1Json
+
+    def test_set_user_items_create_item_with_deleted_item_authorization(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        self.addUsers(alice)
+
+        item1 = Item('item1', 'alice', 'example item data 1', False, 12345678902, 12345678901)
+        self.addItems(item1)
+
+        initialItem1Json = createItemJson(item1)
+
+        self.addItemAuthorizations(
+            ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, True, 12345678902, 12345678901)
         )
 
         item1Json = {
@@ -2099,6 +2130,33 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == itemAuthorization1Json
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization2')) == itemAuthorization2Json
 
+    def test_set_user_item_authorizations_create_authorization_for_other_user(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        self.addUsers(alice, sandy)
+
+        self.addItems(Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901))
+        self.addItemAuthorizations(ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901))
+
+        itemAuthorization2Json = {
+            'id': 'itemAuthorization2',
+            'userId': 'sandy',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        requestData = [itemAuthorization2Json]
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 204
+        assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization2')) == itemAuthorization2Json
+
     def test_set_user_item_authorizations_create_deleted_authorization(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
@@ -2172,7 +2230,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Not found'}
         assert ItemAuthorization.query.get('itemAuthorization1') == None
 
-    def test_set_user_item_authorizations_create_authorization_for_item_with_already_existing_item_authorization(self):
+    def test_set_user_item_authorizations_create_authorization_for_item_with_already_existing_item_authorization_for_requesting_user(self):
         alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
@@ -2196,6 +2254,35 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
         assert ItemAuthorization.query.get('itemAuthorization1a') == None
+
+    def test_set_user_item_authorizations_create_authorization_for_item_with_already_existing_item_authorization_for_other_user(self):
+        alice = User('alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        self.addUsers(alice, sandy)
+
+        self.addItems(Item('item1', 'alice', 'example data 1', False, 12345678902, 12345678901))
+        self.addItemAuthorizations(
+            ItemAuthorization('itemAuthorization1', 'alice', 'item1', 'example item key 1', False, False, 12345678902, 12345678901),
+            ItemAuthorization('itemAuthorization2', 'sandy', 'item1', 'example item key 1', False, False, 12345678902, 12345678901)
+        )
+
+        requestData = [{
+            'id': 'itemAuthorization2a',
+            'userId': 'sandy',
+            'itemId': 'item1',
+            'itemKey': 'example item key 1',
+            'readOnly': False,
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }]
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user/itemauthorizations', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        db.session.rollback()
+
+        assert response.status_code == 400
+        assert response.get_json() == {'error': 'Invalid request'}
+        assert ItemAuthorization.query.get('itemAuthorization2a') == None
 
     ## Permission tests
 
