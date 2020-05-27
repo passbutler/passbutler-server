@@ -26,7 +26,7 @@ class Item(db.Model):
     __tablename__ = 'items'
 
     id = db.Column(db.String(36), primary_key=True, nullable=False)
-    userId = db.Column(db.String, db.ForeignKey('users.username'), nullable=False)
+    userId = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
     data = db.Column(db.JSON, nullable=False)
     deleted = db.Column(db.Boolean, nullable=False)
     modified = db.Column(db.Integer, nullable=False)
@@ -62,7 +62,7 @@ class ItemAuthorization(db.Model):
     __tablename__ = 'item_authorizations'
 
     id = db.Column(db.String(36), primary_key=True, nullable=False)
-    userId = db.Column(db.String, db.ForeignKey('users.username'), nullable=False)
+    userId = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
     itemId = db.Column(db.String, db.ForeignKey('items.id'), nullable=False)
     itemKey = db.Column(db.JSON, nullable=False)
     readOnly = db.Column(db.Boolean, nullable=False)
@@ -103,7 +103,8 @@ class User(db.Model):
 
     __tablename__ = 'users'
 
-    username = db.Column(db.String(64), primary_key=True, nullable=False)
+    id = db.Column(db.String(36), primary_key=True, nullable=False)
+    username = db.Column(db.String(64), unique=True, nullable=False)
     masterPasswordAuthenticationHash = db.Column(db.String, nullable=False)
     masterKeyDerivationInformation = db.Column(db.JSON, nullable=False)
     masterEncryptionKey = db.Column(db.JSON, nullable=False)
@@ -116,6 +117,7 @@ class User(db.Model):
 
     def __init__(
         self,
+        id,
         username,
         masterPasswordAuthenticationHash,
         masterKeyDerivationInformation,
@@ -127,6 +129,7 @@ class User(db.Model):
         modified,
         created
     ):
+        self.id = id
         self.username = username
         self.masterPasswordAuthenticationHash = masterPasswordAuthenticationHash
         self.masterKeyDerivationInformation = masterKeyDerivationInformation
@@ -139,18 +142,18 @@ class User(db.Model):
         self.created = created
 
     def __repr__(self):
-        return "<User(username={user.username!r}) @ {objId!r}>".format(user=self, objId=id(self))
+        return "<User(id={user.id!r}) @ {objId!r}>".format(user=self, objId=id(self))
 
     def checkAuthenticationPassword(self, password):
         return check_password_hash(self.masterPasswordAuthenticationHash, password)
 
     def generateAuthenticationToken(self, tokenSerializer):
-        return tokenSerializer.dumps({'username': self.username}).decode('ascii')
+        return tokenSerializer.dumps({'id': self.id}).decode('ascii')
 
 class PublicUserSchema(Schema):
     class Meta:
         ## Only the following fields are allowed to see for this schema
-        fields = ('username', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
+        fields = ('id', 'username', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
 
 class DefaultUserSchema(ModelSchema):
     class Meta:
@@ -235,11 +238,11 @@ def createApp(testConfig=None):
 
         try:
             tokenData = tokenSerializer.loads(token)
-            username = tokenData.get('username')
+            userId = tokenData.get('id')
 
-            if username is not None:
+            if userId is not None:
                 ## Authentication is only possible for non-deleted users
-                user = User.query.filter_by(username=username, deleted=False).first()
+                user = User.query.filter_by(id=userId, deleted=False).first()
 
                 if user is not None:
                     g.authenticatedUser = user
@@ -313,9 +316,9 @@ def createApp(testConfig=None):
             username = userSchemaResult.username
 
             ## Be sure, the user does not exists
-            if (User.query.get(username) is not None):
+            if (User.query.filter_by(username=username).first() is not None):
                 app.logger.warning(
-                    'The user (id="{0}") already exists - registration is not possible!'
+                    'The user (username="{0}") already exists - registration is not possible!'
                     .format(username)
                 )
                 abort(403)
@@ -363,6 +366,7 @@ def createApp(testConfig=None):
             ## Do not set database session and instance yet to avoid implicit model modification
             userSchemaResult = DefaultUserSchema().load(request.json, session=None, instance=None)
 
+            authenticatedUser.username = userSchemaResult.username
             authenticatedUser.masterPasswordAuthenticationHash = userSchemaResult.masterPasswordAuthenticationHash
             authenticatedUser.masterEncryptionKey = userSchemaResult.masterEncryptionKey
             authenticatedUser.settings = userSchemaResult.settings
@@ -382,7 +386,7 @@ def createApp(testConfig=None):
         authenticatedUser = g.authenticatedUser
 
         ## Returns only the items where the user has a non-deleted item authorization
-        itemAuthorizations = ItemAuthorization.query.filter_by(userId=authenticatedUser.username, deleted=False).all()
+        itemAuthorizations = ItemAuthorization.query.filter_by(userId=authenticatedUser.id, deleted=False).all()
         itemAuthorizationItemIds = map(lambda itemAuthorization: itemAuthorization.itemId, itemAuthorizations)
         userItems = Item.query.filter(Item.id.in_(itemAuthorizationItemIds))
 
@@ -423,10 +427,10 @@ def createApp(testConfig=None):
         ## Determine to create or update the item
         if (existingItem is None):
             ## It is not allowed to create items for other users
-            if (item.userId != authenticatedUser.username):
+            if (item.userId != authenticatedUser.id):
                 app.logger.warning(
                     'The requesting user (id={0}) tried to create item for another user (id={1})!'
-                    .format(authenticatedUser.username, item.userId)
+                    .format(authenticatedUser.id, item.userId)
                 )
                 abort(403)
 
@@ -434,26 +438,26 @@ def createApp(testConfig=None):
 
             db.session.add(item)
         else:
-            itemAuthorization = ItemAuthorization.query.filter_by(userId=authenticatedUser.username, itemId=item.id).first()
+            itemAuthorization = ItemAuthorization.query.filter_by(userId=authenticatedUser.id, itemId=item.id).first()
 
             if (itemAuthorization is None):
                 app.logger.warning(
                     'The requesting user (id={0}) tried to update item (id="{1}") but has no item authorization!'
-                    .format(authenticatedUser.username, item.id)
+                    .format(authenticatedUser.id, item.id)
                 )
                 abort(403)
 
             if (itemAuthorization.readOnly == True):
                 app.logger.warning(
                     'The requesting user (id={0}) tried to update item (id="{1}") but has only a read-only item authorization!'
-                    .format(authenticatedUser.username, item.id)
+                    .format(authenticatedUser.id, item.id)
                 )
                 abort(403)
 
             if (itemAuthorization.deleted == True):
                 app.logger.warning(
                     'The requesting user (id={0}) tried to update item (id="{1}") but has only a deleted item authorization!'
-                    .format(authenticatedUser.username, item.id)
+                    .format(authenticatedUser.id, item.id)
                 )
                 abort(403)
 
@@ -468,15 +472,15 @@ def createApp(testConfig=None):
         authenticatedUser = g.authenticatedUser
 
         ## 1) Item authorizations created for requesting user
-        itemAuthorizationsForUser = ItemAuthorization.query.filter_by(userId=authenticatedUser.username).all()
+        itemAuthorizationsForUser = ItemAuthorization.query.filter_by(userId=authenticatedUser.id).all()
 
         ## 2) Item authorizations created by requesting user for other users
-        userItems = Item.query.filter_by(userId=authenticatedUser.username).all()
+        userItems = Item.query.filter_by(userId=authenticatedUser.id).all()
         userItemsIds = map(lambda item: item.id, userItems)
         itemAuthorizationsCreatedByUser = ItemAuthorization.query.filter(
             and_(
                 ItemAuthorization.itemId.in_(userItemsIds),
-                ItemAuthorization.userId != authenticatedUser.username
+                ItemAuthorization.userId != authenticatedUser.id
             )
         ).all()
 
@@ -527,10 +531,10 @@ def createApp(testConfig=None):
             abort(404)
 
         ## Only the owner of the corresponding item is able to create/update item authorizations
-        if (item.userId != authenticatedUser.username):
+        if (item.userId != authenticatedUser.id):
             app.logger.warning(
                 'The requesting user (id="{0}") tried to create/update item authorization (id="{1}") for item (id="{2}") that is owned by other user (id={3})!'
-                .format(authenticatedUser.username, itemAuthorization.id, item.id, item.userId)
+                .format(authenticatedUser.id, itemAuthorization.id, item.id, item.userId)
             )
             abort(403)
 
@@ -541,8 +545,8 @@ def createApp(testConfig=None):
             ## Check for already existing user+item combination to avoid multiple item authorization for the same user and item
             if (ItemAuthorization.query.filter_by(userId=itemAuthorization.userId, itemId=itemAuthorization.itemId).count() > 0):
                 app.logger.warning(
-                    'An item authorization already exists for the item (id="{0}") and user (id="{1}")!'
-                    .format(itemAuthorization.itemId, authenticatedUser.username)
+                    'An item authorization already exists for the user (id="{0}") and item (id="{1}")!'
+                    .format(itemAuthorization.userId, itemAuthorization.itemId)
                 )
                 abort(400)
 
