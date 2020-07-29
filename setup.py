@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name             = 'passbutler-server',
-    version          = '1.0',
+    version          = '1.0.0',
     description      = 'Pass Butler server for syncing',
     author           = 'Bastian Raschke',
     author_email     = 'bastian.raschke@posteo.de',
