@@ -19,4 +19,5 @@ Pre-Depends: dpkg (>= 1.16.1),
 Depends: ${misc:Depends}
 Architecture: all
 Description: Pass Butler server for syncing
- Pass Butler server for syncing.
+ The Pass Butler server provides the possibility to synchronize passwords 
+ between multiple devices.
