@@ -4,16 +4,16 @@
 from setuptools import setup
 
 setup(
-    name            = 'passbutler-server',
-    version         = '1.0',
-    description     = 'Backend for Passbutler',
-    author          = 'Bastian Raschke',
-    author_email    = 'bastian.raschke@posteo.de',
-    maintainer      = 'Philipp Meisberger',
-    maintainer_email= 'team@pm-codeworks.de',
-    url             = 'http://passbutler.de',
-    license         = 'D-FSL',
-    classifiers     = [
+    name             = 'passbutler-server',
+    version          = '1.0',
+    description      = 'Pass Butler server for syncing',
+    author           = 'Bastian Raschke',
+    author_email     = 'bastian.raschke@posteo.de',
+    maintainer       = 'Philipp Meisberger',
+    maintainer_email = 'team@pm-codeworks.de',
+    url              = 'https://passbutler.de',
+    license          = 'D-FSL',
+    classifiers      = [
         'Environment :: Web Environment',
         'Intended Audience :: System Administrators',
         'Programming Language :: Python',

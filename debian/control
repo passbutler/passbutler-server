@@ -14,5 +14,5 @@ Pre-Depends: python3,
              ${misc:Pre-Depends}
 Depends: ${misc:Depends}
 Architecture: all
-Description: Passbutler backend server
- Passbutler backend server.
+Description: Pass Butler server for syncing
+ Pass Butler server for syncing.

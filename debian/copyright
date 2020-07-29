@@ -1,10 +1,10 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: Passbutler Server
+Upstream-Name: Pass Butler Server
 Upstream-Contact: Philipp Meisberger <team@pm-codeworks.de>
-Source: https://github.com/philippmeisberger/pam-fingerprint
+Source: https://github.com/bastianraschke/passbutler-server
 
 Files: *
-Copyright: Copyright (C) 2020 Bastian Raschke <bastian.raschke@posteo.de>
+Copyright: 2020 Bastian Raschke <bastian.raschke@posteo.de>
 License: D-FSL
  This Program may be used by anyone in accordance with the terms of the German
  Free Software License.
