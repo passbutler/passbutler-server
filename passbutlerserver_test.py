@@ -13,8 +13,6 @@ class TestConfigurationTestCase(TestCase):
 
     SQLALCHEMY_DATABASE_URI = 'sqlite://'
 
-    SERVER_HOST = ''
-    SERVER_PORT = 0
     SECRET_KEY = 'This is the secret key for testing'
 
     def create_app(self):

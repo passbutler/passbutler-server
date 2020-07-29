@@ -183,8 +183,6 @@ def createApp(testConfig=None):
         app.config.from_object(testConfig)
 
     mandatoryConfigurationValues = [
-        'SERVER_HOST',
-        'SERVER_PORT',
         'SECRET_KEY',
     ]
 
@@ -559,8 +557,3 @@ def createApp(testConfig=None):
             existingItemAuthorization.modified = itemAuthorization.modified
 
     return app
-
-if __name__ == '__main__':
-    app = createApp()
-    app.run(host=app.config['SERVER_HOST'], port=app.config['SERVER_PORT'])
-
