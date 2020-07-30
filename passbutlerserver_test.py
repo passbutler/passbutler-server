@@ -5,7 +5,6 @@ from passbutlerserver import API_VERSION_PREFIX, createApp, db
 from passbutlerserver import User, Item, ItemAuthorization
 from itsdangerous import TimedJSONWebSignatureSerializer
 import base64
-import unittest
 
 class TestConfigurationTestCase(TestCase):
 
@@ -2944,6 +2943,3 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == initialItemAuthorization1Json
-
-if __name__ == '__main__':
-    unittest.main()
