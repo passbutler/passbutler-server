@@ -173,22 +173,22 @@ def createApp(testConfig=None):
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     if testConfig is None:
-        baseDirectory = os.path.abspath(os.path.dirname(__file__))
-        databaseFilePath = os.path.join(baseDirectory, 'passbutlerserver.sqlite')
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + databaseFilePath
-
         app.config.from_envvar('PASSBUTLER_SETTINGS')
     else:
         ## Use `flask_testing.TestCase` fields for configuration
         app.config.from_object(testConfig)
 
     mandatoryConfigurationValues = [
+        'DATABASE_FILE',
         'SECRET_KEY',
     ]
 
     for configurationValue in mandatoryConfigurationValues:
         if configurationValue not in app.config:
             raise ValueError('The value "' + configurationValue + '" is not set in configuration!')
+
+    databaseFilePath = app.config['DATABASE_FILE']
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + databaseFilePath
 
     db.init_app(app)
     ma.init_app(app)

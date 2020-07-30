@@ -10,8 +10,7 @@ class TestConfigurationTestCase(TestCase):
 
     TESTING = True
 
-    SQLALCHEMY_DATABASE_URI = 'sqlite://'
-
+    DATABASE_FILE = ':memory:'
     SECRET_KEY = 'This is the secret key for testing'
 
     def create_app(self):
