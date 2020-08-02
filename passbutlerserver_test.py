@@ -110,19 +110,19 @@ class PassButlerTestCase(TestConfigurationTestCase):
         for user in users:
             db.session.add(user)
 
-        db.session.commit()   
+        db.session.commit()
 
     def addItems(self, *items):
         for item in items:
             db.session.add(item)
 
-        db.session.commit()  
+        db.session.commit()
 
     def addItemAuthorizations(self, *itemAuthorizations):
         for itemAuthorization in itemAuthorizations:
             db.session.add(itemAuthorization)
 
-        db.session.commit() 
+        db.session.commit()
 
     """
     Tests for PUT /register
