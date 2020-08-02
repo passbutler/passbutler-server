@@ -324,7 +324,7 @@ def createApp(testConfig=None):
             app.logger.warning('The user registration is not enabled!')
             abort(403)
 
-        if (app.config.get('REGISTRATION_INVITATION_CODE', None) != request.headers.get('X-Registration-Invitation-Code', None)):
+        if (app.config.get('REGISTRATION_INVITATION_CODE', None) != request.headers.get('Registration-Invitation-Code', None)):
             app.logger.warning('The registration invitation code is not correct!')
             abort(403)
 

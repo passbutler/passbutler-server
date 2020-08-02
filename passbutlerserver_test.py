@@ -69,7 +69,7 @@ Authentication helpers
 """
 
 def createRegistrationInvitationCodeHttpHeader(invitationCode):
-    return {'X-Registration-Invitation-Code': invitationCode}
+    return {'Registration-Invitation-Code': invitationCode}
 
 def createHttpBasicAuthHeaders(username, password):
     credentialBytes = (username + ':' + password).encode()
