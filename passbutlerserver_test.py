@@ -7,27 +7,6 @@ from itsdangerous import TimedJSONWebSignatureSerializer
 import base64
 import unittest
 
-class TestConfigurationTestCase(TestCase):
-
-    TESTING = True
-
-    SQLALCHEMY_DATABASE_URI = 'sqlite://'
-
-    SERVER_HOST = ''
-    SERVER_PORT = 0
-    SECRET_KEY = 'This is the secret key for testing'
-
-    def create_app(self):
-        app = createApp(self)
-        return app
-
-    def setUp(self):
-        db.create_all()
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-
 """
 Model to JSON functions
 
@@ -98,6 +77,32 @@ def createHttpTokenAuthHeaders(secretKey, user, expiresIn=3600, signatureAlgorit
     tokenSerializer = TimedJSONWebSignatureSerializer(secretKey, expires_in=expiresIn, algorithm_name=signatureAlgorithm)
     token = user.generateAuthenticationToken(tokenSerializer)
     return {'Authorization': 'Bearer ' + token}
+
+"""
+Actual test cases
+
+"""
+
+class TestConfigurationTestCase(TestCase):
+
+    TESTING = True
+
+    SQLALCHEMY_DATABASE_URI = 'sqlite://'
+
+    SERVER_HOST = ''
+    SERVER_PORT = 0
+    SECRET_KEY = 'This is the secret key for testing - it must be at least 64 characters long'
+
+    def create_app(self):
+        app = createApp(self)
+        return app
+
+    def setUp(self):
+        db.create_all()
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
 
 class PassButlerTestCase(TestConfigurationTestCase):
 

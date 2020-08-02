@@ -191,6 +191,13 @@ def createApp(testConfig=None):
         if configurationValue not in app.config:
             raise ValueError('The value "' + configurationValue + '" is not set in configuration!')
 
+    ## Additional configuration checks
+
+    configurationSecretKey = app.config.get('SECRET_KEY', None)
+
+    if configurationSecretKey is None or len(configurationSecretKey) < 64:
+        raise ValueError('The "SECRET_KEY" in the configuration must at least 64 characters long!')
+
     db.init_app(app)
     ma.init_app(app)
 
@@ -209,7 +216,7 @@ def createApp(testConfig=None):
             db.create_all()
 
     tokenSerializer = TimedJSONWebSignatureSerializer(
-        app.config['SECRET_KEY'],
+        configurationSecretKey,
         expires_in=3600,
         algorithm_name="HS512"
     )
