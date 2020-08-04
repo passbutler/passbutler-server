@@ -613,7 +613,6 @@ class PassButlerTestCase(TestConfigurationTestCase):
     def test_register_user_unknown_field(self):
         ## Enable registration in config
         self.app.config['REGISTRATION_ENABLED'] = True
-        self.app.config['REGISTRATION_INVITATION_CODE'] = 'AAAA-BBBB-CCCC-DDDD'
 
         requestData = {
             'id': 'alice-id',
