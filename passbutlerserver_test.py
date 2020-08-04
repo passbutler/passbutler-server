@@ -7,27 +7,6 @@ from itsdangerous import TimedJSONWebSignatureSerializer
 import base64
 import unittest
 
-class TestConfigurationTestCase(TestCase):
-
-    TESTING = True
-
-    SQLALCHEMY_DATABASE_URI = 'sqlite://'
-
-    SERVER_HOST = ''
-    SERVER_PORT = 0
-    SECRET_KEY = 'This is the secret key for testing'
-
-    def create_app(self):
-        app = createApp(self)
-        return app
-
-    def setUp(self):
-        db.create_all()
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-
 """
 Model to JSON functions
 
@@ -89,15 +68,49 @@ Authentication helpers
 
 """
 
+def createRegistrationInvitationCodeHttpHeader(invitationCode):
+    return {'Registration-Invitation-Code': invitationCode}
+
 def createHttpBasicAuthHeaders(username, password):
     credentialBytes = (username + ':' + password).encode()
     base64EncodedCredentials = base64.b64encode(credentialBytes).decode('utf-8')
     return {'Authorization': 'Basic ' + base64EncodedCredentials}
 
-def createHttpTokenAuthHeaders(secretKey, user, expiresIn=3600, signatureAlgorithm="HS512"):
+def createHttpTokenAuthHeaders(secretKey, user, expiresIn=3600, signatureAlgorithm='HS512'):
     tokenSerializer = TimedJSONWebSignatureSerializer(secretKey, expires_in=expiresIn, algorithm_name=signatureAlgorithm)
     token = user.generateAuthenticationToken(tokenSerializer)
     return {'Authorization': 'Bearer ' + token}
+
+"""
+Actual test cases
+
+"""
+
+class TestConfigurationTestCase(TestCase):
+
+    TESTING = True
+
+    SQLALCHEMY_DATABASE_URI = 'sqlite://'
+
+    SERVER_HOST = ''
+    SERVER_PORT = 0
+    SECRET_KEY = 'This is the secret key for testing - it must be at least 64 characters long'
+
+    ENABLE_REQUEST_LOGGING = False
+
+    REGISTRATION_ENABLED = False
+    REGISTRATION_INVITATION_CODE = 'AAAA-BBBB-CCCC-DDDD'
+
+    def create_app(self):
+        app = createApp(self)
+        return app
+
+    def setUp(self):
+        db.create_all()
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
 
 class PassButlerTestCase(TestConfigurationTestCase):
 
@@ -105,19 +118,19 @@ class PassButlerTestCase(TestConfigurationTestCase):
         for user in users:
             db.session.add(user)
 
-        db.session.commit()   
+        db.session.commit()
 
     def addItems(self, *items):
         for item in items:
             db.session.add(item)
 
-        db.session.commit()  
+        db.session.commit()
 
     def addItemAuthorizations(self, *itemAuthorizations):
         for itemAuthorization in itemAuthorizations:
             db.session.add(itemAuthorization)
 
-        db.session.commit() 
+        db.session.commit()
 
     """
     Tests for PUT /register
@@ -126,7 +139,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
     def test_register_user_non_existing_user(self):
         ## Enable registration in config
-        self.app.config['ENABLE_REGISTRATION'] = True
+        self.app.config['REGISTRATION_ENABLED'] = True
 
         requestData = {
             'id': 'alice-id',
@@ -142,7 +155,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'created': 12345678901
         }
 
-        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData)
+        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers=createRegistrationInvitationCodeHttpHeader('AAAA-BBBB-CCCC-DDDD'))
 
         ## Discard uncommited changes to check if the changes has been committed
         db.session.rollback()
@@ -152,7 +165,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
     def test_register_user_disabled_registration(self):
         ## Disable registration in config
-        self.app.config['ENABLE_REGISTRATION'] = False
+        self.app.config['REGISTRATION_ENABLED'] = False
 
         requestData = {
             'id': 'alice-id',
@@ -168,7 +181,59 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'created': 12345678901
         }
 
-        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData)
+        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers=createRegistrationInvitationCodeHttpHeader('AAAA-BBBB-CCCC-DDDD'))
+
+        ## Discard uncommited changes to check if the changes has been committed
+        db.session.rollback()
+
+        assert response.status_code == 403
+        assert User.query.get('alice-id') == None
+
+    def test_register_user_missing_invitation_code(self):
+        ## Enable registration in config
+        self.app.config['REGISTRATION_ENABLED'] = True
+
+        requestData = {
+            'id': 'alice-id',
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers={})
+
+        ## Discard uncommited changes to check if the changes has been committed
+        db.session.rollback()
+
+        assert response.status_code == 403
+        assert User.query.get('alice-id') == None
+
+    def test_register_user_wrong_invitation_code(self):
+        ## Enable registration in config
+        self.app.config['REGISTRATION_ENABLED'] = True
+
+        requestData = {
+            'id': 'alice-id',
+            'username': 'alice',
+            'masterPasswordAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+
+        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers=createRegistrationInvitationCodeHttpHeader('XXXX-YYYY-ZZZZ-AAAA'))
 
         ## Discard uncommited changes to check if the changes has been committed
         db.session.rollback()
@@ -178,7 +243,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
     def test_register_user_already_existing_user(self):
         ## Enable registration in config
-        self.app.config['ENABLE_REGISTRATION'] = True
+        self.app.config['REGISTRATION_ENABLED'] = True
 
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
@@ -199,7 +264,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'created': 12345678901
         }
 
-        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData)
+        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers=createRegistrationInvitationCodeHttpHeader('AAAA-BBBB-CCCC-DDDD'))
 
         ## Discard uncommited changes to check if the changes has been committed
         db.session.rollback()
@@ -370,9 +435,9 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
     def __test_register_user_wrong_field_type(self, requestData):
         ## Enable registration in config
-        self.app.config['ENABLE_REGISTRATION'] = True
+        self.app.config['REGISTRATION_ENABLED'] = True
 
-        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData)
+        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers=createRegistrationInvitationCodeHttpHeader('AAAA-BBBB-CCCC-DDDD'))
 
         db.session.rollback()
 
@@ -537,9 +602,9 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
     def __test_register_user_missing_field(self, requestData):
         ## Enable registration in config
-        self.app.config['ENABLE_REGISTRATION'] = True
+        self.app.config['REGISTRATION_ENABLED'] = True
 
-        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData)
+        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers=createRegistrationInvitationCodeHttpHeader('AAAA-BBBB-CCCC-DDDD'))
 
         db.session.rollback()
 
@@ -551,7 +616,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
     def test_register_user_unknown_field(self):
         ## Enable registration in config
-        self.app.config['ENABLE_REGISTRATION'] = True
+        self.app.config['REGISTRATION_ENABLED'] = True
+        self.app.config['REGISTRATION_INVITATION_CODE'] = 'AAAA-BBBB-CCCC-DDDD'
 
         requestData = {
             'id': 'alice-id',
@@ -568,7 +634,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'foo': 'bar'
         }
 
-        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData)
+        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers=createRegistrationInvitationCodeHttpHeader('AAAA-BBBB-CCCC-DDDD'))
 
         db.session.rollback()
 
@@ -580,10 +646,10 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
     def test_register_user_invalid_json(self):
         ## Enable registration in config
-        self.app.config['ENABLE_REGISTRATION'] = True
+        self.app.config['REGISTRATION_ENABLED'] = True
 
         requestData = '{this is not valid JSON}'
-        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData)
+        response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers=createRegistrationInvitationCodeHttpHeader('AAAA-BBBB-CCCC-DDDD'))
 
         db.session.rollback()
 
@@ -690,7 +756,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         alice = User('alice-id', 'alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
-        response = self.client.get('/' + API_VERSION_PREFIX + '/user', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, signatureAlgorithm="none"))
+        response = self.client.get('/' + API_VERSION_PREFIX + '/user', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, signatureAlgorithm='none'))
 
         assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}

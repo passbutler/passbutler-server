@@ -185,11 +185,26 @@ def createApp(testConfig=None):
         'SERVER_HOST',
         'SERVER_PORT',
         'SECRET_KEY',
+        'ENABLE_REQUEST_LOGGING',
+        'REGISTRATION_ENABLED',
+        'REGISTRATION_INVITATION_CODE',
     ]
 
     for configurationValue in mandatoryConfigurationValues:
         if configurationValue not in app.config:
             raise ValueError('The value "' + configurationValue + '" is not set in configuration!')
+
+    ## Additional configuration checks
+
+    configurationSecretKey = app.config.get('SECRET_KEY', None)
+
+    if configurationSecretKey is None or len(configurationSecretKey) < 64:
+        raise ValueError('The "SECRET_KEY" in the configuration must be at least 64 characters long!')
+
+    registrationInvitationCode = app.config.get('REGISTRATION_INVITATION_CODE', None)
+
+    if registrationInvitationCode is None or len(registrationInvitationCode) < 16:
+        raise ValueError('The "REGISTRATION_INVITATION_CODE" in the configuration must be at least 16 characters long!')
 
     db.init_app(app)
     ma.init_app(app)
@@ -209,7 +224,7 @@ def createApp(testConfig=None):
             db.create_all()
 
     tokenSerializer = TimedJSONWebSignatureSerializer(
-        app.config['SECRET_KEY'],
+        configurationSecretKey,
         expires_in=3600,
         algorithm_name="HS512"
     )
@@ -305,8 +320,12 @@ def createApp(testConfig=None):
 
     @app.route('/' + API_VERSION_PREFIX + '/register', methods=['PUT'])
     def register_user():
-        if (app.config.get('ENABLE_REGISTRATION', False) == False):
+        if (app.config.get('REGISTRATION_ENABLED', False) == False):
             app.logger.warning('The user registration is not enabled!')
+            abort(403)
+
+        if (app.config.get('REGISTRATION_INVITATION_CODE', None) != request.headers.get('Registration-Invitation-Code', None)):
+            app.logger.warning('The registration invitation code is not correct!')
             abort(403)
 
         try:
