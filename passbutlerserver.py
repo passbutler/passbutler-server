@@ -199,12 +199,12 @@ def createApp(testConfig=None):
     configurationSecretKey = app.config.get('SECRET_KEY', None)
 
     if configurationSecretKey is None or len(configurationSecretKey) < 64:
-        raise ValueError('The "SECRET_KEY" in the configuration must at least 64 characters long!')
+        raise ValueError('The "SECRET_KEY" in the configuration must be at least 64 characters long!')
 
     registrationInvitationCode = app.config.get('REGISTRATION_INVITATION_CODE', None)
 
     if registrationInvitationCode is None or len(registrationInvitationCode) < 16:
-        raise ValueError('The "REGISTRATION_INVITATION_CODE" in the configuration must at least 16 characters long!')
+        raise ValueError('The "REGISTRATION_INVITATION_CODE" in the configuration must be at least 16 characters long!')
 
     db.init_app(app)
     ma.init_app(app)
