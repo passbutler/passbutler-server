@@ -311,7 +311,7 @@ def createApp(testConfig=None):
 
     @app.after_request
     def logRequestResponse(response):
-        if (app.config.get('ENABLE_REQUEST_LOGGING', False) == True):
+        if app.config.get('ENABLE_REQUEST_LOGGING', False) == True:
             app.logger.debug(
                 'Response for request %s %s: %s\n' +
                 '--------------------------------------------------------------------------------\n' +
@@ -330,11 +330,11 @@ def createApp(testConfig=None):
 
     @app.route('/' + API_VERSION_PREFIX + '/register', methods=['PUT'])
     def register_user():
-        if (app.config.get('REGISTRATION_ENABLED', False) == False):
+        if app.config.get('REGISTRATION_ENABLED', False) == False:
             app.logger.warning('The user registration is not enabled!')
             abort(403)
 
-        if (app.config.get('REGISTRATION_INVITATION_CODE', None) != request.headers.get('Registration-Invitation-Code', None)):
+        if app.config.get('REGISTRATION_INVITATION_CODE', None) != request.headers.get('Registration-Invitation-Code', None):
             app.logger.warning('The registration invitation code is not correct!')
             abort(403)
 
@@ -345,7 +345,7 @@ def createApp(testConfig=None):
             username = userSchemaResult.username
 
             # Be sure, the user does not exists
-            if (User.query.filter_by(username=username).first() is not None):
+            if User.query.filter_by(username=username).first() is not None:
                 app.logger.warning(
                     'The user (username="{0}") already exists - registration is not possible!'
                     .format(username)
@@ -359,7 +359,7 @@ def createApp(testConfig=None):
             app.logger.warning('Model validation failed with errors: {0}'.format(e))
             abort(400)
 
-        return ('', 204)
+        return '', 204
 
     """
     Get a new token is only possible with password based authentication
@@ -407,7 +407,7 @@ def createApp(testConfig=None):
             app.logger.warning('Model validation failed with errors: {0}'.format(e))
             abort(400)
 
-        return ('', 204)
+        return '', 204
 
     @app.route('/' + API_VERSION_PREFIX + '/user/items', methods=['GET'])
     @webTokenAuth.login_required
@@ -440,11 +440,11 @@ def createApp(testConfig=None):
             app.logger.warning('Model validation failed with errors: {0}'.format(e))
             abort(400)
 
-        return ('', 204)
+        return '', 204
 
     def createOrUpdateItem(authenticatedUser, item):
         # Be sure, the foreign key `userId` exists
-        if (User.query.get(item.userId) is None):
+        if User.query.get(item.userId) is None:
             app.logger.warning(
                 'The user (id="{0}") of item (id="{1}") does not exist!'
                 .format(item.userId, item.id)
@@ -454,9 +454,9 @@ def createApp(testConfig=None):
         existingItem = Item.query.get(item.id)
 
         # Determine to create or update the item
-        if (existingItem is None):
+        if existingItem is None:
             # It is not allowed to create items for other users
-            if (item.userId != authenticatedUser.id):
+            if item.userId != authenticatedUser.id:
                 app.logger.warning(
                     'The requesting user (id={0}) tried to create item for another user (id={1})!'
                     .format(authenticatedUser.id, item.userId)
@@ -469,21 +469,21 @@ def createApp(testConfig=None):
         else:
             itemAuthorization = ItemAuthorization.query.filter_by(userId=authenticatedUser.id, itemId=item.id).first()
 
-            if (itemAuthorization is None):
+            if itemAuthorization is None:
                 app.logger.warning(
                     'The requesting user (id={0}) tried to update item (id="{1}") but has no item authorization!'
                     .format(authenticatedUser.id, item.id)
                 )
                 abort(403)
 
-            if (itemAuthorization.readOnly == True):
+            if itemAuthorization.readOnly == True:
                 app.logger.warning(
                     'The requesting user (id={0}) tried to update item (id="{1}") but has only a read-only item authorization!'
                     .format(authenticatedUser.id, item.id)
                 )
                 abort(403)
 
-            if (itemAuthorization.deleted == True):
+            if itemAuthorization.deleted == True:
                 app.logger.warning(
                     'The requesting user (id={0}) tried to update item (id="{1}") but has only a deleted item authorization!'
                     .format(authenticatedUser.id, item.id)
@@ -538,11 +538,11 @@ def createApp(testConfig=None):
             app.logger.warning('Model validation failed with errors: {0}'.format(e))
             abort(400)
 
-        return ('', 204)
+        return '', 204
 
     def createOrUpdateItemAuthorization(authenticatedUser, itemAuthorization):
         # Be sure, the foreign key `userId` exists
-        if (User.query.get(itemAuthorization.userId) is None):
+        if User.query.get(itemAuthorization.userId) is None:
             app.logger.warning(
                 'The user (id="{0}") of item authorization (id="{1}") does not exist!'
                 .format(itemAuthorization.userId, itemAuthorization.id)
@@ -552,7 +552,7 @@ def createApp(testConfig=None):
         item = Item.query.get(itemAuthorization.itemId)
 
         # Be sure, the foreign key `itemId` exists
-        if (item is None):
+        if item is None:
             app.logger.warning(
                 'The item (id="{0}") of item authorization (id="{1}") does not exist!'
                 .format(itemAuthorization.itemId, itemAuthorization.id)
@@ -560,7 +560,7 @@ def createApp(testConfig=None):
             abort(404)
 
         # Only the owner of the corresponding item is able to create/update item authorizations
-        if (item.userId != authenticatedUser.id):
+        if item.userId != authenticatedUser.id:
             app.logger.warning(
                 'The requesting user (id="{0}") tried to create/update item authorization (id="{1}") for item (id="{2}") that is owned by other user (id={3})!'
                 .format(authenticatedUser.id, itemAuthorization.id, item.id, item.userId)
@@ -570,9 +570,9 @@ def createApp(testConfig=None):
         existingItemAuthorization = ItemAuthorization.query.get(itemAuthorization.id)
 
         # Determine to create or update the item authorization
-        if (existingItemAuthorization is None):
+        if existingItemAuthorization is None:
             # Check for already existing user+item combination to avoid multiple item authorization for the same user and item
-            if (ItemAuthorization.query.filter_by(userId=itemAuthorization.userId, itemId=itemAuthorization.itemId).count() > 0):
+            if ItemAuthorization.query.filter_by(userId=itemAuthorization.userId, itemId=itemAuthorization.itemId).count() > 0:
                 app.logger.warning(
                     'An item authorization already exists for the user (id="{0}") and item (id="{1}")!'
                     .format(itemAuthorization.userId, itemAuthorization.itemId)
