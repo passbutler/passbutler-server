@@ -222,7 +222,7 @@ def createApp(testConfig=None):
 
     ## Enables foreign key enforcing which is disabled by default in SQLite
     with app.app_context():
-        def enableForeignKeySupport(dbApiConnection, connectionRecord):
+        def enableForeignKeySupport(dbApiConnection, _):
             cursor = dbApiConnection.cursor()
             cursor.execute('PRAGMA foreign_keys=ON;')
             cursor.close()
@@ -286,23 +286,23 @@ def createApp(testConfig=None):
         abort(401)
 
     @app.errorhandler(400)
-    def invalidRequestHandler(error):
+    def invalidRequestHandler(_):
         return make_response(jsonify({'error': 'Invalid request'}), 400)
 
     @app.errorhandler(401)
-    def unauthorizedRequestHandler(error):
+    def unauthorizedRequestHandler(_):
         return make_response(jsonify({'error': 'Unauthorized'}), 401)
 
     @app.errorhandler(403)
-    def forbiddenRequestHandler(error):
+    def forbiddenRequestHandler(_):
         return make_response(jsonify({'error': 'Forbidden'}), 403)
 
     @app.errorhandler(404)
-    def notFoundRequestHandler(error):
+    def notFoundRequestHandler(_):
         return make_response(jsonify({'error': 'Not found'}), 404)
 
     @app.errorhandler(409)
-    def alreadyExistsRequestHandler(error):
+    def alreadyExistsRequestHandler(_):
         return make_response(jsonify({'error': 'Already exists'}), 409)
 
     @app.errorhandler(Exception)
