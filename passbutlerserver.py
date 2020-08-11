@@ -236,7 +236,7 @@ def createApp(testConfig=None):
     tokenSerializer = TimedJSONWebSignatureSerializer(
         configurationSecretKey,
         expires_in=3600,
-        algorithm_name="HS512"
+        algorithm_name='HS512'
     )
 
     passwordAuth = HTTPBasicAuth()
