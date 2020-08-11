@@ -311,7 +311,7 @@ def createApp(testConfig=None):
 
     @app.after_request
     def logRequestResponse(response):
-        if app.config.get('ENABLE_REQUEST_LOGGING', False) == True:
+        if app.config.get('ENABLE_REQUEST_LOGGING', False):
             app.logger.debug(
                 'Response for request %s %s: %s\n' +
                 '--------------------------------------------------------------------------------\n' +
@@ -330,7 +330,7 @@ def createApp(testConfig=None):
 
     @app.route('/' + API_VERSION_PREFIX + '/register', methods=['PUT'])
     def register_user():
-        if app.config.get('REGISTRATION_ENABLED', False) == False:
+        if not app.config.get('REGISTRATION_ENABLED', False):
             app.logger.warning('The user registration is not enabled!')
             abort(403)
 
@@ -476,14 +476,14 @@ def createApp(testConfig=None):
                 )
                 abort(403)
 
-            if itemAuthorization.readOnly == True:
+            if itemAuthorization.readOnly:
                 app.logger.warning(
                     'The requesting user (id={0}) tried to update item (id="{1}") but has only a read-only item authorization!'
                     .format(authenticatedUser.id, item.id)
                 )
                 abort(403)
 
-            if itemAuthorization.deleted == True:
+            if itemAuthorization.deleted:
                 app.logger.warning(
                     'The requesting user (id={0}) tried to update item (id="{1}") but has only a deleted item authorization!'
                     .format(authenticatedUser.id, item.id)
