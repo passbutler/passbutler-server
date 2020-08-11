@@ -90,6 +90,7 @@ class TestConfigurationTestCase(TestCase):
     TESTING = True
 
     DATABASE_FILE = ':memory:'
+    LOG_FILE = None
     SECRET_KEY = 'This is the secret key for testing - it must be at least 64 characters long'
 
     ENABLE_REQUEST_LOGGING = False

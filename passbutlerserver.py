@@ -209,11 +209,13 @@ def createApp(testConfig=None):
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + databaseFilePath
 
     logFilePath = app.config['LOG_FILE']
-    fileLogHandler = FileHandler(logFilePath)
-    fileLogHandler.setLevel(logging.INFO)
-    fileLogHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(name)s [%(threadName)s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S.%03d'))
 
-    app.logger.addHandler(fileLogHandler)
+    if logFilePath is not None:
+        fileLogHandler = FileHandler(logFilePath)
+        fileLogHandler.setLevel(logging.INFO)
+        fileLogHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(name)s [%(threadName)s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S.%03d'))
+        app.logger.addHandler(fileLogHandler)
+
     app.logger.info('Pass Butler server is starting')
 
     db.init_app(app)
