@@ -308,7 +308,7 @@ def createApp(testConfig=None):
 
     @app.errorhandler(Exception)
     def unhandledExceptionHandler(exception):
-        app.logger.error('Unexpected exception occured: %s', (exception))
+        app.logger.error('Unexpected exception occurred: %s', exception)
         return make_response(jsonify({'error': 'Server error'}), 500)
 
     @app.after_request
