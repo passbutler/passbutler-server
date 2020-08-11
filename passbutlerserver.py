@@ -5,7 +5,7 @@ from flask import Flask, request, jsonify, abort, make_response, g
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 from flask_marshmallow import Marshmallow, Schema
 from flask_sqlalchemy import SQLAlchemy
-from itsdangerous import TimedJSONWebSignatureSerializer
+from itsdangerous import TimedJSONWebSignatureSerializer, BadSignature
 from logging import FileHandler
 from marshmallow.exceptions import ValidationError
 from marshmallow_sqlalchemy import ModelSchema
@@ -273,8 +273,7 @@ def createApp(testConfig=None):
                 if user is not None:
                     g.authenticatedUser = user
                     wasSuccessful = True
-        except:
-            ## If any exception occurs, the token is invalid/expired
+        except BadSignature:
             wasSuccessful = False
 
         return wasSuccessful
