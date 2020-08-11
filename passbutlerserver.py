@@ -154,7 +154,7 @@ class User(db.Model):
 
 class PublicUserSchema(Schema):
     class Meta:
-        ## Only the following fields are allowed to see for this schema
+        # Only the following fields are allowed to see for this schema
         fields = ('id', 'username', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
 
 class DefaultUserSchema(ModelSchema):
@@ -170,13 +170,13 @@ App implementation and routes
 def createApp(testConfig=None):
     app = Flask(__name__)
 
-    ## General config (production and test related)
+    # General config (production and test related)
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     if testConfig is None:
         app.config.from_envvar('PASSBUTLER_SETTINGS')
     else:
-        ## Use `flask_testing.TestCase` fields for configuration
+        # Use `flask_testing.TestCase` fields for configuration
         app.config.from_object(testConfig)
 
     mandatoryConfigurationValues = [
@@ -192,7 +192,7 @@ def createApp(testConfig=None):
         if configurationValue not in app.config:
             raise ValueError('The value "' + configurationValue + '" is not set in configuration!')
 
-    ## Additional configuration checks
+    # Additional configuration checks
 
     configurationSecretKey = app.config.get('SECRET_KEY', None)
 
@@ -220,7 +220,7 @@ def createApp(testConfig=None):
     db.init_app(app)
     ma.init_app(app)
 
-    ## Enables foreign key enforcing which is disabled by default in SQLite
+    # Enables foreign key enforcing which is disabled by default in SQLite
     with app.app_context():
         def enableForeignKeySupport(dbApiConnection, _):
             cursor = dbApiConnection.cursor()
@@ -229,7 +229,7 @@ def createApp(testConfig=None):
 
         event.listen(db.engine, 'connect', enableForeignKeySupport)
 
-    ## Create database tables if not in unit test mode
+    # Create database tables if not in unit test mode
     if testConfig is None:
         with app.app_context():
             db.create_all()
@@ -248,7 +248,7 @@ def createApp(testConfig=None):
         wasSuccessful = False
         g.authenticatedUser = None
 
-        ## Authentication is only possible for non-deleted users
+        # Authentication is only possible for non-deleted users
         requestingUser = User.query.filter_by(username=username, deleted=False).first()
 
         if requestingUser is not None and requestingUser.checkAuthenticationPassword(password):
@@ -267,7 +267,7 @@ def createApp(testConfig=None):
             userId = tokenData.get('id')
 
             if userId is not None:
-                ## Authentication is only possible for non-deleted users
+                # Authentication is only possible for non-deleted users
                 user = User.query.filter_by(id=userId, deleted=False).first()
 
                 if user is not None:
@@ -281,7 +281,7 @@ def createApp(testConfig=None):
     @passwordAuth.error_handler
     @webTokenAuth.error_handler
     def httpAuthUnauthorizedHandler():
-        ## Just pass the event to normal Flask handler
+        # Just pass the event to normal Flask handler
         abort(401)
 
     @app.errorhandler(400)
@@ -339,12 +339,12 @@ def createApp(testConfig=None):
             abort(403)
 
         try:
-            ## Do not set database session and instance yet to avoid implicit model modification
+            # Do not set database session and instance yet to avoid implicit model modification
             userSchemaResult = DefaultUserSchema().load(request.json, session=None, instance=None)
 
             username = userSchemaResult.username
 
-            ## Be sure, the user does not exists
+            # Be sure, the user does not exists
             if (User.query.filter_by(username=username).first() is not None):
                 app.logger.warning(
                     'The user (username="{0}") already exists - registration is not possible!'
@@ -392,7 +392,7 @@ def createApp(testConfig=None):
         authenticatedUser = g.authenticatedUser
 
         try:
-            ## Do not set database session and instance yet to avoid implicit model modification
+            # Do not set database session and instance yet to avoid implicit model modification
             userSchemaResult = DefaultUserSchema().load(request.json, session=None, instance=None)
 
             authenticatedUser.username = userSchemaResult.username
@@ -414,7 +414,7 @@ def createApp(testConfig=None):
     def get_user_items():
         authenticatedUser = g.authenticatedUser
 
-        ## Returns only the items where the user has a non-deleted item authorization
+        # Returns only the items where the user has a non-deleted item authorization
         itemAuthorizations = ItemAuthorization.query.filter_by(userId=authenticatedUser.id, deleted=False).all()
         itemAuthorizationItemIds = map(lambda itemAuthorization: itemAuthorization.itemId, itemAuthorizations)
         userItems = Item.query.filter(Item.id.in_(itemAuthorizationItemIds))
@@ -428,7 +428,7 @@ def createApp(testConfig=None):
         authenticatedUser = g.authenticatedUser
 
         try:
-            ## Do not set database session and instance yet to avoid implicit model modification
+            # Do not set database session and instance yet to avoid implicit model modification
             itemsSchemaResult = DefaultItemSchema(many=True).load(request.json, session=None, instance=None)
 
             for item in itemsSchemaResult:
@@ -443,7 +443,7 @@ def createApp(testConfig=None):
         return ('', 204)
 
     def createOrUpdateItem(authenticatedUser, item):
-        ## Be sure, the foreign key `userId` exists
+        # Be sure, the foreign key `userId` exists
         if (User.query.get(item.userId) is None):
             app.logger.warning(
                 'The user (id="{0}") of item (id="{1}") does not exist!'
@@ -453,9 +453,9 @@ def createApp(testConfig=None):
 
         existingItem = Item.query.get(item.id)
 
-        ## Determine to create or update the item
+        # Determine to create or update the item
         if (existingItem is None):
-            ## It is not allowed to create items for other users
+            # It is not allowed to create items for other users
             if (item.userId != authenticatedUser.id):
                 app.logger.warning(
                     'The requesting user (id={0}) tried to create item for another user (id={1})!'
@@ -463,7 +463,7 @@ def createApp(testConfig=None):
                 )
                 abort(403)
 
-            ## When an item is created, the item authorization can't be checked because it is still not existing
+            # When an item is created, the item authorization can't be checked because it is still not existing
 
             db.session.add(item)
         else:
@@ -490,7 +490,7 @@ def createApp(testConfig=None):
                 )
                 abort(403)
 
-            ## Only update the allowed mutable fields
+            # Only update the allowed mutable fields
             existingItem.data = item.data
             existingItem.deleted = item.deleted
             existingItem.modified = item.modified
@@ -500,10 +500,10 @@ def createApp(testConfig=None):
     def get_user_item_authorizations():
         authenticatedUser = g.authenticatedUser
 
-        ## 1) Item authorizations created for requesting user
+        # 1) Item authorizations created for requesting user
         itemAuthorizationsForUser = ItemAuthorization.query.filter_by(userId=authenticatedUser.id).all()
 
-        ## 2) Item authorizations created by requesting user for other users
+        # 2) Item authorizations created by requesting user for other users
         userItems = Item.query.filter_by(userId=authenticatedUser.id).all()
         userItemsIds = map(lambda item: item.id, userItems)
         itemAuthorizationsCreatedByUser = ItemAuthorization.query.filter(
@@ -526,7 +526,7 @@ def createApp(testConfig=None):
         try:
             itemAuthorizationsSchema = DefaultItemAuthorizationSchema(many=True)
 
-            ## Do not set database session and instance yet to avoid implicit model modification
+            # Do not set database session and instance yet to avoid implicit model modification
             itemAuthorizationsSchemaResult = itemAuthorizationsSchema.load(request.json, session=None, instance=None)
 
             for itemAuthorization in itemAuthorizationsSchemaResult:
@@ -541,7 +541,7 @@ def createApp(testConfig=None):
         return ('', 204)
 
     def createOrUpdateItemAuthorization(authenticatedUser, itemAuthorization):
-        ## Be sure, the foreign key `userId` exists
+        # Be sure, the foreign key `userId` exists
         if (User.query.get(itemAuthorization.userId) is None):
             app.logger.warning(
                 'The user (id="{0}") of item authorization (id="{1}") does not exist!'
@@ -551,7 +551,7 @@ def createApp(testConfig=None):
 
         item = Item.query.get(itemAuthorization.itemId)
 
-        ## Be sure, the foreign key `itemId` exists
+        # Be sure, the foreign key `itemId` exists
         if (item is None):
             app.logger.warning(
                 'The item (id="{0}") of item authorization (id="{1}") does not exist!'
@@ -559,7 +559,7 @@ def createApp(testConfig=None):
             )
             abort(404)
 
-        ## Only the owner of the corresponding item is able to create/update item authorizations
+        # Only the owner of the corresponding item is able to create/update item authorizations
         if (item.userId != authenticatedUser.id):
             app.logger.warning(
                 'The requesting user (id="{0}") tried to create/update item authorization (id="{1}") for item (id="{2}") that is owned by other user (id={3})!'
@@ -569,9 +569,9 @@ def createApp(testConfig=None):
 
         existingItemAuthorization = ItemAuthorization.query.get(itemAuthorization.id)
 
-        ## Determine to create or update the item authorization
+        # Determine to create or update the item authorization
         if (existingItemAuthorization is None):
-            ## Check for already existing user+item combination to avoid multiple item authorization for the same user and item
+            # Check for already existing user+item combination to avoid multiple item authorization for the same user and item
             if (ItemAuthorization.query.filter_by(userId=itemAuthorization.userId, itemId=itemAuthorization.itemId).count() > 0):
                 app.logger.warning(
                     'An item authorization already exists for the user (id="{0}") and item (id="{1}")!'
@@ -581,7 +581,7 @@ def createApp(testConfig=None):
 
             db.session.add(itemAuthorization)
         else:
-            ## Only update the allowed mutable fields
+            # Only update the allowed mutable fields
             existingItemAuthorization.readOnly = itemAuthorization.readOnly
             existingItemAuthorization.deleted = itemAuthorization.deleted
             existingItemAuthorization.modified = itemAuthorization.modified
