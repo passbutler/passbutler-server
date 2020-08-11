@@ -6,10 +6,12 @@ from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 from flask_marshmallow import Marshmallow, Schema
 from flask_sqlalchemy import SQLAlchemy
 from itsdangerous import TimedJSONWebSignatureSerializer
+from logging import FileHandler
 from marshmallow.exceptions import ValidationError
 from marshmallow_sqlalchemy import ModelSchema
 from sqlalchemy import event, and_
 from werkzeug.security import check_password_hash
+import logging
 import os
 
 API_VERSION_PREFIX = 'v1'
@@ -180,6 +182,7 @@ def createApp(testConfig=None):
 
     mandatoryConfigurationValues = [
         'DATABASE_FILE',
+        'LOG_FILE',
         'SECRET_KEY',
         'ENABLE_REQUEST_LOGGING',
         'REGISTRATION_ENABLED',
@@ -204,6 +207,14 @@ def createApp(testConfig=None):
 
     databaseFilePath = app.config['DATABASE_FILE']
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + databaseFilePath
+
+    logFilePath = app.config['LOG_FILE']
+    fileLogHandler = FileHandler(logFilePath)
+    fileLogHandler.setLevel(logging.INFO)
+    fileLogHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(name)s [%(threadName)s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S.%03d'))
+
+    app.logger.addHandler(fileLogHandler)
+    app.logger.info('Pass Butler server is starting')
 
     db.init_app(app)
     ma.init_app(app)
