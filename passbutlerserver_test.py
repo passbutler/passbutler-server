@@ -155,7 +155,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers=createRegistrationInvitationCodeHttpHeader('AAAA-BBBB-CCCC-DDDD'))
 
-        # Discard uncommited changes to check if the changes has been committed
+        # Discard uncommitted changes to check if the changes has been committed
         db.session.rollback()
 
         assert response.status_code == 204
@@ -181,7 +181,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers=createRegistrationInvitationCodeHttpHeader('AAAA-BBBB-CCCC-DDDD'))
 
-        # Discard uncommited changes to check if the changes has been committed
+        # Discard uncommitted changes to check if the changes has been committed
         db.session.rollback()
 
         assert response.status_code == 403
@@ -207,7 +207,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers={})
 
-        # Discard uncommited changes to check if the changes has been committed
+        # Discard uncommitted changes to check if the changes has been committed
         db.session.rollback()
 
         assert response.status_code == 403
@@ -233,7 +233,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers=createRegistrationInvitationCodeHttpHeader('XXXX-YYYY-ZZZZ-AAAA'))
 
-        # Discard uncommited changes to check if the changes has been committed
+        # Discard uncommitted changes to check if the changes has been committed
         db.session.rollback()
 
         assert response.status_code == 403
@@ -264,7 +264,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers=createRegistrationInvitationCodeHttpHeader('AAAA-BBBB-CCCC-DDDD'))
 
-        # Discard uncommited changes to check if the changes has been committed
+        # Discard uncommitted changes to check if the changes has been committed
         db.session.rollback()
 
         assert response.status_code == 403
@@ -847,7 +847,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         response = self.client.put('/' + API_VERSION_PREFIX + '/user', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
-        # Discard uncommited changes to check if the changes has been committed
+        # Discard uncommitted changes to check if the changes has been committed
         db.session.rollback()
 
         assert response.status_code == 204
