@@ -12,7 +12,6 @@ from marshmallow_sqlalchemy import ModelSchema
 from sqlalchemy import event, and_
 from werkzeug.security import check_password_hash
 import logging
-import os
 
 API_VERSION_PREFIX = 'v1'
 
