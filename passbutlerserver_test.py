@@ -112,19 +112,22 @@ class TestConfigurationTestCase(TestCase):
 
 class PassButlerTestCase(TestConfigurationTestCase):
 
-    def addUsers(self, *users):
+    @staticmethod
+    def addUsers(*users):
         for user in users:
             db.session.add(user)
 
         db.session.commit()
 
-    def addItems(self, *items):
+    @staticmethod
+    def addItems(*items):
         for item in items:
             db.session.add(item)
 
         db.session.commit()
 
-    def addItemAuthorizations(self, *itemAuthorizations):
+    @staticmethod
+    def addItemAuthorizations(*itemAuthorizations):
         for itemAuthorization in itemAuthorizations:
             db.session.add(itemAuthorization)
 
