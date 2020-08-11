@@ -185,7 +185,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         db.session.rollback()
 
         assert response.status_code == 403
-        assert User.query.get('alice-id') == None
+        assert User.query.get('alice-id') is None
 
     def test_register_user_missing_invitation_code(self):
         # Enable registration in config
@@ -211,7 +211,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         db.session.rollback()
 
         assert response.status_code == 403
-        assert User.query.get('alice-id') == None
+        assert User.query.get('alice-id') is None
 
     def test_register_user_wrong_invitation_code(self):
         # Enable registration in config
@@ -237,7 +237,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         db.session.rollback()
 
         assert response.status_code == 403
-        assert User.query.get('alice-id') == None
+        assert User.query.get('alice-id') is None
 
     def test_register_user_already_existing_user(self):
         # Enable registration in config
@@ -441,7 +441,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-        assert User.query.get('alice-id') == None
+        assert User.query.get('alice-id') is None
 
     # General missing field tests
 
@@ -608,7 +608,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-        assert User.query.get('alice-id') == None
+        assert User.query.get('alice-id') is None
 
     # Unknown field test
 
@@ -637,7 +637,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-        assert User.query.get('alice-id') == None
+        assert User.query.get('alice-id') is None
 
     # Invalid JSON test
 
@@ -652,7 +652,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-        assert User.query.get('alice-id') == None
+        assert User.query.get('alice-id') is None
 
     """
     Tests for GET /token
@@ -1716,7 +1716,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 404
         assert response.get_json() == {'error': 'Not found'}
-        assert Item.query.get('item1') == None
+        assert Item.query.get('item1') is None
 
     # Permission tests
 
@@ -1742,7 +1742,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         # Alice is not allowed to create a item for another user (Sandy)
         assert response.status_code == 403
         assert response.get_json() == {'error': 'Forbidden'}
-        assert Item.query.get('item1') == None
+        assert Item.query.get('item1') is None
 
     def test_set_user_items_create_item_without_item_authorization(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -1880,8 +1880,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self.__test_set_user_items_change_field(
             requestData=requestData,
             expected=expected,
-            expectedStatusCode = 404,
-            expectedResponseJson = {'error': 'Not found'}
+            expectedStatusCode=404,
+            expectedResponseJson={'error': 'Not found'}
         )
 
     def test_set_user_items_change_field_data(self):
@@ -1946,8 +1946,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self,
         requestData,
         expected,
-        expectedStatusCode = 204,
-        expectedResponseJson = None
+        expectedStatusCode=204,
+        expectedResponseJson=None
     ):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         sandy = User('sandy-id', 'sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
@@ -2216,10 +2216,10 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         # Alice see the item authorizations created from and for her (also the deleted ones)
         assert sortItemAuthorizationList(response.get_json()) == sortItemAuthorizationList([
-            {'id': 'itemAuthorization1', 'userId': 'alice-id', 'itemId': 'item1', 'itemKey': 'example item key 1', 'readOnly': False, 'deleted': False, 'modified': 12345678902,'created': 12345678901},
-            {'id': 'itemAuthorization2', 'userId': 'alice-id', 'itemId': 'item2', 'itemKey': 'example item key 2', 'readOnly': False, 'deleted': False, 'modified': 12345678902,'created': 12345678901},
-            {'id': 'itemAuthorization3', 'userId': 'sandy-id', 'itemId': 'item2', 'itemKey': 'example item key 2', 'readOnly': False, 'deleted': False, 'modified': 12345678902,'created': 12345678901},
-            {'id': 'itemAuthorization5', 'userId': 'alice-id', 'itemId': 'item3', 'itemKey': 'example item key 3', 'readOnly': False, 'deleted': True, 'modified': 12345678902,'created': 12345678901}
+            {'id': 'itemAuthorization1', 'userId': 'alice-id', 'itemId': 'item1', 'itemKey': 'example item key 1', 'readOnly': False, 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
+            {'id': 'itemAuthorization2', 'userId': 'alice-id', 'itemId': 'item2', 'itemKey': 'example item key 2', 'readOnly': False, 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
+            {'id': 'itemAuthorization3', 'userId': 'sandy-id', 'itemId': 'item2', 'itemKey': 'example item key 2', 'readOnly': False, 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
+            {'id': 'itemAuthorization5', 'userId': 'alice-id', 'itemId': 'item3', 'itemKey': 'example item key 3', 'readOnly': False, 'deleted': True, 'modified': 12345678902, 'created': 12345678901}
         ])
 
     """
@@ -2343,7 +2343,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 404
         assert response.get_json() == {'error': 'Not found'}
-        assert ItemAuthorization.query.get('itemAuthorization1') == None
+        assert ItemAuthorization.query.get('itemAuthorization1') is None
 
     def test_set_user_item_authorizations_create_authorization_with_not_existing_item(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -2367,7 +2367,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 404
         assert response.get_json() == {'error': 'Not found'}
-        assert ItemAuthorization.query.get('itemAuthorization1') == None
+        assert ItemAuthorization.query.get('itemAuthorization1') is None
 
     def test_set_user_item_authorizations_create_authorization_for_item_with_already_existing_item_authorization_for_requesting_user(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -2392,7 +2392,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-        assert ItemAuthorization.query.get('itemAuthorization1a') == None
+        assert ItemAuthorization.query.get('itemAuthorization1a') is None
 
     def test_set_user_item_authorizations_create_authorization_for_item_with_already_existing_item_authorization_for_other_user(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -2421,7 +2421,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-        assert ItemAuthorization.query.get('itemAuthorization2a') == None
+        assert ItemAuthorization.query.get('itemAuthorization2a') is None
 
     # Permission tests
 
@@ -2449,7 +2449,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         # Alice is not allowed to create a item authorization for an item that is not owned by her
         assert response.status_code == 403
         assert response.get_json() == {'error': 'Forbidden'}
-        assert ItemAuthorization.query.get('itemAuthorization1') == None
+        assert ItemAuthorization.query.get('itemAuthorization1') is None
 
     def test_set_user_item_authorizations_update_authorization_for_item_is_owned_by_other_user(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -2537,8 +2537,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self.__test_set_user_item_authorizations_change_field(
             requestData=requestData,
             expected=expected,
-            expectedStatusCode = 404,
-            expectedResponseJson = {'error': 'Not found'}
+            expectedStatusCode=404,
+            expectedResponseJson={'error': 'Not found'}
         )
 
     def test_set_user_item_authorizations_change_field_itemId_existing(self):
@@ -2594,8 +2594,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self.__test_set_user_item_authorizations_change_field(
             requestData=requestData,
             expected=expected,
-            expectedStatusCode = 404,
-            expectedResponseJson = {'error': 'Not found'}
+            expectedStatusCode=404,
+            expectedResponseJson={'error': 'Not found'}
         )
 
     def test_set_user_item_authorizations_change_field_itemKey(self):
@@ -2696,8 +2696,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self,
         requestData,
         expected,
-        expectedStatusCode = 204,
-        expectedResponseJson = None
+        expectedStatusCode=204,
+        expectedResponseJson=None
     ):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         sandy = User('sandy-id', 'sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
