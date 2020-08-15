@@ -2,7 +2,7 @@
 
 The Pass Butler server provides the possibility to synchronize passwords between multiple devices.
 
-## Production setup on Debian 10 / Ubuntu 20
+## Production setup on Debian 10
 
 ### Installation
 
@@ -39,7 +39,7 @@ Install the package:
 
 Install the package:
 
-    $ sudo apt install gunicorn
+    $ sudo apt install gunicorn3
 
 Add dedicated user and group:
 
