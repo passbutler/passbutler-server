@@ -100,7 +100,7 @@ Add to your Nginx `sites-available/example.vhost` configuration:
         ...
 
         location / {
-            proxy_pass unix:/run/passbutler-server-example.sock;
+            proxy_pass http://unix:/run/passbutler-server-example.sock;
 
             include "proxy_params";
         }
@@ -108,7 +108,7 @@ Add to your Nginx `sites-available/example.vhost` configuration:
 
 Restart Nginx:
 
-    $ sudo systemctl restart nginx
+    $ sudo systemctl restart nginx.service
 
 ## Development setup on Debian 10 / Ubuntu 20
 
