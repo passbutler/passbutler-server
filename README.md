@@ -59,11 +59,11 @@ Create configuration file `/etc/passbutler-server/example.conf`:
 
     DATABASE_FILE = '/var/lib/passbutler-server/example/database.sqlite'
     LOG_FILE = '/var/log/passbutler-server-example.log'
-
+    
     SECRET_KEY = 'SECRET-KEY-PLACEHOLDER'
-
+    
     ENABLE_REQUEST_LOGGING = False
-
+    
     REGISTRATION_ENABLED = True
     REGISTRATION_INVITATION_CODE = 'REGISTRATION-INVITATION-CODE-PLACEHOLDER'
 
@@ -97,10 +97,10 @@ Add to your Nginx `sites-available/example.vhost` configuration:
 
     server {
         ...
-
+    
         location / {
             proxy_pass http://unix:/run/passbutler-server-example/socket.sock;
-
+    
             include "proxy_params";
         }
     }
@@ -109,7 +109,7 @@ Restart Nginx:
 
     $ sudo systemctl restart nginx.service
 
-## Development setup on Debian 10 / Ubuntu 20
+## Development setup on Ubuntu 20
 
 Install package:
 
@@ -124,7 +124,7 @@ Install dependencies:
 
     $ pip install -r requirements.txt
 
-Install dependencies for testing (optional):
+Install dependencies for testing:
 
     $ pip install -r dev-requirements.txt
 
