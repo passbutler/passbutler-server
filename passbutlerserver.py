@@ -170,75 +170,34 @@ App implementation and routes
 def createApp(testConfig=None):
     app = Flask(__name__)
 
-    # General config (production and test related)
+    # Signals of SQLAlchemy are not used
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     if testConfig is None:
         app.config.from_envvar('PASSBUTLER_SETTINGS')
     else:
-        # Use `flask_testing.TestCase` fields for configuration
         app.config.from_object(testConfig)
 
-    mandatoryConfigurationValues = [
-        'DATABASE_FILE',
-        'LOG_FILE',
-        'SECRET_KEY',
-        'ENABLE_REQUEST_LOGGING',
-        'REGISTRATION_ENABLED',
-        'REGISTRATION_INVITATION_CODE',
-    ]
+    checkMandatoryConfigurationValues(app)
 
-    for configurationValue in mandatoryConfigurationValues:
-        if configurationValue not in app.config:
-            raise ValueError('The value "' + configurationValue + '" is not set in configuration!')
-
-    # Additional configuration checks
-
-    configurationSecretKey = app.config.get('SECRET_KEY', None)
-
-    if configurationSecretKey is None or len(configurationSecretKey) < 64:
-        raise ValueError('The "SECRET_KEY" in the configuration must be at least 64 characters long!')
-
-    registrationInvitationCode = app.config.get('REGISTRATION_INVITATION_CODE', None)
-
-    if registrationInvitationCode is None or len(registrationInvitationCode) < 16:
-        raise ValueError('The "REGISTRATION_INVITATION_CODE" in the configuration must be at least 16 characters long!')
+    secretKey = obtainSecretKey(app)
+    registrationInvitationCode = obtainRegistrationInvitationCode(app)
 
     databaseFilePath = app.config['DATABASE_FILE']
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + databaseFilePath
 
-    logFilePath = app.config['LOG_FILE']
-
-    if logFilePath is not None:
-        fileLogHandler = FileHandler(logFilePath)
-        fileLogHandler.setLevel(logging.INFO)
-        fileLogHandler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(name)s [%(threadName)s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S.%03d'))
-        app.logger.addHandler(fileLogHandler)
-
-    app.logger.info('Pass Butler server is starting')
+    initializeLogger(app)
 
     db.init_app(app)
     ma.init_app(app)
 
-    # Enables foreign key enforcing which is disabled by default in SQLite
-    with app.app_context():
-        def enableForeignKeySupport(dbApiConnection, _):
-            cursor = dbApiConnection.cursor()
-            cursor.execute('PRAGMA foreign_keys=ON;')
-            cursor.close()
-
-        event.listen(db.engine, 'connect', enableForeignKeySupport)
+    enableForeignKeyEnforcement(app)
 
     # Create database tables if not in unit test mode
     if testConfig is None:
-        with app.app_context():
-            db.create_all()
+        createDatabaseStructure(app)
 
-    tokenSerializer = TimedJSONWebSignatureSerializer(
-        configurationSecretKey,
-        expires_in=3600,
-        algorithm_name='HS512'
-    )
+    tokenSerializer = TimedJSONWebSignatureSerializer(secretKey, expires_in=3600, algorithm_name='HS512')
 
     passwordAuth = HTTPBasicAuth()
     webTokenAuth = HTTPTokenAuth('Bearer')
@@ -334,7 +293,7 @@ def createApp(testConfig=None):
             app.logger.warning('The user registration is not enabled!')
             abort(403)
 
-        if app.config.get('REGISTRATION_INVITATION_CODE', None) != request.headers.get('Registration-Invitation-Code', None):
+        if request.headers.get('Registration-Invitation-Code', None) != registrationInvitationCode:
             app.logger.warning('The registration invitation code is not correct!')
             abort(403)
 
@@ -587,3 +546,60 @@ def createApp(testConfig=None):
             existingItemAuthorization.modified = itemAuthorization.modified
 
     return app
+
+def checkMandatoryConfigurationValues(app):
+    mandatoryConfigurationValues = [
+        'DATABASE_FILE',
+        'LOG_FILE',
+        'SECRET_KEY',
+        'ENABLE_REQUEST_LOGGING',
+        'REGISTRATION_ENABLED',
+        'REGISTRATION_INVITATION_CODE',
+    ]
+
+    for configurationValue in mandatoryConfigurationValues:
+        if configurationValue not in app.config:
+            raise ValueError('The value "' + configurationValue + '" is not set in configuration!')
+
+def obtainSecretKey(app):
+    configurationSecretKey = app.config.get('SECRET_KEY', None)
+
+    if configurationSecretKey is None or len(configurationSecretKey) < 64:
+        raise ValueError('The "SECRET_KEY" in the configuration must be at least 64 characters long!')
+
+    return configurationSecretKey
+
+def obtainRegistrationInvitationCode(app):
+    registrationInvitationCode = app.config.get('REGISTRATION_INVITATION_CODE', None)
+
+    if registrationInvitationCode is None or len(registrationInvitationCode) < 16:
+        raise ValueError('The "REGISTRATION_INVITATION_CODE" in the configuration must be at least 16 characters long!')
+
+    return registrationInvitationCode
+
+def initializeLogger(app):
+    logFilePath = app.config['LOG_FILE']
+
+    if logFilePath is not None:
+        fileLogHandler = FileHandler(logFilePath)
+        fileLogHandler.setLevel(logging.INFO)
+        fileLogHandler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s %(name)s [%(threadName)s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S.%03d')
+        )
+        app.logger.addHandler(fileLogHandler)
+
+    app.logger.info('Pass Butler server is starting')
+
+def enableForeignKeyEnforcement(app):
+    # Enables foreign key enforcing which is disabled by default in SQLite
+    with app.app_context():
+        def enableForeignKeySupport(dbApiConnection, _):
+            cursor = dbApiConnection.cursor()
+            cursor.execute('PRAGMA foreign_keys=ON;')
+            cursor.close()
+
+        event.listen(db.engine, 'connect', enableForeignKeySupport)
+
+def createDatabaseStructure(app):
+    with app.app_context():
+        db.create_all()
