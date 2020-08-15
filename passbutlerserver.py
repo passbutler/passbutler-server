@@ -363,7 +363,7 @@ def createApp(testConfig=None):
 
     """
     Get a new token is only possible with password based authentication
-    to be sure tokens can't refresh themselfs for unlimited time!
+    to be sure tokens can't refresh themselves for unlimited time!
     """
     @app.route('/' + API_VERSION_PREFIX + '/token', methods=['GET'])
     @passwordAuth.login_required
