@@ -84,7 +84,7 @@ Create Systemd service file `/etc/systemd/system/passbutler-server-example.servi
     Group=passbutler-server-example
     WorkingDirectory=/var/lib/passbutler-server/example/
     Environment="PASSBUTLER_SETTINGS=/etc/passbutler-server/example.conf"
-    ExecStart=/usr/bin/gunicorn3 --name=gunicorn-passbutler-server-example --workers=1 --pythonpath=/opt/venvs/passbutler-server/lib/python3.8/site-packages --bind=unix:/run/passbutler-server-example.sock 'passbutlerserver:createApp'
+    ExecStart=/usr/bin/gunicorn3 --name=gunicorn-passbutler-server-example --workers=1 --pythonpath=/opt/venvs/passbutler-server/lib/python3.8/site-packages --bind=unix:/run/passbutler-server-example.sock 'passbutlerserver:createApp()'
     
     [Install]
     WantedBy=multi-user.target
