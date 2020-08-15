@@ -45,11 +45,10 @@ Add dedicated user and group:
 
     $ sudo adduser --system --group --disabled-password --home /var/lib/passbutler-server/example/ "passbutler-server-example"
 
-Create socket file and correct owner and permissions:
+Create socket directory and correct owner:
 
-    $ sudo touch /run/passbutler-server-example.sock
-    $ sudo chown passbutler-server-example:passbutler-server-example /run/passbutler-server-example.sock
-    $ sudo chmod 0640 /run/passbutler-server-example.sock
+    $ sudo mkdir /run/passbutler-server-example/
+    $ sudo chown passbutler-server-example:passbutler-server-example /run/passbutler-server-example/
 
 Create log file and correct owner:
 
@@ -84,7 +83,7 @@ Create Systemd service file `/etc/systemd/system/passbutler-server-example.servi
     Group=passbutler-server-example
     WorkingDirectory=/var/lib/passbutler-server/example/
     Environment="PASSBUTLER_SETTINGS=/etc/passbutler-server/example.conf"
-    ExecStart=/usr/bin/gunicorn3 --name=gunicorn-passbutler-server-example --workers=1 --pythonpath=/opt/venvs/passbutler-server/lib/python3.8/site-packages --bind=unix:/run/passbutler-server-example.sock 'passbutlerserver:createApp()'
+    ExecStart=/usr/bin/gunicorn3 --name=gunicorn-passbutler-server-example --workers=1 --pythonpath=/opt/venvs/passbutler-server/lib/python3.8/site-packages --bind=unix:/run/passbutler-server-example/socket.sock 'passbutlerserver:createApp()'
     
     [Install]
     WantedBy=multi-user.target
@@ -100,7 +99,7 @@ Add to your Nginx `sites-available/example.vhost` configuration:
         ...
 
         location / {
-            proxy_pass http://unix:/run/passbutler-server-example.sock;
+            proxy_pass http://unix:/run/passbutler-server-example/socket.sock;
 
             include "proxy_params";
         }
