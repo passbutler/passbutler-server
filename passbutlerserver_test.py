@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 from flask_testing import TestCase
 from passbutlerserver import API_VERSION_PREFIX, createApp, db
 from passbutlerserver import User, Item, ItemAuthorization
 from itsdangerous import TimedJSONWebSignatureSerializer
 import base64
-import unittest
 
 """
 Model to JSON functions
@@ -90,10 +90,8 @@ class TestConfigurationTestCase(TestCase):
 
     TESTING = True
 
-    SQLALCHEMY_DATABASE_URI = 'sqlite://'
-
-    SERVER_HOST = ''
-    SERVER_PORT = 0
+    DATABASE_FILE = ':memory:'
+    LOG_FILE = None
     SECRET_KEY = 'This is the secret key for testing - it must be at least 64 characters long'
 
     ENABLE_REQUEST_LOGGING = False
@@ -114,19 +112,22 @@ class TestConfigurationTestCase(TestCase):
 
 class PassButlerTestCase(TestConfigurationTestCase):
 
-    def addUsers(self, *users):
+    @staticmethod
+    def addUsers(*users):
         for user in users:
             db.session.add(user)
 
         db.session.commit()
 
-    def addItems(self, *items):
+    @staticmethod
+    def addItems(*items):
         for item in items:
             db.session.add(item)
 
         db.session.commit()
 
-    def addItemAuthorizations(self, *itemAuthorizations):
+    @staticmethod
+    def addItemAuthorizations(*itemAuthorizations):
         for itemAuthorization in itemAuthorizations:
             db.session.add(itemAuthorization)
 
@@ -138,7 +139,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
     """
 
     def test_register_user_non_existing_user(self):
-        ## Enable registration in config
+        # Enable registration in config
         self.app.config['REGISTRATION_ENABLED'] = True
 
         requestData = {
@@ -157,14 +158,14 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers=createRegistrationInvitationCodeHttpHeader('AAAA-BBBB-CCCC-DDDD'))
 
-        ## Discard uncommited changes to check if the changes has been committed
+        # Discard uncommitted changes to check if the changes has been committed
         db.session.rollback()
 
         assert response.status_code == 204
         assert createUserJson(User.query.get('alice-id')) == requestData
 
     def test_register_user_disabled_registration(self):
-        ## Disable registration in config
+        # Disable registration in config
         self.app.config['REGISTRATION_ENABLED'] = False
 
         requestData = {
@@ -183,14 +184,14 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers=createRegistrationInvitationCodeHttpHeader('AAAA-BBBB-CCCC-DDDD'))
 
-        ## Discard uncommited changes to check if the changes has been committed
+        # Discard uncommitted changes to check if the changes has been committed
         db.session.rollback()
 
         assert response.status_code == 403
-        assert User.query.get('alice-id') == None
+        assert User.query.get('alice-id') is None
 
     def test_register_user_missing_invitation_code(self):
-        ## Enable registration in config
+        # Enable registration in config
         self.app.config['REGISTRATION_ENABLED'] = True
 
         requestData = {
@@ -209,14 +210,14 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers={})
 
-        ## Discard uncommited changes to check if the changes has been committed
+        # Discard uncommitted changes to check if the changes has been committed
         db.session.rollback()
 
         assert response.status_code == 403
-        assert User.query.get('alice-id') == None
+        assert User.query.get('alice-id') is None
 
     def test_register_user_wrong_invitation_code(self):
-        ## Enable registration in config
+        # Enable registration in config
         self.app.config['REGISTRATION_ENABLED'] = True
 
         requestData = {
@@ -235,14 +236,14 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers=createRegistrationInvitationCodeHttpHeader('XXXX-YYYY-ZZZZ-AAAA'))
 
-        ## Discard uncommited changes to check if the changes has been committed
+        # Discard uncommitted changes to check if the changes has been committed
         db.session.rollback()
 
         assert response.status_code == 403
-        assert User.query.get('alice-id') == None
+        assert User.query.get('alice-id') is None
 
     def test_register_user_already_existing_user(self):
-        ## Enable registration in config
+        # Enable registration in config
         self.app.config['REGISTRATION_ENABLED'] = True
 
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -266,13 +267,13 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers=createRegistrationInvitationCodeHttpHeader('AAAA-BBBB-CCCC-DDDD'))
 
-        ## Discard uncommited changes to check if the changes has been committed
+        # Discard uncommitted changes to check if the changes has been committed
         db.session.rollback()
 
         assert response.status_code == 403
         assert createUserJson(User.query.get('alice-id')) == initialUserJson
 
-    ## General wrong field type tests
+    # General wrong field type tests
 
     def test_register_user_wrong_field_type_username(self):
         requestData = {
@@ -434,7 +435,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self.__test_register_user_wrong_field_type(requestData)
 
     def __test_register_user_wrong_field_type(self, requestData):
-        ## Enable registration in config
+        # Enable registration in config
         self.app.config['REGISTRATION_ENABLED'] = True
 
         response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers=createRegistrationInvitationCodeHttpHeader('AAAA-BBBB-CCCC-DDDD'))
@@ -443,9 +444,9 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-        assert User.query.get('alice-id') == None
+        assert User.query.get('alice-id') is None
 
-    ## General missing field tests
+    # General missing field tests
 
     def test_register_user_missing_field_all(self):
         requestData = {}
@@ -601,7 +602,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self.__test_register_user_missing_field(requestData)
 
     def __test_register_user_missing_field(self, requestData):
-        ## Enable registration in config
+        # Enable registration in config
         self.app.config['REGISTRATION_ENABLED'] = True
 
         response = self.client.put('/' + API_VERSION_PREFIX + '/register', json=requestData, headers=createRegistrationInvitationCodeHttpHeader('AAAA-BBBB-CCCC-DDDD'))
@@ -610,14 +611,13 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-        assert User.query.get('alice-id') == None
+        assert User.query.get('alice-id') is None
 
-    ## Unknown field test
+    # Unknown field test
 
     def test_register_user_unknown_field(self):
-        ## Enable registration in config
+        # Enable registration in config
         self.app.config['REGISTRATION_ENABLED'] = True
-        self.app.config['REGISTRATION_INVITATION_CODE'] = 'AAAA-BBBB-CCCC-DDDD'
 
         requestData = {
             'id': 'alice-id',
@@ -640,12 +640,12 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-        assert User.query.get('alice-id') == None
+        assert User.query.get('alice-id') is None
 
-    ## Invalid JSON test
+    # Invalid JSON test
 
     def test_register_user_invalid_json(self):
-        ## Enable registration in config
+        # Enable registration in config
         self.app.config['REGISTRATION_ENABLED'] = True
 
         requestData = '{this is not valid JSON}'
@@ -655,7 +655,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-        assert User.query.get('alice-id') == None
+        assert User.query.get('alice-id') is None
 
     """
     Tests for GET /token
@@ -695,7 +695,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         response = self.client.get('/' + API_VERSION_PREFIX + '/token', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
-        ## A token only can be requested with username and password
+        # A token only can be requested with username and password
         assert response.status_code == 401
         assert response.get_json() == {'error': 'Unauthorized'}
 
@@ -850,13 +850,13 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         response = self.client.put('/' + API_VERSION_PREFIX + '/user', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
-        ## Discard uncommited changes to check if the changes has been committed
+        # Discard uncommitted changes to check if the changes has been committed
         db.session.rollback()
 
         assert response.status_code == 204
         assert createUserJson(User.query.get('alice-id')) == requestData
 
-    ## General modify field tests
+    # General modify field tests
 
     def test_set_user_details_change_field_username(self):
         requestData = {
@@ -911,7 +911,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'created': 12345678901
         }
 
-        ## The field is immutable
+        # The field is immutable
         expected = {
             'id': 'alice-id',
             'username': 'alice',
@@ -962,7 +962,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'created': 12345678901
         }
 
-        ## The field is immutable
+        # The field is immutable
         expected = {
             'id': 'alice-id',
             'username': 'alice',
@@ -994,7 +994,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'created': 12345678901
         }
 
-        ## The field is immutable
+        # The field is immutable
         expected = {
             'id': 'alice-id',
             'username': 'alice',
@@ -1045,7 +1045,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'created': 12345678901
         }
 
-        ## The field is immutable
+        # The field is immutable
         expected = {
             'id': 'alice-id',
             'username': 'alice',
@@ -1096,7 +1096,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'created': 12345678902
         }
 
-        ## The field is immutable
+        # The field is immutable
         expected = {
             'id': 'alice-id',
             'username': 'alice',
@@ -1124,7 +1124,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.status_code == 204
         assert createUserJson(User.query.get('alice-id')) == expected
 
-    ## General wrong field type tests
+    # General wrong field type tests
 
     def test_set_user_details_wrong_field_type_username(self):
         requestData = {
@@ -1299,7 +1299,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Invalid request'}
         assert createUserJson(User.query.get('alice-id')) == initialUserJson
 
-    ## General missing field tests
+    # General missing field tests
 
     def test_set_user_details_missing_field_all(self):
         requestData = {}
@@ -1468,7 +1468,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Invalid request'}
         assert createUserJson(User.query.get('alice-id')) == initialUserJson
 
-    ## Unknown field test
+    # Unknown field test
 
     def test_set_user_details_unknown_field(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -1487,7 +1487,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Invalid request'}
         assert createUserJson(User.query.get('alice-id')) == initialUserJson
 
-    ## Invalid JSON test
+    # Invalid JSON test
 
     def test_set_user_details_invalid_json(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -1545,7 +1545,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 200
 
-        ## The "item2" is deleted, but is listed of course
+        # The "item2" is deleted, but is listed of course
         assert sortItemList(response.get_json()) == sortItemList([
             {'id': 'item1', 'userId': 'alice-id', 'data': 'example data 1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
             {'id': 'item2', 'userId': 'alice-id', 'data': 'example data 2', 'deleted': True, 'modified': 12345678902, 'created': 12345678901}
@@ -1562,7 +1562,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         response = self.client.get('/' + API_VERSION_PREFIX + '/user/items', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
         assert response.status_code == 200
 
-        ## Alice is not able to see "item1" because no item authorization exists
+        # Alice is not able to see "item1" because no item authorization exists
         assert sortItemList(response.get_json()) == sortItemList([])
 
     def test_get_user_items_without_shared_item_authorization(self):
@@ -1584,7 +1584,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 200
 
-        ## Alice is only able to see "item1", because Sandy does not shared "item2" with her
+        # Alice is only able to see "item1", because Sandy does not shared "item2" with her
         assert sortItemList(response.get_json()) == sortItemList([
             {'id': 'item1', 'userId': 'alice-id', 'data': 'example data 1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901}
         ])
@@ -1609,7 +1609,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 200
 
-        ## The "item2" of Sandy is also accessible by Alice because she has a non-deleted item authorization
+        # The "item2" of Sandy is also accessible by Alice because she has a non-deleted item authorization
         assert sortItemList(response.get_json()) == sortItemList([
             {'id': 'item1', 'userId': 'alice-id', 'data': 'example data 1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
             {'id': 'item2', 'userId': 'sandy-id', 'data': 'example data 2', 'deleted': False, 'modified': 12345678902, 'created': 12345678901}
@@ -1635,7 +1635,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 200
 
-        ## The "item2" of Sandy is not accessible by Alice anymore because item authorization was deleted by Sandy
+        # The "item2" of Sandy is not accessible by Alice anymore because item authorization was deleted by Sandy
         assert sortItemList(response.get_json()) == sortItemList([
             {'id': 'item1', 'userId': 'alice-id', 'data': 'example data 1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901}
         ])
@@ -1645,7 +1645,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
     """
 
-    ## Create new items tests
+    # Create new items tests
 
     def test_set_user_items_create_items(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -1719,9 +1719,9 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 404
         assert response.get_json() == {'error': 'Not found'}
-        assert Item.query.get('item1') == None
+        assert Item.query.get('item1') is None
 
-    ## Permission tests
+    # Permission tests
 
     def test_set_user_items_create_item_for_other_user(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -1742,10 +1742,10 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         db.session.rollback()
 
-        ## Alice is not allowed to create a item for another user (Sandy)
+        # Alice is not allowed to create a item for another user (Sandy)
         assert response.status_code == 403
         assert response.get_json() == {'error': 'Forbidden'}
-        assert Item.query.get('item1') == None
+        assert Item.query.get('item1') is None
 
     def test_set_user_items_create_item_without_item_authorization(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -1836,7 +1836,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Forbidden'}
         assert createItemJson(Item.query.get('item1')) == initialItem1Json
 
-    ## General modify field tests
+    # General modify field tests
 
     def test_set_user_items_change_field_userId_existing(self):
         requestData = [{
@@ -1848,7 +1848,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'created': 12345678901
         }]
 
-        ## The field is immutable
+        # The field is immutable
         expected = {
             'id': 'item1',
             'userId': 'alice-id',
@@ -1870,7 +1870,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'created': 12345678901
         }]
 
-        ## The field is immutable
+        # The field is immutable
         expected = {
             'id': 'item1',
             'userId': 'alice-id',
@@ -1883,8 +1883,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self.__test_set_user_items_change_field(
             requestData=requestData,
             expected=expected,
-            expectedStatusCode = 404,
-            expectedResponseJson = {'error': 'Not found'}
+            expectedStatusCode=404,
+            expectedResponseJson={'error': 'Not found'}
         )
 
     def test_set_user_items_change_field_data(self):
@@ -1933,7 +1933,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'created': 12345678903
         }]
 
-        ## The field is immutable
+        # The field is immutable
         expected = {
             'id': 'item1',
             'userId': 'alice-id',
@@ -1949,8 +1949,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self,
         requestData,
         expected,
-        expectedStatusCode = 204,
-        expectedResponseJson = None
+        expectedStatusCode=204,
+        expectedResponseJson=None
     ):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         sandy = User('sandy-id', 'sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
@@ -1967,7 +1967,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == expectedResponseJson
         assert createItemJson(Item.query.get('item1')) == expected
 
-    ## General wrong field type tests
+    # General wrong field type tests
 
     def test_set_user_items_wrong_field_type_id(self):
         requestData = [{
@@ -2054,7 +2054,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Invalid request'}
         assert createItemJson(Item.query.get('item1')) == initialItem1Json
 
-    ## General missing field tests
+    # General missing field tests
 
     def test_set_user_items_missing_field_all(self):
         requestData = [{}]
@@ -2139,7 +2139,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Invalid request'}
         assert createItemJson(Item.query.get('item1')) == initialItem1Json
 
-    ## Unknown field test
+    # Unknown field test
 
     def test_set_user_items_unknown_field(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -2163,7 +2163,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Invalid request'}
         assert createItemJson(Item.query.get('item1')) == initialItem1Json
 
-    ## Invalid JSON test
+    # Invalid JSON test
 
     def test_set_user_items_invalid_json(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -2204,11 +2204,11 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self.addItemAuthorizations(
             ItemAuthorization('itemAuthorization1', 'alice-id', 'item1', 'example item key 1', False, False, 12345678902, 12345678901),
 
-            ## Alice gave herself and Sandy access to "item2"
+            # Alice gave herself and Sandy access to "item2"
             ItemAuthorization('itemAuthorization2', 'alice-id', 'item2', 'example item key 2', False, False, 12345678902, 12345678901),
             ItemAuthorization('itemAuthorization3', 'sandy-id', 'item2', 'example item key 2', False, False, 12345678902, 12345678901),
 
-            ## Sandy gave herself and Alice access to "item3" but deleted Alice item authorization
+            # Sandy gave herself and Alice access to "item3" but deleted Alice item authorization
             ItemAuthorization('itemAuthorization4', 'sandy-id', 'item3', 'example item key 3', False, False, 12345678902, 12345678901),
             ItemAuthorization('itemAuthorization5', 'alice-id', 'item3', 'example item key 3', False, True, 12345678902, 12345678901)
         )
@@ -2217,12 +2217,12 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 200
 
-        ## Alice see the item authorizations created from and for her (also the deleted ones)
+        # Alice see the item authorizations created from and for her (also the deleted ones)
         assert sortItemAuthorizationList(response.get_json()) == sortItemAuthorizationList([
-            {'id': 'itemAuthorization1', 'userId': 'alice-id', 'itemId': 'item1', 'itemKey': 'example item key 1', 'readOnly': False, 'deleted': False, 'modified': 12345678902,'created': 12345678901},
-            {'id': 'itemAuthorization2', 'userId': 'alice-id', 'itemId': 'item2', 'itemKey': 'example item key 2', 'readOnly': False, 'deleted': False, 'modified': 12345678902,'created': 12345678901},
-            {'id': 'itemAuthorization3', 'userId': 'sandy-id', 'itemId': 'item2', 'itemKey': 'example item key 2', 'readOnly': False, 'deleted': False, 'modified': 12345678902,'created': 12345678901},
-            {'id': 'itemAuthorization5', 'userId': 'alice-id', 'itemId': 'item3', 'itemKey': 'example item key 3', 'readOnly': False, 'deleted': True, 'modified': 12345678902,'created': 12345678901}
+            {'id': 'itemAuthorization1', 'userId': 'alice-id', 'itemId': 'item1', 'itemKey': 'example item key 1', 'readOnly': False, 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
+            {'id': 'itemAuthorization2', 'userId': 'alice-id', 'itemId': 'item2', 'itemKey': 'example item key 2', 'readOnly': False, 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
+            {'id': 'itemAuthorization3', 'userId': 'sandy-id', 'itemId': 'item2', 'itemKey': 'example item key 2', 'readOnly': False, 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
+            {'id': 'itemAuthorization5', 'userId': 'alice-id', 'itemId': 'item3', 'itemKey': 'example item key 3', 'readOnly': False, 'deleted': True, 'modified': 12345678902, 'created': 12345678901}
         ])
 
     """
@@ -2230,7 +2230,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
     """
 
-    ## Create new item authorization tests
+    # Create new item authorization tests
 
     def test_set_user_item_authorizations_create_authorizations(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -2346,7 +2346,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 404
         assert response.get_json() == {'error': 'Not found'}
-        assert ItemAuthorization.query.get('itemAuthorization1') == None
+        assert ItemAuthorization.query.get('itemAuthorization1') is None
 
     def test_set_user_item_authorizations_create_authorization_with_not_existing_item(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -2370,7 +2370,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 404
         assert response.get_json() == {'error': 'Not found'}
-        assert ItemAuthorization.query.get('itemAuthorization1') == None
+        assert ItemAuthorization.query.get('itemAuthorization1') is None
 
     def test_set_user_item_authorizations_create_authorization_for_item_with_already_existing_item_authorization_for_requesting_user(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -2395,7 +2395,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-        assert ItemAuthorization.query.get('itemAuthorization1a') == None
+        assert ItemAuthorization.query.get('itemAuthorization1a') is None
 
     def test_set_user_item_authorizations_create_authorization_for_item_with_already_existing_item_authorization_for_other_user(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -2424,9 +2424,9 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
-        assert ItemAuthorization.query.get('itemAuthorization2a') == None
+        assert ItemAuthorization.query.get('itemAuthorization2a') is None
 
-    ## Permission tests
+    # Permission tests
 
     def test_set_user_item_authorizations_create_authorization_for_item_is_owned_by_other_user(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -2449,10 +2449,10 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         db.session.rollback()
 
-        ## Alice is not allowed to create a item authorization for an item that is not owned by her
+        # Alice is not allowed to create a item authorization for an item that is not owned by her
         assert response.status_code == 403
         assert response.get_json() == {'error': 'Forbidden'}
-        assert ItemAuthorization.query.get('itemAuthorization1') == None
+        assert ItemAuthorization.query.get('itemAuthorization1') is None
 
     def test_set_user_item_authorizations_update_authorization_for_item_is_owned_by_other_user(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -2480,12 +2480,12 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         db.session.rollback()
 
-        ## Alice is not allowed to change item authorization for her for an item that is not owned by her
+        # Alice is not allowed to change item authorization for her for an item that is not owned by her
         assert response.status_code == 403
         assert response.get_json() == {'error': 'Forbidden'}
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == initialItemAuthorization1Json
 
-    ## General modify field tests
+    # General modify field tests
 
     def test_set_user_item_authorizations_change_field_userId_existing(self):
         requestData = [{
@@ -2499,7 +2499,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'created': 12345678901
         }]
 
-        ## The field is immutable
+        # The field is immutable
         expected = {
             'id': 'itemAuthorization1',
             'userId': 'alice-id',
@@ -2525,7 +2525,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'created': 12345678901
         }]
 
-        ## The field is immutable
+        # The field is immutable
         expected = {
             'id': 'itemAuthorization1',
             'userId': 'alice-id',
@@ -2540,8 +2540,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self.__test_set_user_item_authorizations_change_field(
             requestData=requestData,
             expected=expected,
-            expectedStatusCode = 404,
-            expectedResponseJson = {'error': 'Not found'}
+            expectedStatusCode=404,
+            expectedResponseJson={'error': 'Not found'}
         )
 
     def test_set_user_item_authorizations_change_field_itemId_existing(self):
@@ -2556,7 +2556,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'created': 12345678901
         }]
 
-        ## The field is immutable
+        # The field is immutable
         expected = {
             'id': 'itemAuthorization1',
             'userId': 'alice-id',
@@ -2582,7 +2582,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'created': 12345678901
         }]
 
-        ## The field is immutable
+        # The field is immutable
         expected = {
             'id': 'itemAuthorization1',
             'userId': 'alice-id',
@@ -2597,8 +2597,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self.__test_set_user_item_authorizations_change_field(
             requestData=requestData,
             expected=expected,
-            expectedStatusCode = 404,
-            expectedResponseJson = {'error': 'Not found'}
+            expectedStatusCode=404,
+            expectedResponseJson={'error': 'Not found'}
         )
 
     def test_set_user_item_authorizations_change_field_itemKey(self):
@@ -2613,7 +2613,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'created': 12345678901
         }]
 
-        ## The field is immutable
+        # The field is immutable
         expected = {
             'id': 'itemAuthorization1',
             'userId': 'alice-id',
@@ -2681,7 +2681,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'created': 12345678902
         }]
 
-        ## The field is immutable
+        # The field is immutable
         expected = {
             'id': 'itemAuthorization1',
             'userId': 'alice-id',
@@ -2699,8 +2699,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self,
         requestData,
         expected,
-        expectedStatusCode = 204,
-        expectedResponseJson = None
+        expectedStatusCode=204,
+        expectedResponseJson=None
     ):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         sandy = User('sandy-id', 'sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
@@ -2721,7 +2721,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == expectedResponseJson
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == expected
 
-    ## General wrong field type tests
+    # General wrong field type tests
 
     def test_set_user_item_authorizations_wrong_field_type_id(self):
         requestData = [{
@@ -2846,7 +2846,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Invalid request'}
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == initialItemAuthorization1Json
 
-    ## General missing field tests
+    # General missing field tests
 
     def test_set_user_item_authorizations_missing_field_all(self):
         requestData = [{}]
@@ -2967,7 +2967,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Invalid request'}
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == initialItemAuthorization1Json
 
-    ## Unknown field test
+    # Unknown field test
 
     def test_set_user_item_authorizations_unknown_field(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -2991,7 +2991,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Invalid request'}
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == initialItemAuthorization1Json
 
-    ## Invalid JSON test
+    # Invalid JSON test
 
     def test_set_user_item_authorizations_invalid_json(self):
         alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
@@ -3012,6 +3012,3 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.status_code == 400
         assert response.get_json() == {'error': 'Invalid request'}
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == initialItemAuthorization1Json
-
-if __name__ == '__main__':
-    unittest.main()

@@ -1,0 +1,2 @@
+passbutlerserver-example.conf /etc/passbutler-server/
+passbutlerserver.py /usr/bin/

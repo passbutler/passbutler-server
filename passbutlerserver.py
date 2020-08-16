@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 from flask import Flask, request, jsonify, abort, make_response, g
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 from flask_marshmallow import Marshmallow, Schema
 from flask_sqlalchemy import SQLAlchemy
-from itsdangerous import TimedJSONWebSignatureSerializer
+from itsdangerous import TimedJSONWebSignatureSerializer, BadSignature
+from logging import FileHandler
 from marshmallow.exceptions import ValidationError
 from marshmallow_sqlalchemy import ModelSchema
 from sqlalchemy import event, and_
 from werkzeug.security import check_password_hash
-import os
+import logging
 
 API_VERSION_PREFIX = 'v1'
 
@@ -152,7 +154,7 @@ class User(db.Model):
 
 class PublicUserSchema(Schema):
     class Meta:
-        ## Only the following fields are allowed to see for this schema
+        # Only the following fields are allowed to see for this schema
         fields = ('id', 'username', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
 
 class DefaultUserSchema(ModelSchema):
@@ -168,66 +170,34 @@ App implementation and routes
 def createApp(testConfig=None):
     app = Flask(__name__)
 
-    ## General config (production and test related)
+    # Signals of SQLAlchemy are not used
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     if testConfig is None:
-        baseDirectory = os.path.abspath(os.path.dirname(__file__))
-        databaseFilePath = os.path.join(baseDirectory, 'passbutlerserver.sqlite')
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + databaseFilePath
-
         app.config.from_envvar('PASSBUTLER_SETTINGS')
     else:
-        ## Use `flask_testing.TestCase` fields for configuration
         app.config.from_object(testConfig)
 
-    mandatoryConfigurationValues = [
-        'SERVER_HOST',
-        'SERVER_PORT',
-        'SECRET_KEY',
-        'ENABLE_REQUEST_LOGGING',
-        'REGISTRATION_ENABLED',
-        'REGISTRATION_INVITATION_CODE',
-    ]
+    checkMandatoryConfigurationValues(app)
 
-    for configurationValue in mandatoryConfigurationValues:
-        if configurationValue not in app.config:
-            raise ValueError('The value "' + configurationValue + '" is not set in configuration!')
+    secretKey = obtainSecretKey(app)
+    registrationInvitationCode = obtainRegistrationInvitationCode(app)
 
-    ## Additional configuration checks
+    databaseFilePath = app.config['DATABASE_FILE']
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + databaseFilePath
 
-    configurationSecretKey = app.config.get('SECRET_KEY', None)
-
-    if configurationSecretKey is None or len(configurationSecretKey) < 64:
-        raise ValueError('The "SECRET_KEY" in the configuration must be at least 64 characters long!')
-
-    registrationInvitationCode = app.config.get('REGISTRATION_INVITATION_CODE', None)
-
-    if registrationInvitationCode is None or len(registrationInvitationCode) < 16:
-        raise ValueError('The "REGISTRATION_INVITATION_CODE" in the configuration must be at least 16 characters long!')
+    initializeLogger(app)
 
     db.init_app(app)
     ma.init_app(app)
 
-    ## Enables foreign key enforcing which is disabled by default in SQLite
-    with app.app_context():
-        def enableForeignKeySupport(dbApiConnection, connectionRecord):
-            cursor = dbApiConnection.cursor()
-            cursor.execute('PRAGMA foreign_keys=ON;')
-            cursor.close()
+    enableForeignKeyEnforcement(app)
 
-        event.listen(db.engine, 'connect', enableForeignKeySupport)
-
-    ## Create database tables if not in unit test mode
+    # Create database tables if not in unit test mode
     if testConfig is None:
-        with app.app_context():
-            db.create_all()
+        createDatabaseStructure(app)
 
-    tokenSerializer = TimedJSONWebSignatureSerializer(
-        configurationSecretKey,
-        expires_in=3600,
-        algorithm_name="HS512"
-    )
+    tokenSerializer = TimedJSONWebSignatureSerializer(secretKey, expires_in=3600, algorithm_name='HS512')
 
     passwordAuth = HTTPBasicAuth()
     webTokenAuth = HTTPTokenAuth('Bearer')
@@ -237,7 +207,7 @@ def createApp(testConfig=None):
         wasSuccessful = False
         g.authenticatedUser = None
 
-        ## Authentication is only possible for non-deleted users
+        # Authentication is only possible for non-deleted users
         requestingUser = User.query.filter_by(username=username, deleted=False).first()
 
         if requestingUser is not None and requestingUser.checkAuthenticationPassword(password):
@@ -256,14 +226,13 @@ def createApp(testConfig=None):
             userId = tokenData.get('id')
 
             if userId is not None:
-                ## Authentication is only possible for non-deleted users
+                # Authentication is only possible for non-deleted users
                 user = User.query.filter_by(id=userId, deleted=False).first()
 
                 if user is not None:
                     g.authenticatedUser = user
                     wasSuccessful = True
-        except:
-            ## If any exception occurs, the token is invalid/expired
+        except BadSignature:
             wasSuccessful = False
 
         return wasSuccessful
@@ -271,37 +240,37 @@ def createApp(testConfig=None):
     @passwordAuth.error_handler
     @webTokenAuth.error_handler
     def httpAuthUnauthorizedHandler():
-        ## Just pass the event to normal Flask handler
+        # Just pass the event to normal Flask handler
         abort(401)
 
     @app.errorhandler(400)
-    def invalidRequestHandler(error):
+    def invalidRequestHandler(_):
         return make_response(jsonify({'error': 'Invalid request'}), 400)
 
     @app.errorhandler(401)
-    def unauthorizedRequestHandler(error):
+    def unauthorizedRequestHandler(_):
         return make_response(jsonify({'error': 'Unauthorized'}), 401)
 
     @app.errorhandler(403)
-    def forbiddenRequestHandler(error):
+    def forbiddenRequestHandler(_):
         return make_response(jsonify({'error': 'Forbidden'}), 403)
 
     @app.errorhandler(404)
-    def notFoundRequestHandler(error):
+    def notFoundRequestHandler(_):
         return make_response(jsonify({'error': 'Not found'}), 404)
 
     @app.errorhandler(409)
-    def alreadyExistsRequestHandler(error):
+    def alreadyExistsRequestHandler(_):
         return make_response(jsonify({'error': 'Already exists'}), 409)
 
     @app.errorhandler(Exception)
     def unhandledExceptionHandler(exception):
-        app.logger.error('Unexpected exception occured: %s', (exception))
+        app.logger.error('Unexpected exception occurred: %s', exception)
         return make_response(jsonify({'error': 'Server error'}), 500)
 
     @app.after_request
     def logRequestResponse(response):
-        if (app.config.get('ENABLE_REQUEST_LOGGING', False) == True):
+        if app.config.get('ENABLE_REQUEST_LOGGING', False):
             app.logger.debug(
                 'Response for request %s %s: %s\n' +
                 '--------------------------------------------------------------------------------\n' +
@@ -320,22 +289,22 @@ def createApp(testConfig=None):
 
     @app.route('/' + API_VERSION_PREFIX + '/register', methods=['PUT'])
     def register_user():
-        if (app.config.get('REGISTRATION_ENABLED', False) == False):
+        if not app.config.get('REGISTRATION_ENABLED', False):
             app.logger.warning('The user registration is not enabled!')
             abort(403)
 
-        if (app.config.get('REGISTRATION_INVITATION_CODE', None) != request.headers.get('Registration-Invitation-Code', None)):
+        if request.headers.get('Registration-Invitation-Code', None) != registrationInvitationCode:
             app.logger.warning('The registration invitation code is not correct!')
             abort(403)
 
         try:
-            ## Do not set database session and instance yet to avoid implicit model modification
+            # Do not set database session and instance yet to avoid implicit model modification
             userSchemaResult = DefaultUserSchema().load(request.json, session=None, instance=None)
 
             username = userSchemaResult.username
 
-            ## Be sure, the user does not exists
-            if (User.query.filter_by(username=username).first() is not None):
+            # Be sure, the user does not exists
+            if User.query.filter_by(username=username).first() is not None:
                 app.logger.warning(
                     'The user (username="{0}") already exists - registration is not possible!'
                     .format(username)
@@ -349,11 +318,11 @@ def createApp(testConfig=None):
             app.logger.warning('Model validation failed with errors: {0}'.format(e))
             abort(400)
 
-        return ('', 204)
+        return '', 204
 
     """
     Get a new token is only possible with password based authentication
-    to be sure tokens can't refresh themselfs for unlimited time!
+    to be sure tokens can't refresh themselves for unlimited time!
     """
     @app.route('/' + API_VERSION_PREFIX + '/token', methods=['GET'])
     @passwordAuth.login_required
@@ -382,7 +351,7 @@ def createApp(testConfig=None):
         authenticatedUser = g.authenticatedUser
 
         try:
-            ## Do not set database session and instance yet to avoid implicit model modification
+            # Do not set database session and instance yet to avoid implicit model modification
             userSchemaResult = DefaultUserSchema().load(request.json, session=None, instance=None)
 
             authenticatedUser.username = userSchemaResult.username
@@ -397,14 +366,14 @@ def createApp(testConfig=None):
             app.logger.warning('Model validation failed with errors: {0}'.format(e))
             abort(400)
 
-        return ('', 204)
+        return '', 204
 
     @app.route('/' + API_VERSION_PREFIX + '/user/items', methods=['GET'])
     @webTokenAuth.login_required
     def get_user_items():
         authenticatedUser = g.authenticatedUser
 
-        ## Returns only the items where the user has a non-deleted item authorization
+        # Returns only the items where the user has a non-deleted item authorization
         itemAuthorizations = ItemAuthorization.query.filter_by(userId=authenticatedUser.id, deleted=False).all()
         itemAuthorizationItemIds = map(lambda itemAuthorization: itemAuthorization.itemId, itemAuthorizations)
         userItems = Item.query.filter(Item.id.in_(itemAuthorizationItemIds))
@@ -418,7 +387,7 @@ def createApp(testConfig=None):
         authenticatedUser = g.authenticatedUser
 
         try:
-            ## Do not set database session and instance yet to avoid implicit model modification
+            # Do not set database session and instance yet to avoid implicit model modification
             itemsSchemaResult = DefaultItemSchema(many=True).load(request.json, session=None, instance=None)
 
             for item in itemsSchemaResult:
@@ -430,11 +399,11 @@ def createApp(testConfig=None):
             app.logger.warning('Model validation failed with errors: {0}'.format(e))
             abort(400)
 
-        return ('', 204)
+        return '', 204
 
     def createOrUpdateItem(authenticatedUser, item):
-        ## Be sure, the foreign key `userId` exists
-        if (User.query.get(item.userId) is None):
+        # Be sure, the foreign key `userId` exists
+        if User.query.get(item.userId) is None:
             app.logger.warning(
                 'The user (id="{0}") of item (id="{1}") does not exist!'
                 .format(item.userId, item.id)
@@ -443,44 +412,44 @@ def createApp(testConfig=None):
 
         existingItem = Item.query.get(item.id)
 
-        ## Determine to create or update the item
-        if (existingItem is None):
-            ## It is not allowed to create items for other users
-            if (item.userId != authenticatedUser.id):
+        # Determine to create or update the item
+        if existingItem is None:
+            # It is not allowed to create items for other users
+            if item.userId != authenticatedUser.id:
                 app.logger.warning(
                     'The requesting user (id={0}) tried to create item for another user (id={1})!'
                     .format(authenticatedUser.id, item.userId)
                 )
                 abort(403)
 
-            ## When an item is created, the item authorization can't be checked because it is still not existing
+            # When an item is created, the item authorization can't be checked because it is still not existing
 
             db.session.add(item)
         else:
             itemAuthorization = ItemAuthorization.query.filter_by(userId=authenticatedUser.id, itemId=item.id).first()
 
-            if (itemAuthorization is None):
+            if itemAuthorization is None:
                 app.logger.warning(
                     'The requesting user (id={0}) tried to update item (id="{1}") but has no item authorization!'
                     .format(authenticatedUser.id, item.id)
                 )
                 abort(403)
 
-            if (itemAuthorization.readOnly == True):
+            if itemAuthorization.readOnly:
                 app.logger.warning(
                     'The requesting user (id={0}) tried to update item (id="{1}") but has only a read-only item authorization!'
                     .format(authenticatedUser.id, item.id)
                 )
                 abort(403)
 
-            if (itemAuthorization.deleted == True):
+            if itemAuthorization.deleted:
                 app.logger.warning(
                     'The requesting user (id={0}) tried to update item (id="{1}") but has only a deleted item authorization!'
                     .format(authenticatedUser.id, item.id)
                 )
                 abort(403)
 
-            ## Only update the allowed mutable fields
+            # Only update the allowed mutable fields
             existingItem.data = item.data
             existingItem.deleted = item.deleted
             existingItem.modified = item.modified
@@ -490,10 +459,10 @@ def createApp(testConfig=None):
     def get_user_item_authorizations():
         authenticatedUser = g.authenticatedUser
 
-        ## 1) Item authorizations created for requesting user
+        # 1) Item authorizations created for requesting user
         itemAuthorizationsForUser = ItemAuthorization.query.filter_by(userId=authenticatedUser.id).all()
 
-        ## 2) Item authorizations created by requesting user for other users
+        # 2) Item authorizations created by requesting user for other users
         userItems = Item.query.filter_by(userId=authenticatedUser.id).all()
         userItemsIds = map(lambda item: item.id, userItems)
         itemAuthorizationsCreatedByUser = ItemAuthorization.query.filter(
@@ -516,7 +485,7 @@ def createApp(testConfig=None):
         try:
             itemAuthorizationsSchema = DefaultItemAuthorizationSchema(many=True)
 
-            ## Do not set database session and instance yet to avoid implicit model modification
+            # Do not set database session and instance yet to avoid implicit model modification
             itemAuthorizationsSchemaResult = itemAuthorizationsSchema.load(request.json, session=None, instance=None)
 
             for itemAuthorization in itemAuthorizationsSchemaResult:
@@ -528,11 +497,11 @@ def createApp(testConfig=None):
             app.logger.warning('Model validation failed with errors: {0}'.format(e))
             abort(400)
 
-        return ('', 204)
+        return '', 204
 
     def createOrUpdateItemAuthorization(authenticatedUser, itemAuthorization):
-        ## Be sure, the foreign key `userId` exists
-        if (User.query.get(itemAuthorization.userId) is None):
+        # Be sure, the foreign key `userId` exists
+        if User.query.get(itemAuthorization.userId) is None:
             app.logger.warning(
                 'The user (id="{0}") of item authorization (id="{1}") does not exist!'
                 .format(itemAuthorization.userId, itemAuthorization.id)
@@ -541,16 +510,16 @@ def createApp(testConfig=None):
 
         item = Item.query.get(itemAuthorization.itemId)
 
-        ## Be sure, the foreign key `itemId` exists
-        if (item is None):
+        # Be sure, the foreign key `itemId` exists
+        if item is None:
             app.logger.warning(
                 'The item (id="{0}") of item authorization (id="{1}") does not exist!'
                 .format(itemAuthorization.itemId, itemAuthorization.id)
             )
             abort(404)
 
-        ## Only the owner of the corresponding item is able to create/update item authorizations
-        if (item.userId != authenticatedUser.id):
+        # Only the owner of the corresponding item is able to create/update item authorizations
+        if item.userId != authenticatedUser.id:
             app.logger.warning(
                 'The requesting user (id="{0}") tried to create/update item authorization (id="{1}") for item (id="{2}") that is owned by other user (id={3})!'
                 .format(authenticatedUser.id, itemAuthorization.id, item.id, item.userId)
@@ -559,10 +528,10 @@ def createApp(testConfig=None):
 
         existingItemAuthorization = ItemAuthorization.query.get(itemAuthorization.id)
 
-        ## Determine to create or update the item authorization
-        if (existingItemAuthorization is None):
-            ## Check for already existing user+item combination to avoid multiple item authorization for the same user and item
-            if (ItemAuthorization.query.filter_by(userId=itemAuthorization.userId, itemId=itemAuthorization.itemId).count() > 0):
+        # Determine to create or update the item authorization
+        if existingItemAuthorization is None:
+            # Check for already existing user+item combination to avoid multiple item authorization for the same user and item
+            if ItemAuthorization.query.filter_by(userId=itemAuthorization.userId, itemId=itemAuthorization.itemId).count() > 0:
                 app.logger.warning(
                     'An item authorization already exists for the user (id="{0}") and item (id="{1}")!'
                     .format(itemAuthorization.userId, itemAuthorization.itemId)
@@ -571,14 +540,66 @@ def createApp(testConfig=None):
 
             db.session.add(itemAuthorization)
         else:
-            ## Only update the allowed mutable fields
+            # Only update the allowed mutable fields
             existingItemAuthorization.readOnly = itemAuthorization.readOnly
             existingItemAuthorization.deleted = itemAuthorization.deleted
             existingItemAuthorization.modified = itemAuthorization.modified
 
     return app
 
-if __name__ == '__main__':
-    app = createApp()
-    app.run(host=app.config['SERVER_HOST'], port=app.config['SERVER_PORT'])
+def checkMandatoryConfigurationValues(app):
+    mandatoryConfigurationValues = [
+        'DATABASE_FILE',
+        'LOG_FILE',
+        'SECRET_KEY',
+        'ENABLE_REQUEST_LOGGING',
+        'REGISTRATION_ENABLED',
+        'REGISTRATION_INVITATION_CODE',
+    ]
 
+    for configurationValue in mandatoryConfigurationValues:
+        if configurationValue not in app.config:
+            raise ValueError('The value "' + configurationValue + '" is not set in configuration!')
+
+def obtainSecretKey(app):
+    configurationSecretKey = app.config.get('SECRET_KEY', None)
+
+    if configurationSecretKey is None or len(configurationSecretKey) < 64:
+        raise ValueError('The "SECRET_KEY" in the configuration must be at least 64 characters long!')
+
+    return configurationSecretKey
+
+def obtainRegistrationInvitationCode(app):
+    registrationInvitationCode = app.config.get('REGISTRATION_INVITATION_CODE', None)
+
+    if registrationInvitationCode is None or len(registrationInvitationCode) < 16:
+        raise ValueError('The "REGISTRATION_INVITATION_CODE" in the configuration must be at least 16 characters long!')
+
+    return registrationInvitationCode
+
+def initializeLogger(app):
+    logFilePath = app.config['LOG_FILE']
+
+    if logFilePath is not None:
+        fileLogHandler = FileHandler(logFilePath)
+        fileLogHandler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s %(name)s [%(threadName)s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S.%03d')
+        )
+        app.logger.addHandler(fileLogHandler)
+        app.logger.setLevel(logging.INFO)
+
+    app.logger.info('Pass Butler server is starting')
+
+def enableForeignKeyEnforcement(app):
+    # Enables foreign key enforcing which is disabled by default in SQLite
+    with app.app_context():
+        def enableForeignKeySupport(dbApiConnection, _):
+            cursor = dbApiConnection.cursor()
+            cursor.execute('PRAGMA foreign_keys=ON;')
+            cursor.close()
+
+        event.listen(db.engine, 'connect', enableForeignKeySupport)
+
+def createDatabaseStructure(app):
+    with app.app_context():
+        db.create_all()
