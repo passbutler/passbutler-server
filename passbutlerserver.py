@@ -271,7 +271,7 @@ def createApp(testConfig=None):
     @app.after_request
     def logRequestResponse(response):
         if app.config.get('ENABLE_REQUEST_LOGGING', False):
-            app.logger.debug(
+            app.logger.info(
                 'Response for request %s %s: %s\n' +
                 '--------------------------------------------------------------------------------\n' +
                 '%s' +
