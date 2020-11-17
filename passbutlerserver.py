@@ -8,7 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 from itsdangerous import TimedJSONWebSignatureSerializer, BadSignature
 from logging import FileHandler
 from marshmallow.exceptions import ValidationError
-from marshmallow_sqlalchemy import ModelSchema
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from sqlalchemy import event, and_
 from werkzeug.security import check_password_hash
 import logging
@@ -53,9 +53,10 @@ class Item(db.Model):
     def __repr__(self):
         return "<Item(id={item.id!r}) @ {objId!r}>".format(item=self, objId=id(self))
 
-class DefaultItemSchema(ModelSchema):
+class DefaultItemSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = Item
+        load_instance = True
         include_fk = True
         transient = True
 
@@ -95,9 +96,10 @@ class ItemAuthorization(db.Model):
     def __repr__(self):
         return "<ItemAuthorization(id={item.id!r}) @ {objId!r}>".format(item=self, objId=id(self))
 
-class DefaultItemAuthorizationSchema(ModelSchema):
+class DefaultItemAuthorizationSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = ItemAuthorization
+        load_instance = True
         include_fk = True
         transient = True
 
@@ -157,9 +159,10 @@ class PublicUserSchema(Schema):
         # Only the following fields are allowed to see for this schema
         fields = ('id', 'username', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
 
-class DefaultUserSchema(ModelSchema):
+class DefaultUserSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = User
+        load_instance = True
         transient = True
 
 """
