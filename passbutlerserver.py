@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from flask import Flask, request, jsonify, abort, make_response, g
+from flask import Flask, request, jsonify, abort, make_response
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 from flask_marshmallow import Marshmallow, Schema
 from flask_sqlalchemy import SQLAlchemy
 from itsdangerous import TimedJSONWebSignatureSerializer, BadSignature
 from logging import FileHandler
 from marshmallow.exceptions import ValidationError
-from marshmallow_sqlalchemy import ModelSchema
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from sqlalchemy import event, and_
 from werkzeug.security import check_password_hash
 import logging
@@ -53,9 +53,10 @@ class Item(db.Model):
     def __repr__(self):
         return "<Item(id={item.id!r}) @ {objId!r}>".format(item=self, objId=id(self))
 
-class DefaultItemSchema(ModelSchema):
+class DefaultItemSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = Item
+        load_instance = True
         include_fk = True
         transient = True
 
@@ -95,9 +96,10 @@ class ItemAuthorization(db.Model):
     def __repr__(self):
         return "<ItemAuthorization(id={item.id!r}) @ {objId!r}>".format(item=self, objId=id(self))
 
-class DefaultItemAuthorizationSchema(ModelSchema):
+class DefaultItemAuthorizationSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = ItemAuthorization
+        load_instance = True
         include_fk = True
         transient = True
 
@@ -157,9 +159,10 @@ class PublicUserSchema(Schema):
         # Only the following fields are allowed to see for this schema
         fields = ('id', 'username', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
 
-class DefaultUserSchema(ModelSchema):
+class DefaultUserSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = User
+        load_instance = True
         transient = True
 
 """
@@ -204,22 +207,19 @@ def createApp(testConfig=None):
 
     @passwordAuth.verify_password
     def httpAuthVerifyPassword(username, password):
-        wasSuccessful = False
-        g.authenticatedUser = None
+        authenticatedUser = None
 
         # Authentication is only possible for non-deleted users
         requestingUser = User.query.filter_by(username=username, deleted=False).first()
 
         if requestingUser is not None and requestingUser.checkAuthenticationPassword(password):
-            g.authenticatedUser = requestingUser
-            wasSuccessful = True
+            authenticatedUser = requestingUser
 
-        return wasSuccessful
+        return authenticatedUser
 
     @webTokenAuth.verify_token
     def httpAuthVerifyToken(token):
-        wasSuccessful = False
-        g.authenticatedUser = None
+        authenticatedUser = None
 
         try:
             tokenData = tokenSerializer.loads(token)
@@ -227,15 +227,15 @@ def createApp(testConfig=None):
 
             if userId is not None:
                 # Authentication is only possible for non-deleted users
-                user = User.query.filter_by(id=userId, deleted=False).first()
+                requestingUser = User.query.filter_by(id=userId, deleted=False).first()
 
-                if user is not None:
-                    g.authenticatedUser = user
-                    wasSuccessful = True
+                if requestingUser is not None:
+                    authenticatedUser = requestingUser
+
         except BadSignature:
-            wasSuccessful = False
+            authenticatedUser = None
 
-        return wasSuccessful
+        return authenticatedUser
 
     @passwordAuth.error_handler
     @webTokenAuth.error_handler
@@ -271,7 +271,7 @@ def createApp(testConfig=None):
     @app.after_request
     def logRequestResponse(response):
         if app.config.get('ENABLE_REQUEST_LOGGING', False):
-            app.logger.debug(
+            app.logger.info(
                 'Response for request %s %s: %s\n' +
                 '--------------------------------------------------------------------------------\n' +
                 '%s' +
@@ -327,7 +327,7 @@ def createApp(testConfig=None):
     @app.route('/' + API_VERSION_PREFIX + '/token', methods=['GET'])
     @passwordAuth.login_required
     def get_token():
-        authenticatedUser = g.authenticatedUser
+        authenticatedUser = passwordAuth.current_user()
         token = authenticatedUser.generateAuthenticationToken(tokenSerializer)
         return jsonify({'token': token})
 
@@ -341,14 +341,14 @@ def createApp(testConfig=None):
     @app.route('/' + API_VERSION_PREFIX + '/user', methods=['GET'])
     @webTokenAuth.login_required
     def get_user_details():
-        authenticatedUser = g.authenticatedUser
+        authenticatedUser = webTokenAuth.current_user()
         result = DefaultUserSchema().dump(authenticatedUser)
         return jsonify(result)
 
     @app.route('/' + API_VERSION_PREFIX + '/user', methods=['PUT'])
     @webTokenAuth.login_required
     def set_user_details():
-        authenticatedUser = g.authenticatedUser
+        authenticatedUser = webTokenAuth.current_user()
 
         try:
             # Do not set database session and instance yet to avoid implicit model modification
@@ -371,7 +371,7 @@ def createApp(testConfig=None):
     @app.route('/' + API_VERSION_PREFIX + '/user/items', methods=['GET'])
     @webTokenAuth.login_required
     def get_user_items():
-        authenticatedUser = g.authenticatedUser
+        authenticatedUser = webTokenAuth.current_user()
 
         # Returns only the items where the user has a non-deleted item authorization
         itemAuthorizations = ItemAuthorization.query.filter_by(userId=authenticatedUser.id, deleted=False).all()
@@ -384,7 +384,7 @@ def createApp(testConfig=None):
     @app.route('/' + API_VERSION_PREFIX + '/user/items', methods=['PUT'])
     @webTokenAuth.login_required
     def set_user_items():
-        authenticatedUser = g.authenticatedUser
+        authenticatedUser = webTokenAuth.current_user()
 
         try:
             # Do not set database session and instance yet to avoid implicit model modification
@@ -457,7 +457,7 @@ def createApp(testConfig=None):
     @app.route('/' + API_VERSION_PREFIX + '/user/itemauthorizations', methods=['GET'])
     @webTokenAuth.login_required
     def get_user_item_authorizations():
-        authenticatedUser = g.authenticatedUser
+        authenticatedUser = webTokenAuth.current_user()
 
         # 1) Item authorizations created for requesting user
         itemAuthorizationsForUser = ItemAuthorization.query.filter_by(userId=authenticatedUser.id).all()
@@ -480,7 +480,7 @@ def createApp(testConfig=None):
     @app.route('/' + API_VERSION_PREFIX + '/user/itemauthorizations', methods=['PUT'])
     @webTokenAuth.login_required
     def set_user_item_authorizations():
-        authenticatedUser = g.authenticatedUser
+        authenticatedUser = webTokenAuth.current_user()
 
         try:
             itemAuthorizationsSchema = DefaultItemAuthorizationSchema(many=True)

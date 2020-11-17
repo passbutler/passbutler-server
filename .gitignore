@@ -3,3 +3,11 @@ __pycache__/
 
 *.sqlite
 *.log
+
+debian/passbutler-server/
+debian/.debhelper/
+debian/debhelper-build-stamp
+debian/files
+debian/*.postinst.debhelper
+debian/*.prerm.debhelper
+debian/*.substvars

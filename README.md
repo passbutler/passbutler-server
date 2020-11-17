@@ -1,4 +1,4 @@
-# Pass Butler server
+# Pass Butler synchronization server
 
 The Pass Butler server provides the possibility to synchronize passwords between multiple devices.
 
@@ -45,11 +45,6 @@ Add dedicated user and group:
 
     $ sudo adduser --system --group --disabled-password --home /var/lib/passbutler-server/example/ "passbutler-server-example"
 
-Create socket directory and correct owner:
-
-    $ sudo mkdir /run/passbutler-server-example/
-    $ sudo chown passbutler-server-example:passbutler-server-example /run/passbutler-server-example/
-
 Create log file and correct owner:
 
     $ sudo touch /var/log/passbutler-server-example.log
@@ -75,23 +70,43 @@ Apply random secret and invitation code:
 Create Systemd service file `/etc/systemd/system/passbutler-server-example.service`:
 
     [Unit]
-    Description=Pass Butler synchronization server (example)
+    Description=Pass Butler synchronization server daemon (example)
+    Requires=passbutler-server-example.socket
     After=network.target
-    
+
     [Service]
+    PIDFile=/run/passbutler-server-example/pid
     User=passbutler-server-example
     Group=passbutler-server-example
+    RuntimeDirectory=passbutler-server-example
     WorkingDirectory=/var/lib/passbutler-server/example/
     Environment="PASSBUTLER_SETTINGS=/etc/passbutler-server/example.conf"
-    ExecStart=/usr/bin/gunicorn3 --name=gunicorn-passbutler-server-example --workers=1 --pythonpath=/opt/venvs/passbutler-server/lib/python3.8/site-packages --bind=unix:/run/passbutler-server-example/socket.sock 'passbutlerserver:createApp()'
-    
+    ExecStart=/usr/bin/gunicorn3 --name=gunicorn-passbutler-server-example --pid /run/passbutler-server-example/pid --workers=1 --pythonpath=/opt/venvs/passbutler-server/lib/python3.8/site-packages --bind=unix:/run/passbutler-server-example/socket.sock 'passbutlerserver:createApp()'
+    ExecReload=/bin/kill -s HUP $MAINPID
+    ExecStop=/bin/kill -s TERM $MAINPID
+    PrivateTmp=true
+
     [Install]
     WantedBy=multi-user.target
 
+Create Systemd socket file `/etc/systemd/system/passbutler-server-example.socket`:
+
+    [Unit]
+    Description=Pass Butler synchronization server socket (example)
+
+    [Socket]
+    ListenStream=/run/passbutler-server-example/socket.sock
+
+    [Install]
+    WantedBy=sockets.target
+
 Enable Systemd service:
 
-    $ sudo systemctl start passbutler-server-example.service
-    $ sudo systemctl enable passbutler-server-example.service
+    $ sudo systemctl daemon-reload
+    $ sudo systemctl start passbutler-server-example.socket
+    $ sudo systemctl enable passbutler-server-example.socket
+
+The socket will be available automatically if it is requested by Nginx later.
 
 Add to your Nginx `sites-available/example.vhost` configuration:
 
@@ -109,7 +124,7 @@ Restart Nginx:
 
     $ sudo systemctl restart nginx.service
 
-## Development setup on Ubuntu 20
+## Development setup on Ubuntu 20.04
 
 Install package:
 
