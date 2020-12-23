@@ -109,7 +109,7 @@ class User(db.Model):
 
     id = db.Column(db.String(36), primary_key=True, nullable=False)
     username = db.Column(db.String(64), unique=True, nullable=False)
-    masterPasswordAuthenticationHash = db.Column(db.String, nullable=False)
+    serverComputedAuthenticationHash = db.Column(db.String, nullable=False)
     masterKeyDerivationInformation = db.Column(db.JSON, nullable=False)
     masterEncryptionKey = db.Column(db.JSON, nullable=False)
     itemEncryptionPublicKey = db.Column(db.JSON, nullable=False)
@@ -123,7 +123,7 @@ class User(db.Model):
         self,
         id,
         username,
-        masterPasswordAuthenticationHash,
+        serverComputedAuthenticationHash,
         masterKeyDerivationInformation,
         masterEncryptionKey,
         itemEncryptionPublicKey,
@@ -135,7 +135,7 @@ class User(db.Model):
     ):
         self.id = id
         self.username = username
-        self.masterPasswordAuthenticationHash = masterPasswordAuthenticationHash
+        self.serverComputedAuthenticationHash = serverComputedAuthenticationHash
         self.masterKeyDerivationInformation = masterKeyDerivationInformation
         self.masterEncryptionKey = masterEncryptionKey
         self.itemEncryptionPublicKey = itemEncryptionPublicKey
@@ -148,8 +148,8 @@ class User(db.Model):
     def __repr__(self):
         return "<User(id={user.id!r}) @ {objId!r}>".format(user=self, objId=id(self))
 
-    def checkAuthenticationPassword(self, password):
-        return check_password_hash(self.masterPasswordAuthenticationHash, password)
+    def checkLocalComputedAuthenticationHash(self, localComputedAuthenticationHash):
+        return check_password_hash(self.serverComputedAuthenticationHash, localComputedAuthenticationHash)
 
     def generateAuthenticationToken(self, tokenSerializer):
         return tokenSerializer.dumps({'id': self.id}).decode('ascii')
@@ -206,13 +206,13 @@ def createApp(testConfig=None):
     webTokenAuth = HTTPTokenAuth('Bearer')
 
     @passwordAuth.verify_password
-    def httpAuthVerifyPassword(username, password):
+    def httpAuthVerifyPassword(username, localComputedAuthenticationHash):
         authenticatedUser = None
 
         # Authentication is only possible for non-deleted users
         requestingUser = User.query.filter_by(username=username, deleted=False).first()
 
-        if requestingUser is not None and requestingUser.checkAuthenticationPassword(password):
+        if requestingUser is not None and requestingUser.checkLocalComputedAuthenticationHash(localComputedAuthenticationHash):
             authenticatedUser = requestingUser
 
         return authenticatedUser
@@ -355,7 +355,7 @@ def createApp(testConfig=None):
             userSchemaResult = DefaultUserSchema().load(request.json, session=None, instance=None)
 
             authenticatedUser.username = userSchemaResult.username
-            authenticatedUser.masterPasswordAuthenticationHash = userSchemaResult.masterPasswordAuthenticationHash
+            authenticatedUser.serverComputedAuthenticationHash = userSchemaResult.serverComputedAuthenticationHash
             authenticatedUser.masterEncryptionKey = userSchemaResult.masterEncryptionKey
             authenticatedUser.settings = userSchemaResult.settings
             authenticatedUser.modified = userSchemaResult.modified

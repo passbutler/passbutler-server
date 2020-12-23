@@ -16,7 +16,7 @@ def createUserJson(user):
     return {
         'id': user.id,
         'username': user.username,
-        'masterPasswordAuthenticationHash': user.masterPasswordAuthenticationHash,
+        'serverComputedAuthenticationHash': user.serverComputedAuthenticationHash,
         'masterKeyDerivationInformation': user.masterKeyDerivationInformation,
         'masterEncryptionKey': user.masterEncryptionKey,
         'itemEncryptionPublicKey': user.itemEncryptionPublicKey,
@@ -145,7 +145,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -171,7 +171,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -197,7 +197,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -223,7 +223,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -254,7 +254,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -278,7 +278,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
     def test_register_user_wrong_field_type_username(self):
         requestData = {
             'username': 1234,
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -290,11 +290,11 @@ class PassButlerTestCase(TestConfigurationTestCase):
         }
         self.__test_register_user_wrong_field_type(requestData)
 
-    def test_register_user_wrong_field_type_masterPasswordAuthenticationHash(self):
+    def test_register_user_wrong_field_type_serverComputedAuthenticationHash(self):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 1234,
+            'serverComputedAuthenticationHash': 1234,
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -310,7 +310,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': None,
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -326,7 +326,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': None,
             'itemEncryptionPublicKey': 'a3',
@@ -342,7 +342,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': None,
@@ -358,7 +358,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -374,7 +374,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -390,7 +390,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -406,7 +406,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -422,7 +422,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -454,7 +454,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
     def test_register_user_missing_field_username(self):
         requestData = {
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -466,7 +466,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         }
         self.__test_register_user_missing_field(requestData)
 
-    def test_register_user_missing_field_masterPasswordAuthenticationHash(self):
+    def test_register_user_missing_field_serverComputedAuthenticationHash(self):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
@@ -485,7 +485,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
             'itemEncryptionSecretKey': 'a4',
@@ -500,7 +500,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'itemEncryptionPublicKey': 'a3',
             'itemEncryptionSecretKey': 'a4',
@@ -515,7 +515,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionSecretKey': 'a4',
@@ -530,7 +530,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -545,7 +545,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -560,7 +560,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -575,7 +575,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -590,7 +590,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -622,7 +622,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -814,7 +814,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -837,7 +837,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x changed',
+            'serverComputedAuthenticationHash': 'x changed',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2 changed',
             'itemEncryptionPublicKey': 'a3',
@@ -862,7 +862,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice changed',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -877,11 +877,11 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         self.__test_set_user_details_change_field(requestData, expected)
 
-    def test_set_user_details_change_field_masterPasswordAuthenticationHash(self):
+    def test_set_user_details_change_field_serverComputedAuthenticationHash(self):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x changed',
+            'serverComputedAuthenticationHash': 'x changed',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -900,7 +900,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1 changed',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -915,7 +915,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         expected = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -932,7 +932,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2 changed',
             'itemEncryptionPublicKey': 'a3',
@@ -951,7 +951,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3 changed',
@@ -966,7 +966,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         expected = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -983,7 +983,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -998,7 +998,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         expected = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1015,7 +1015,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1034,7 +1034,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1049,7 +1049,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         expected = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1066,7 +1066,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1085,7 +1085,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1100,7 +1100,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         expected = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1129,7 +1129,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
     def test_set_user_details_wrong_field_type_username(self):
         requestData = {
             'username': 1234,
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1141,11 +1141,11 @@ class PassButlerTestCase(TestConfigurationTestCase):
         }
         self.__test_set_user_details_wrong_field_type(requestData)
 
-    def test_set_user_details_wrong_field_type_masterPasswordAuthenticationHash(self):
+    def test_set_user_details_wrong_field_type_serverComputedAuthenticationHash(self):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 1234,
+            'serverComputedAuthenticationHash': 1234,
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1161,7 +1161,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': None,
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1177,7 +1177,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': None,
             'itemEncryptionPublicKey': 'a3',
@@ -1193,7 +1193,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': None,
@@ -1209,7 +1209,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1225,7 +1225,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1241,7 +1241,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1257,7 +1257,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1273,7 +1273,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1307,7 +1307,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
     def test_set_user_details_missing_field_username(self):
         requestData = {
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1319,7 +1319,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         }
         self.__test_set_user_details_missing_field(requestData)
 
-    def test_set_user_details_missing_field_masterPasswordAuthenticationHash(self):
+    def test_set_user_details_missing_field_serverComputedAuthenticationHash(self):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
@@ -1338,7 +1338,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
             'itemEncryptionSecretKey': 'a4',
@@ -1353,7 +1353,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'itemEncryptionPublicKey': 'a3',
             'itemEncryptionSecretKey': 'a4',
@@ -1368,7 +1368,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionSecretKey': 'a4',
@@ -1383,7 +1383,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1398,7 +1398,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1413,7 +1413,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1428,7 +1428,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1443,7 +1443,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
-            'masterPasswordAuthenticationHash': 'x',
+            'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
