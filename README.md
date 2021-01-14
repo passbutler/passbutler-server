@@ -6,8 +6,6 @@ The Pass Butler server provides the possibility to synchronize passwords between
 
 ### Installation
 
-#### Install package from repository (recommended)
-
 Add APT repository:
 
     $ echo "deb http://apt.pm-codeworks.de buster main" | sudo tee /etc/apt/sources.list.d/pm-codeworks.list
@@ -20,20 +18,6 @@ Add APT repository signing key and update package index:
 Install the package:
 
     $ sudo apt install passbutler-server
-
-#### Build and install package manually
-
-Install packages:
-
-    $ sudo apt install devscripts
-
-Build the package:
-
-    $ debuild
-
-Install the package:
-
-    $ sudo dpkg -i ../*.deb
 
 ### Deployment with Gunicorn and Nginx
 
@@ -124,7 +108,9 @@ Restart Nginx:
 
     $ sudo systemctl restart nginx.service
 
-## Development setup on Ubuntu 20.04
+## Development setup
+
+The following steps are tested with Ubuntu 20.04.
 
 Install package:
 
@@ -154,3 +140,19 @@ Run unit tests (add `-v` for more verbosity):
 Start server:
 
     $ FLASK_ENV=development FLASK_APP=passbutlerserver:createApp PASSBUTLER_SETTINGS=./passbutlerserver-example.conf flask run --host 0.0.0.0 --port 5000
+
+### Packaging
+
+Currently only the distribution with "deb" package is supported!
+
+#### Package for Debian/Ubuntu
+
+Install packages:
+
+    $ sudo apt install devscripts
+
+Build the package:
+
+    $ debuild
+
+The "deb" file is created in parent directory.
