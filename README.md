@@ -123,11 +123,11 @@ Setup virtual environment:
 
 Install dependencies:
 
-    $ pip install -r requirements.txt
+    $ pip3 install -r requirements.txt
 
 Install dependencies for testing:
 
-    $ pip install -r dev-requirements.txt
+    $ pip3 install -r dev-requirements.txt
 
 ### Unit testing
 
