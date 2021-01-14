@@ -8,11 +8,11 @@ The Pass Butler server provides the possibility to synchronize passwords between
 
 Add APT repository:
 
-    $ echo "deb http://apt.pm-codeworks.de buster main" | sudo tee /etc/apt/sources.list.d/pm-codeworks.list
+    $ echo "deb https://apt.pm-codeworks.de buster main" | sudo tee /etc/apt/sources.list.d/pm-codeworks.list
 
 Add APT repository signing key and update package index:
 
-    $ wget -O - http://apt.pm-codeworks.de/pm-codeworks.de.gpg | sudo apt-key add -
+    $ wget -O - https://apt.pm-codeworks.de/pm-codeworks.de.gpg | sudo apt-key add -
     $ sudo apt update
 
 Install the package:
