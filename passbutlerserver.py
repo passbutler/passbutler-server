@@ -27,7 +27,7 @@ class Item(db.Model):
 
     __tablename__ = 'items'
 
-    id = db.Column(db.String(36), primary_key=True, nullable=False)
+    id = db.Column(db.String, primary_key=True, nullable=False)
     userId = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
     data = db.Column(db.JSON, nullable=False)
     deleted = db.Column(db.Boolean, nullable=False)
@@ -64,7 +64,7 @@ class ItemAuthorization(db.Model):
 
     __tablename__ = 'item_authorizations'
 
-    id = db.Column(db.String(36), primary_key=True, nullable=False)
+    id = db.Column(db.String, primary_key=True, nullable=False)
     userId = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
     itemId = db.Column(db.String, db.ForeignKey('items.id'), nullable=False)
     itemKey = db.Column(db.JSON, nullable=False)
@@ -107,8 +107,8 @@ class User(db.Model):
 
     __tablename__ = 'users'
 
-    id = db.Column(db.String(36), primary_key=True, nullable=False)
-    username = db.Column(db.String(64), unique=True, nullable=False)
+    id = db.Column(db.String, primary_key=True, nullable=False)
+    username = db.Column(db.String, unique=True, nullable=False)
     serverComputedAuthenticationHash = db.Column(db.String, nullable=False)
     masterKeyDerivationInformation = db.Column(db.JSON, nullable=False)
     masterEncryptionKey = db.Column(db.JSON, nullable=False)
