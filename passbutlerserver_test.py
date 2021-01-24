@@ -273,7 +273,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.status_code == 403
         assert createUserJson(User.query.get('alice-id')) == initialUserJson
 
-    # General wrong field type tests
+    # Wrong field type tests
 
     def test_register_user_wrong_field_type_username(self):
         requestData = {
@@ -446,7 +446,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Invalid request'}
         assert User.query.get('alice-id') is None
 
-    # General missing field tests
+    # Missing field tests
 
     def test_register_user_missing_field_all(self):
         requestData = {}
@@ -856,7 +856,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.status_code == 204
         assert createUserJson(User.query.get('alice-id')) == requestData
 
-    # General modify field tests
+    # Modify field tests
 
     def test_set_user_details_change_field_username(self):
         requestData = {
@@ -1124,7 +1124,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.status_code == 204
         assert createUserJson(User.query.get('alice-id')) == expected
 
-    # General wrong field type tests
+    # Wrong field type tests
 
     def test_set_user_details_wrong_field_type_username(self):
         requestData = {
@@ -1299,7 +1299,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Invalid request'}
         assert createUserJson(User.query.get('alice-id')) == initialUserJson
 
-    # General missing field tests
+    # Missing field tests
 
     def test_set_user_details_missing_field_all(self):
         requestData = {}
@@ -1836,7 +1836,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Forbidden'}
         assert createItemJson(Item.query.get('item1')) == initialItem1Json
 
-    # General modify field tests
+    # Modify field tests
 
     def test_set_user_items_change_field_userId_existing(self):
         requestData = [{
@@ -1967,7 +1967,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == expectedResponseJson
         assert createItemJson(Item.query.get('item1')) == expected
 
-    # General wrong field type tests
+    # Wrong field type tests
 
     def test_set_user_items_wrong_field_type_id(self):
         requestData = [{
@@ -2054,7 +2054,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Invalid request'}
         assert createItemJson(Item.query.get('item1')) == initialItem1Json
 
-    # General missing field tests
+    # Missing field tests
 
     def test_set_user_items_missing_field_all(self):
         requestData = [{}]
@@ -2485,7 +2485,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Forbidden'}
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == initialItemAuthorization1Json
 
-    # General modify field tests
+    # Modify field tests
 
     def test_set_user_item_authorizations_change_field_userId_existing(self):
         requestData = [{
@@ -2721,7 +2721,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == expectedResponseJson
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == expected
 
-    # General wrong field type tests
+    # Wrong field type tests
 
     def test_set_user_item_authorizations_wrong_field_type_id(self):
         requestData = [{
@@ -2846,7 +2846,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Invalid request'}
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == initialItemAuthorization1Json
 
-    # General missing field tests
+    # Missing field tests
 
     def test_set_user_item_authorizations_missing_field_all(self):
         requestData = [{}]
