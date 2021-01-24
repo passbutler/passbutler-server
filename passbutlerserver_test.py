@@ -277,6 +277,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
     def test_register_user_wrong_field_type_username(self):
         requestData = {
+            'id': 'alice-id',
             'username': 1234,
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
@@ -454,6 +455,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
     def test_register_user_missing_field_username(self):
         requestData = {
+            'id': 'alice-id',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1128,6 +1130,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
     def test_set_user_details_wrong_field_type_username(self):
         requestData = {
+            'id': 'alice-id',
             'username': 1234,
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
@@ -1307,6 +1310,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
     def test_set_user_details_missing_field_username(self):
         requestData = {
+            'id': 'alice-id',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
