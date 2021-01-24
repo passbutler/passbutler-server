@@ -275,6 +275,22 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
     # Wrong field type tests
 
+    def test_register_user_wrong_field_type_id(self):
+        requestData = {
+            'id': 1234,
+            'username': 'alice',
+            'serverComputedAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_register_user_wrong_field_type(requestData)
+
     def test_register_user_wrong_field_type_username(self):
         requestData = {
             'id': 'alice-id',
@@ -451,6 +467,21 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
     def test_register_user_missing_field_all(self):
         requestData = {}
+        self.__test_register_user_missing_field(requestData)
+
+    def test_register_user_missing_field_id(self):
+        requestData = {
+            'username': 'alice',
+            'serverComputedAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
         self.__test_register_user_missing_field(requestData)
 
     def test_register_user_missing_field_username(self):
@@ -1128,6 +1159,22 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
     # Wrong field type tests
 
+    def test_set_user_details_wrong_field_type_id(self):
+        requestData = {
+            'id': 1234,
+            'username': 'alice',
+            'serverComputedAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
+        self.__test_set_user_details_wrong_field_type(requestData)
+
     def test_set_user_details_wrong_field_type_username(self):
         requestData = {
             'id': 'alice-id',
@@ -1306,6 +1353,21 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
     def test_set_user_details_missing_field_all(self):
         requestData = {}
+        self.__test_set_user_details_missing_field(requestData)
+
+    def test_set_user_details_missing_field_id(self):
+        requestData = {
+            'username': 'alice',
+            'serverComputedAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
         self.__test_set_user_details_missing_field(requestData)
 
     def test_set_user_details_missing_field_username(self):
