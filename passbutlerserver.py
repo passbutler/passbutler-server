@@ -312,7 +312,7 @@ def createApp(testConfig=None):
                     'The user (username="{0}") already exists - registration is not possible!'
                     .format(username)
                 )
-                abort(403)
+                abort(409)
 
             db.session.add(userSchemaResult)
             db.session.commit()

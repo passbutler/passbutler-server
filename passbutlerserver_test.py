@@ -276,7 +276,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         # Discard uncommitted changes to check if the changes has been committed
         db.session.rollback()
 
-        assert response.status_code == 403
+        assert response.status_code == 409
         assert createUserJson(User.query.get('alice-id-1')) == initialUserJson
 
     # Wrong field type tests
