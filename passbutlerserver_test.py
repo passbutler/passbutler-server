@@ -16,6 +16,7 @@ def createUserJson(user):
     return {
         'id': user.id,
         'username': user.username,
+        'fullName': user.fullName,
         'serverComputedAuthenticationHash': user.serverComputedAuthenticationHash,
         'masterKeyDerivationInformation': user.masterKeyDerivationInformation,
         'masterEncryptionKey': user.masterEncryptionKey,
@@ -145,6 +146,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -171,6 +173,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -197,6 +200,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -223,6 +227,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -246,7 +251,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         # Enable registration in config
         self.app.config['REGISTRATION_ENABLED'] = True
 
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         initialUserJson = createUserJson(alice)
@@ -254,6 +259,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -295,6 +301,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 1234,
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -311,6 +318,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 1234,
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -327,6 +335,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': None,
             'masterEncryptionKey': 'a2',
@@ -343,6 +352,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': None,
@@ -359,6 +369,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -375,6 +386,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -391,6 +403,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -407,6 +420,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -423,6 +437,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -439,6 +454,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -472,6 +488,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
     def test_register_user_missing_field_id(self):
         requestData = {
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -487,6 +504,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
     def test_register_user_missing_field_username(self):
         requestData = {
             'id': 'alice-id',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -503,6 +521,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -518,6 +537,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -533,6 +553,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'itemEncryptionPublicKey': 'a3',
@@ -548,6 +569,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -563,6 +585,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -578,6 +601,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -593,6 +617,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -608,6 +633,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -623,6 +649,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -655,6 +682,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -696,7 +724,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
     """
 
     def test_get_token_with_correct_credentials(self):
-        alice = User('alice-id', 'alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         response = self.client.get('/' + API_VERSION_PREFIX + '/token', headers=createHttpBasicAuthHeaders('alice', '1234'))
@@ -705,7 +733,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert len(response.get_json().get('token')) == 177
 
     def test_get_token_with_deleted_user_record(self):
-        alice = User('alice-id', 'alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', True, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', True, 12345678902, 12345678901)
         self.addUsers(alice)
 
         response = self.client.get('/' + API_VERSION_PREFIX + '/token', headers=createHttpBasicAuthHeaders('alice', '1234'))
@@ -714,7 +742,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Unauthorized'}
 
     def test_get_token_with_invalid_credentials(self):
-        alice = User('alice-id', 'alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         response = self.client.get('/' + API_VERSION_PREFIX + '/token', headers=createHttpBasicAuthHeaders('alice', '1235'))
@@ -723,7 +751,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Unauthorized'}
 
     def test_get_token_with_valid_token(self):
-        alice = User('alice-id', 'alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         response = self.client.get('/' + API_VERSION_PREFIX + '/token', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
@@ -733,7 +761,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Unauthorized'}
 
     def test_get_token_without_authentication(self):
-        alice = User('alice-id', 'alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         response = self.client.get('/' + API_VERSION_PREFIX + '/token')
@@ -753,7 +781,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
     """
 
     def test_get_user_details_without_authentication(self):
-        alice = User('alice-id', 'alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         response = self.client.get('/' + API_VERSION_PREFIX + '/user')
@@ -768,7 +796,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Unauthorized'}
 
     def test_get_user_details_unaccepted_password_authentication(self):
-        alice = User('alice-id', 'alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         response = self.client.get('/' + API_VERSION_PREFIX + '/user', headers=createHttpBasicAuthHeaders('alice', '1234'))
@@ -777,7 +805,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Unauthorized'}
 
     def test_get_user_details_expired_token(self):
-        alice = User('alice-id', 'alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         response = self.client.get('/' + API_VERSION_PREFIX + '/user', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, -3600))
@@ -786,7 +814,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Unauthorized'}
 
     def test_get_user_details_token_without_signature(self):
-        alice = User('alice-id', 'alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         response = self.client.get('/' + API_VERSION_PREFIX + '/user', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice, signatureAlgorithm='none'))
@@ -795,7 +823,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Unauthorized'}
 
     def test_get_user_deleted_user_record(self):
-        alice = User('alice-id', 'alice', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', True, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'pbkdf2:sha256:150000$BOV4dvoc$333626f4403cf4f7ab627824cf0643e0e9937335d6600154ac154860f09a2309', 'a1', 'a2', 'a3', 'a4', 'a5', True, 12345678902, 12345678901)
         self.addUsers(alice)
 
         response = self.client.get('/' + API_VERSION_PREFIX + '/user', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
@@ -809,27 +837,27 @@ class PassButlerTestCase(TestConfigurationTestCase):
     """
 
     def test_get_users_one_user(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         response = self.client.get('/' + API_VERSION_PREFIX + '/users', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         assert response.status_code == 200
         assert sortUserList(response.get_json()) == sortUserList([
-            {'id': 'alice-id', 'username': 'alice', 'itemEncryptionPublicKey': 'a3', 'deleted': False, 'modified': 12345678902, 'created': 12345678901}
+            {'id': 'alice-id', 'username': 'alice', 'fullName': 'Alice Name', 'itemEncryptionPublicKey': 'a3', 'deleted': False, 'modified': 12345678902, 'created': 12345678901}
         ])
 
     def test_get_users_multiple_users(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        sandy = User('sandy-id', 'sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678904, 12345678903)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy-id', 'sandy', 'Sandy Name', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678904, 12345678903)
         self.addUsers(alice, sandy)
 
         response = self.client.get('/' + API_VERSION_PREFIX + '/users', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
 
         assert response.status_code == 200
         assert sortUserList(response.get_json()) == sortUserList([
-            {'id': 'alice-id', 'username': 'alice', 'itemEncryptionPublicKey': 'a3', 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
-            {'id': 'sandy-id', 'username': 'sandy', 'itemEncryptionPublicKey': 's3', 'deleted': False, 'modified': 12345678904, 'created': 12345678903}
+            {'id': 'alice-id', 'username': 'alice', 'fullName': 'Alice Name', 'itemEncryptionPublicKey': 'a3', 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
+            {'id': 'sandy-id', 'username': 'sandy', 'fullName': 'Sandy Name', 'itemEncryptionPublicKey': 's3', 'deleted': False, 'modified': 12345678904, 'created': 12345678903}
         ])
 
     """
@@ -838,7 +866,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
     """
 
     def test_get_user_details(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         response = self.client.get('/' + API_VERSION_PREFIX + '/user', headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
@@ -847,6 +875,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -864,12 +893,13 @@ class PassButlerTestCase(TestConfigurationTestCase):
     """
 
     def test_set_user_details_change_multiple_fields(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x changed',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2 changed',
@@ -895,6 +925,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice changed',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -914,6 +945,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x changed',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -933,6 +965,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1 changed',
             'masterEncryptionKey': 'a2',
@@ -948,6 +981,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         expected = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -965,6 +999,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2 changed',
@@ -984,6 +1019,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -999,6 +1035,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         expected = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1016,6 +1053,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1031,6 +1069,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         expected = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1048,6 +1087,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1067,6 +1107,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1082,6 +1123,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         expected = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1099,6 +1141,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1118,6 +1161,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1133,6 +1177,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         expected = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1147,7 +1192,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self.__test_set_user_details_change_field(requestData, expected)
 
     def __test_set_user_details_change_field(self, requestData, expected):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         response = self.client.put('/' + API_VERSION_PREFIX + '/user', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
@@ -1163,6 +1208,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 1234,
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1179,6 +1225,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 1234,
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1195,6 +1242,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 1234,
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1211,6 +1259,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': None,
             'masterEncryptionKey': 'a2',
@@ -1227,6 +1276,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': None,
@@ -1243,6 +1293,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1259,6 +1310,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1275,6 +1327,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1291,6 +1344,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1307,6 +1361,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1323,6 +1378,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1336,7 +1392,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self.__test_set_user_details_wrong_field_type(requestData)
 
     def __test_set_user_details_wrong_field_type(self, requestData):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         initialUserJson = createUserJson(alice)
@@ -1358,6 +1414,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
     def test_set_user_details_missing_field_id(self):
         requestData = {
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1373,6 +1430,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
     def test_set_user_details_missing_field_username(self):
         requestData = {
             'id': 'alice-id',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1389,6 +1447,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1404,6 +1463,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterEncryptionKey': 'a2',
             'itemEncryptionPublicKey': 'a3',
@@ -1419,6 +1479,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'itemEncryptionPublicKey': 'a3',
@@ -1434,6 +1495,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1449,6 +1511,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1464,6 +1527,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1479,6 +1543,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1494,6 +1559,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1509,6 +1575,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         requestData = {
             'id': 'alice-id',
             'username': 'alice',
+            'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
             'masterKeyDerivationInformation': 'a1',
             'masterEncryptionKey': 'a2',
@@ -1521,7 +1588,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self.__test_set_user_details_missing_field(requestData)
 
     def __test_set_user_details_missing_field(self, requestData):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         initialUserJson = createUserJson(alice)
@@ -1537,7 +1604,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
     # Unknown field test
 
     def test_set_user_details_unknown_field(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         initialUserJson = createUserJson(alice)
@@ -1556,7 +1623,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
     # Invalid JSON test
 
     def test_set_user_details_invalid_json(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         initialUserJson = createUserJson(alice)
@@ -1576,7 +1643,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
     """
 
     def test_get_user_items(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         self.addItems(
@@ -1594,7 +1661,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         ])
 
     def test_get_user_items_with_deleted_item(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         self.addItems(
@@ -1618,7 +1685,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         ])
 
     def test_get_user_items_without_any_item_authorization(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         self.addItems(
@@ -1632,8 +1699,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert sortItemList(response.get_json()) == sortItemList([])
 
     def test_get_user_items_without_shared_item_authorization(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        sandy = User('sandy-id', 'sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy-id', 'sandy', 'Sandy Name', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
         self.addUsers(alice, sandy)
 
         self.addItems(
@@ -1656,8 +1723,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
         ])
 
     def test_get_user_items_with_shared_item_authorization(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        sandy = User('sandy-id', 'sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy-id', 'sandy', 'Sandy Name', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
         self.addUsers(alice, sandy)
 
         self.addItems(
@@ -1682,8 +1749,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
         ])
 
     def test_get_user_items_with_deleted_shared_item_authorization(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        sandy = User('sandy-id', 'sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy-id', 'sandy', 'Sandy Name', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
         self.addUsers(alice, sandy)
 
         self.addItems(
@@ -1714,7 +1781,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
     # Create new items tests
 
     def test_set_user_items_create_items(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         item1Json = {
@@ -1745,7 +1812,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert createItemJson(Item.query.get('item2')) == item2Json
 
     def test_set_user_items_create_deleted_item(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         item1Json = {
@@ -1766,7 +1833,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert createItemJson(Item.query.get('item1')) == item1Json
 
     def test_set_user_items_create_item_with_not_existing_user(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         item1Json = {
@@ -1790,8 +1857,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
     # Permission tests
 
     def test_set_user_items_create_item_for_other_user(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        sandy = User('sandy-id', 'sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy-id', 'sandy', 'Sandy Name', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
         self.addUsers(alice, sandy)
 
         item1Json = {
@@ -1814,7 +1881,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert Item.query.get('item1') is None
 
     def test_set_user_items_create_item_without_item_authorization(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         item1 = Item('item1', 'alice-id', 'example item data 1', False, 12345678902, 12345678901)
@@ -1841,7 +1908,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert createItemJson(Item.query.get('item1')) == initialItem1Json
 
     def test_set_user_items_create_item_with_readonly_item_authorization(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         item1 = Item('item1', 'alice-id', 'example item data 1', False, 12345678902, 12345678901)
@@ -1872,7 +1939,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert createItemJson(Item.query.get('item1')) == initialItem1Json
 
     def test_set_user_items_create_item_with_deleted_item_authorization(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         item1 = Item('item1', 'alice-id', 'example item data 1', False, 12345678902, 12345678901)
@@ -2018,8 +2085,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
         expectedStatusCode=204,
         expectedResponseJson=None
     ):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        sandy = User('sandy-id', 'sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy-id', 'sandy', 'Sandy Name', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
         self.addUsers(alice, sandy)
 
         self.addItems(Item('item1', 'alice-id', 'example data 1', False, 12345678902, 12345678901))
@@ -2102,7 +2169,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self.__test_set_user_items_wrong_field_type(requestData)
 
     def __test_set_user_items_wrong_field_type(self, requestData):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         item1 = Item('item1', 'alice-id', 'example data 1', False, 12345678902, 12345678901)
@@ -2187,7 +2254,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self.__test_set_user_items_missing_field(requestData)
 
     def __test_set_user_items_missing_field(self, requestData):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         item1 = Item('item1', 'alice-id', 'example data 1', False, 12345678902, 12345678901)
@@ -2208,7 +2275,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
     # Unknown field test
 
     def test_set_user_items_unknown_field(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         item1 = Item('item1', 'alice-id', 'example data 1', False, 12345678902, 12345678901)
@@ -2232,7 +2299,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
     # Invalid JSON test
 
     def test_set_user_items_invalid_json(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         item1 = Item('item1', 'alice-id', 'example data 1', False, 12345678902, 12345678901)
@@ -2257,8 +2324,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
     """
 
     def test_get_user_item_authorizations(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        sandy = User('sandy-id', 'sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy-id', 'sandy', 'Sandy Name', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
         self.addUsers(alice, sandy)
 
         self.addItems(
@@ -2299,7 +2366,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
     # Create new item authorization tests
 
     def test_set_user_item_authorizations_create_authorizations(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         self.addItems(
@@ -2339,8 +2406,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization2')) == itemAuthorization2Json
 
     def test_set_user_item_authorizations_create_authorization_for_other_user(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        sandy = User('sandy-id', 'sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy-id', 'sandy', 'Sandy Name', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
         self.addUsers(alice, sandy)
 
         self.addItems(Item('item1', 'alice-id', 'example data 1', False, 12345678902, 12345678901))
@@ -2366,7 +2433,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization2')) == itemAuthorization2Json
 
     def test_set_user_item_authorizations_create_deleted_authorization(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         self.addItems(Item('item1', 'alice-id', 'example data 1', False, 12345678902, 12345678901))
@@ -2391,7 +2458,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert createItemAuthorizationJson(ItemAuthorization.query.get('itemAuthorization1')) == itemAuthorization1Json
 
     def test_set_user_item_authorizations_create_authorization_with_not_existing_user(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         self.addItems(Item('item1', 'alice-id', 'example data 1', False, 12345678902, 12345678901))
@@ -2415,7 +2482,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert ItemAuthorization.query.get('itemAuthorization1') is None
 
     def test_set_user_item_authorizations_create_authorization_with_not_existing_item(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         self.addItems(Item('item1', 'alice-id', 'example data 1', False, 12345678902, 12345678901))
@@ -2439,7 +2506,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert ItemAuthorization.query.get('itemAuthorization1') is None
 
     def test_set_user_item_authorizations_create_authorization_for_item_with_already_existing_item_authorization_for_requesting_user(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         self.addItems(Item('item1', 'alice-id', 'example data 1', False, 12345678902, 12345678901))
@@ -2464,8 +2531,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert ItemAuthorization.query.get('itemAuthorization1a') is None
 
     def test_set_user_item_authorizations_create_authorization_for_item_with_already_existing_item_authorization_for_other_user(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        sandy = User('sandy-id', 'sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy-id', 'sandy', 'Sandy Name', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
         self.addUsers(alice, sandy)
 
         self.addItems(Item('item1', 'alice-id', 'example data 1', False, 12345678902, 12345678901))
@@ -2495,8 +2562,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
     # Permission tests
 
     def test_set_user_item_authorizations_create_authorization_for_item_is_owned_by_other_user(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        sandy = User('sandy-id', 'sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy-id', 'sandy', 'Sandy Name', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
         self.addUsers(alice, sandy)
 
         self.addItems(Item('item1', 'sandy-id', 'example data 1', False, 12345678902, 12345678901))
@@ -2521,8 +2588,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert ItemAuthorization.query.get('itemAuthorization1') is None
 
     def test_set_user_item_authorizations_update_authorization_for_item_is_owned_by_other_user(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        sandy = User('sandy-id', 'sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy-id', 'sandy', 'Sandy Name', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
         self.addUsers(alice, sandy)
 
         self.addItems(Item('item1', 'sandy-id', 'example data 1', False, 12345678902, 12345678901))
@@ -2768,8 +2835,8 @@ class PassButlerTestCase(TestConfigurationTestCase):
         expectedStatusCode=204,
         expectedResponseJson=None
     ):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
-        sandy = User('sandy-id', 'sandy', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy-id', 'sandy', 'Sandy Name', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
         self.addUsers(alice, sandy)
 
         self.addItems(
@@ -2894,7 +2961,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self.__test_set_user_item_authorizations_wrong_field_type(requestData)
 
     def __test_set_user_item_authorizations_wrong_field_type(self, requestData):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         self.addItems(Item('item1', 'alice-id', 'example data 1', False, 12345678902, 12345678901))
@@ -3015,7 +3082,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         self.__test_set_user_item_authorizations_missing_field(requestData)
 
     def __test_set_user_item_authorizations_missing_field(self, requestData):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         self.addItems(Item('item1', 'alice-id', 'example data 1', False, 12345678902, 12345678901))
@@ -3036,7 +3103,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
     # Unknown field test
 
     def test_set_user_item_authorizations_unknown_field(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         self.addItems(Item('item1', 'alice-id', 'example data 1', False, 12345678902, 12345678901))
@@ -3060,7 +3127,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
     # Invalid JSON test
 
     def test_set_user_item_authorizations_invalid_json(self):
-        alice = User('alice-id', 'alice', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         self.addItems(Item('item1', 'alice-id', 'example data 1', False, 12345678902, 12345678901))

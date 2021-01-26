@@ -109,6 +109,7 @@ class User(db.Model):
 
     id = db.Column(db.String, primary_key=True, nullable=False)
     username = db.Column(db.String, unique=True, nullable=False)
+    fullName = db.Column(db.String, nullable=False)
     serverComputedAuthenticationHash = db.Column(db.String, nullable=False)
     masterKeyDerivationInformation = db.Column(db.JSON, nullable=False)
     masterEncryptionKey = db.Column(db.JSON, nullable=False)
@@ -123,6 +124,7 @@ class User(db.Model):
         self,
         id,
         username,
+        fullName,
         serverComputedAuthenticationHash,
         masterKeyDerivationInformation,
         masterEncryptionKey,
@@ -135,6 +137,7 @@ class User(db.Model):
     ):
         self.id = id
         self.username = username
+        self.fullName = fullName
         self.serverComputedAuthenticationHash = serverComputedAuthenticationHash
         self.masterKeyDerivationInformation = masterKeyDerivationInformation
         self.masterEncryptionKey = masterEncryptionKey
@@ -157,7 +160,7 @@ class User(db.Model):
 class PublicUserSchema(Schema):
     class Meta:
         # Only the following fields are allowed to see for this schema
-        fields = ('id', 'username', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
+        fields = ('id', 'username', 'fullName', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
 
 class DefaultUserSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -355,6 +358,7 @@ def createApp(testConfig=None):
             userSchemaResult = DefaultUserSchema().load(request.json, session=None, instance=None)
 
             authenticatedUser.username = userSchemaResult.username
+            authenticatedUser.fullName = userSchemaResult.fullName
             authenticatedUser.serverComputedAuthenticationHash = userSchemaResult.serverComputedAuthenticationHash
             authenticatedUser.masterEncryptionKey = userSchemaResult.masterEncryptionKey
             authenticatedUser.settings = userSchemaResult.settings
