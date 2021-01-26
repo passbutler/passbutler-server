@@ -357,7 +357,6 @@ def createApp(testConfig=None):
             # Do not set database session and instance yet to avoid implicit model modification
             userSchemaResult = DefaultUserSchema().load(request.json, session=None, instance=None)
 
-            authenticatedUser.username = userSchemaResult.username
             authenticatedUser.fullName = userSchemaResult.fullName
             authenticatedUser.serverComputedAuthenticationHash = userSchemaResult.serverComputedAuthenticationHash
             authenticatedUser.masterEncryptionKey = userSchemaResult.masterEncryptionKey

@@ -970,7 +970,21 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'created': 12345678901
         }
 
-        expected = requestData
+        # The field is immutable
+        expected = {
+            'id': 'alice-id',
+            'username': 'alice',
+            'fullName': 'Alice Name',
+            'serverComputedAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678902,
+            'created': 12345678901
+        }
 
         self.__test_set_user_details_change_field(requestData, expected)
 
