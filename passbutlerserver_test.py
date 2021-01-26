@@ -1966,7 +1966,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Forbidden'}
         assert Item.query.get('item1') is None
 
-    def test_set_user_items_create_item_without_item_authorization(self):
+    def test_set_user_items_change_item_without_item_authorization(self):
         alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
@@ -1993,7 +1993,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Forbidden'}
         assert createItemJson(Item.query.get('item1')) == initialItem1Json
 
-    def test_set_user_items_create_item_with_readonly_item_authorization(self):
+    def test_set_user_items_change_item_with_readonly_item_authorization(self):
         alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
@@ -2024,7 +2024,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.get_json() == {'error': 'Forbidden'}
         assert createItemJson(Item.query.get('item1')) == initialItem1Json
 
-    def test_set_user_items_create_item_with_deleted_item_authorization(self):
+    def test_set_user_items_change_item_with_deleted_item_authorization(self):
         alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
