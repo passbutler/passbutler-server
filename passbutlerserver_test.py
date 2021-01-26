@@ -247,17 +247,17 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.status_code == 403
         assert User.query.get('alice-id') is None
 
-    def test_register_user_already_existing_user(self):
+    def test_register_user_already_existing_user_by_existing_username(self):
         # Enable registration in config
         self.app.config['REGISTRATION_ENABLED'] = True
 
-        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        alice = User('alice-id-1', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
         self.addUsers(alice)
 
         initialUserJson = createUserJson(alice)
 
         requestData = {
-            'id': 'alice-id',
+            'id': 'alice-id-2',
             'username': 'alice',
             'fullName': 'Alice Name',
             'serverComputedAuthenticationHash': 'x',
@@ -277,7 +277,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         db.session.rollback()
 
         assert response.status_code == 403
-        assert createUserJson(User.query.get('alice-id')) == initialUserJson
+        assert createUserJson(User.query.get('alice-id-1')) == initialUserJson
 
     # Wrong field type tests
 
