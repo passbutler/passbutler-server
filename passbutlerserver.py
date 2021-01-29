@@ -357,6 +357,17 @@ def createApp(testConfig=None):
             # Do not set database session and instance yet to avoid implicit model modification
             userSchemaResult = DefaultUserSchema().load(request.json, session=None, instance=None)
 
+            newUsername = userSchemaResult.username
+
+            # Be sure, the user does not exists
+            if authenticatedUser.username != newUsername and User.query.filter_by(username=newUsername).first() is not None:
+                app.logger.warning(
+                    'The user (username="{0}") already exists - update is not possible!'
+                    .format(newUsername)
+                )
+                abort(409)
+
+            authenticatedUser.username = newUsername
             authenticatedUser.fullName = userSchemaResult.fullName
             authenticatedUser.serverComputedAuthenticationHash = userSchemaResult.serverComputedAuthenticationHash
             authenticatedUser.masterEncryptionKey = userSchemaResult.masterEncryptionKey

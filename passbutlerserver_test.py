@@ -952,6 +952,37 @@ class PassButlerTestCase(TestConfigurationTestCase):
         assert response.status_code == 204
         assert createUserJson(User.query.get('alice-id')) == requestData
 
+    def test_set_user_details_change_to_existing_username(self):
+        alice = User('alice-id', 'alice', 'Alice Name', 'x', 'a1', 'a2', 'a3', 'a4', 'a5', False, 12345678902, 12345678901)
+        sandy = User('sandy-id', 'sandy', 'Sandy Name', 'y', 's1', 's2', 's3', 's4', 's5', False, 12345678902, 12345678901)
+
+        self.addUsers(alice, sandy)
+
+        initialAliceJson = createUserJson(alice)
+
+        requestData = {
+            'id': 'alice-id',
+            'username': 'sandy',
+            'fullName': 'Alice Name',
+            'serverComputedAuthenticationHash': 'x',
+            'masterKeyDerivationInformation': 'a1',
+            'masterEncryptionKey': 'a2',
+            'itemEncryptionPublicKey': 'a3',
+            'itemEncryptionSecretKey': 'a4',
+            'settings': 'a5',
+            'deleted': False,
+            'modified': 12345678903,
+            'created': 12345678901
+        }
+
+        response = self.client.put('/' + API_VERSION_PREFIX + '/user', json=requestData, headers=createHttpTokenAuthHeaders(self.SECRET_KEY, alice))
+
+        # Discard uncommitted changes to check if the changes has been committed
+        db.session.rollback()
+
+        assert response.status_code == 409
+        assert createUserJson(User.query.get('alice-id')) == initialAliceJson
+
     # Modify field tests
 
     def test_set_user_details_change_field_username(self):
@@ -970,21 +1001,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
             'created': 12345678901
         }
 
-        # The field is immutable
-        expected = {
-            'id': 'alice-id',
-            'username': 'alice',
-            'fullName': 'Alice Name',
-            'serverComputedAuthenticationHash': 'x',
-            'masterKeyDerivationInformation': 'a1',
-            'masterEncryptionKey': 'a2',
-            'itemEncryptionPublicKey': 'a3',
-            'itemEncryptionSecretKey': 'a4',
-            'settings': 'a5',
-            'deleted': False,
-            'modified': 12345678902,
-            'created': 12345678901
-        }
+        expected = requestData
 
         self.__test_set_user_details_change_field(requestData, expected)
 
