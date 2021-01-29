@@ -27,7 +27,7 @@ class Item(db.Model):
 
     __tablename__ = 'items'
 
-    id = db.Column(db.String(36), primary_key=True, nullable=False)
+    id = db.Column(db.String, primary_key=True, nullable=False)
     userId = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
     data = db.Column(db.JSON, nullable=False)
     deleted = db.Column(db.Boolean, nullable=False)
@@ -64,7 +64,7 @@ class ItemAuthorization(db.Model):
 
     __tablename__ = 'item_authorizations'
 
-    id = db.Column(db.String(36), primary_key=True, nullable=False)
+    id = db.Column(db.String, primary_key=True, nullable=False)
     userId = db.Column(db.String, db.ForeignKey('users.id'), nullable=False)
     itemId = db.Column(db.String, db.ForeignKey('items.id'), nullable=False)
     itemKey = db.Column(db.JSON, nullable=False)
@@ -107,8 +107,9 @@ class User(db.Model):
 
     __tablename__ = 'users'
 
-    id = db.Column(db.String(36), primary_key=True, nullable=False)
-    username = db.Column(db.String(64), unique=True, nullable=False)
+    id = db.Column(db.String, primary_key=True, nullable=False)
+    username = db.Column(db.String, unique=True, nullable=False)
+    fullName = db.Column(db.String, nullable=False)
     serverComputedAuthenticationHash = db.Column(db.String, nullable=False)
     masterKeyDerivationInformation = db.Column(db.JSON, nullable=False)
     masterEncryptionKey = db.Column(db.JSON, nullable=False)
@@ -123,6 +124,7 @@ class User(db.Model):
         self,
         id,
         username,
+        fullName,
         serverComputedAuthenticationHash,
         masterKeyDerivationInformation,
         masterEncryptionKey,
@@ -135,6 +137,7 @@ class User(db.Model):
     ):
         self.id = id
         self.username = username
+        self.fullName = fullName
         self.serverComputedAuthenticationHash = serverComputedAuthenticationHash
         self.masterKeyDerivationInformation = masterKeyDerivationInformation
         self.masterEncryptionKey = masterEncryptionKey
@@ -157,7 +160,7 @@ class User(db.Model):
 class PublicUserSchema(Schema):
     class Meta:
         # Only the following fields are allowed to see for this schema
-        fields = ('id', 'username', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
+        fields = ('id', 'username', 'fullName', 'itemEncryptionPublicKey', 'deleted', 'modified', 'created')
 
 class DefaultUserSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -309,7 +312,7 @@ def createApp(testConfig=None):
                     'The user (username="{0}") already exists - registration is not possible!'
                     .format(username)
                 )
-                abort(403)
+                abort(409)
 
             db.session.add(userSchemaResult)
             db.session.commit()
@@ -354,7 +357,18 @@ def createApp(testConfig=None):
             # Do not set database session and instance yet to avoid implicit model modification
             userSchemaResult = DefaultUserSchema().load(request.json, session=None, instance=None)
 
-            authenticatedUser.username = userSchemaResult.username
+            newUsername = userSchemaResult.username
+
+            # Be sure, the user does not exists
+            if authenticatedUser.username != newUsername and User.query.filter_by(username=newUsername).first() is not None:
+                app.logger.warning(
+                    'The user (username="{0}") already exists - update is not possible!'
+                    .format(newUsername)
+                )
+                abort(409)
+
+            authenticatedUser.username = newUsername
+            authenticatedUser.fullName = userSchemaResult.fullName
             authenticatedUser.serverComputedAuthenticationHash = userSchemaResult.serverComputedAuthenticationHash
             authenticatedUser.masterEncryptionKey = userSchemaResult.masterEncryptionKey
             authenticatedUser.settings = userSchemaResult.settings
