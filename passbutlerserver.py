@@ -387,10 +387,22 @@ def createApp(testConfig=None):
     def get_user_items():
         authenticatedUser = webTokenAuth.current_user()
 
-        # Returns only the items where the user has a non-deleted item authorization
-        itemAuthorizations = ItemAuthorization.query.filter_by(userId=authenticatedUser.id, deleted=False).all()
+        itemAuthorizations = ItemAuthorization.query.filter_by(userId=authenticatedUser.id).all()
         itemAuthorizationItemIds = map(lambda itemAuthorization: itemAuthorization.itemId, itemAuthorizations)
         userItems = Item.query.filter(Item.id.in_(itemAuthorizationItemIds))
+
+        deletedItemAuthorizations = filter(lambda itemAuthorization: itemAuthorization.deleted == True, itemAuthorizations)
+        deletedItemAuthorizationItemIds = list(map(lambda itemAuthorization: itemAuthorization.itemId, deletedItemAuthorizations))
+
+        for userItem in userItems:
+            # If the item has a deleted item authorization manipulate the item contents
+            if (userItem.id in deletedItemAuthorizationItemIds):
+                # Strip the item data
+                userItem.data = None
+
+                # Reset date fields to mark the item record as manipulated
+                userItem.modified = 0
+                userItem.created = 0
 
         result = DefaultItemSchema(many=True).dump(userItems)
         return jsonify(result)
