@@ -1885,9 +1885,10 @@ class PassButlerTestCase(TestConfigurationTestCase):
 
         assert response.status_code == 200
 
-        # The "item2" of Sandy is not accessible by Alice anymore because item authorization was deleted by Sandy
+        # The data of "item2" of Sandy is not accessible by Alice anymore because item authorization was deleted by Sandy
         assert sortItemList(response.get_json()) == sortItemList([
-            {'id': 'item1', 'userId': 'alice-id', 'data': 'example data 1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901}
+            {'id': 'item1', 'userId': 'alice-id', 'data': 'example data 1', 'deleted': False, 'modified': 12345678902, 'created': 12345678901},
+            {'id': 'item2', 'userId': 'sandy-id', 'data': None, 'deleted': False, 'modified': 0, 'created': 0}
         ])
 
     """
