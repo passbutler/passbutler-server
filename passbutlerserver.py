@@ -298,7 +298,7 @@ def createApp(testConfig=None):
 
         if request.headers.get('Registration-Invitation-Code', None) != registrationInvitationCode:
             app.logger.warning('The registration invitation code is not correct!')
-            abort(403)
+            abort(401)
 
         try:
             # Do not set database session and instance yet to avoid implicit model modification
