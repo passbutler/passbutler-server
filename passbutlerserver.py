@@ -428,7 +428,7 @@ def createApp(testConfig=None):
         return '', 204
 
     def createOrUpdateItem(authenticatedUser, item):
-        # Be sure, the foreign key `userId` exists
+        # Be sure, the foreign key `userId` exists (check manually for explicit status code and detailed logging)
         if User.query.get(item.userId) is None:
             app.logger.warning(
                 'The user (id="{0}") of item (id="{1}") does not exist!'
@@ -526,7 +526,7 @@ def createApp(testConfig=None):
         return '', 204
 
     def createOrUpdateItemAuthorization(authenticatedUser, itemAuthorization):
-        # Be sure, the foreign key `userId` exists
+        # Be sure, the foreign key `userId` exists (check manually for explicit status code and detailed logging)
         if User.query.get(itemAuthorization.userId) is None:
             app.logger.warning(
                 'The user (id="{0}") of item authorization (id="{1}") does not exist!'
@@ -536,7 +536,7 @@ def createApp(testConfig=None):
 
         item = Item.query.get(itemAuthorization.itemId)
 
-        # Be sure, the foreign key `itemId` exists
+        # Be sure, the foreign key `itemId` exists (check manually for explicit status code and detailed logging)
         if item is None:
             app.logger.warning(
                 'The item (id="{0}") of item authorization (id="{1}") does not exist!'
