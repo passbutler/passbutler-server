@@ -143,7 +143,7 @@ Start server:
 
 ### Packaging
 
-Currently only the distribution with "deb" package is supported!
+Currently, only the distribution with "deb" package is supported!
 
 #### Package for Debian/Ubuntu
 
@@ -155,4 +155,4 @@ Build the package:
 
     $ debuild
 
-The "deb" file is created in parent directory.
+The "deb" file is created in the parent directory.
