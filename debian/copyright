@@ -1,12 +1,19 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: Pass Butler Server
+Upstream-Name: Pass Butler synchronization server
 Upstream-Contact: Philipp Meisberger <team@pm-codeworks.de>
-Source: https://github.com/bastianraschke/passbutler-server
+Source: https://github.com/passbutler/passbutler-server
 
 Files: *
-Copyright: 2020 Bastian Raschke <bastian.raschke@posteo.de>
-License: D-FSL
- This Program may be used by anyone in accordance with the terms of the German
- Free Software License.
- .
- The License may be obtained under <http://www.d-fsl.org>.
+Copyright: 2019-2022 Bastian Raschke <bastian.raschke@posteo.de>
+License: GNU Affero General Public License 3
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License, version 3,
+ as published by the Free Software Foundation.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License
+ along with this program. If not, see <https://www.gnu.org/licenses/>.

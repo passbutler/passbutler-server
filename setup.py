@@ -12,7 +12,7 @@ setup(
     maintainer       = 'Philipp Meisberger',
     maintainer_email = 'team@pm-codeworks.de',
     url              = 'https://passbutler.de',
-    license          = 'D-FSL',
+    license          = 'GNU Affero General Public License 3',
     classifiers      = [
         'Environment :: Web Environment',
         'Intended Audience :: System Administrators',
