@@ -1,6 +1,6 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: Pass Butler synchronization server
-Upstream-Contact: Philipp Meisberger <team@pm-codeworks.de>
+Upstream-Contact: Bastian Raschke <bastian.raschke@posteo.de>
 Source: https://github.com/passbutler/passbutler-server
 
 Files: *

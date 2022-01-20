@@ -9,8 +9,8 @@ setup(
     description      = 'Pass Butler synchronization server',
     author           = 'Bastian Raschke',
     author_email     = 'bastian.raschke@posteo.de',
-    maintainer       = 'Philipp Meisberger',
-    maintainer_email = 'team@pm-codeworks.de',
+    maintainer       = 'Bastian Raschke',
+    maintainer_email = 'bastian.raschke@posteo.de',
     url              = 'https://passbutler.de',
     license          = 'GNU Affero General Public License 3',
     classifiers      = [

@@ -1,5 +1,5 @@
 Source: passbutler-server
-Maintainer: Philipp Meisberger <team@pm-codeworks.de>
+Maintainer: Bastian Raschke <bastian.raschke@posteo.de>
 Section: python
 Priority: optional
 Standards-Version: 4.5.0
