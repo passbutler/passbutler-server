@@ -1,18 +1,24 @@
+<div align="center">
+    <img alt="Pass Butler – Private Cloud Password Manager" src="./projectcover.jpg" width="600">
+</div>
+
 # Pass Butler synchronization server
 
 The Pass Butler server provides the possibility to synchronize passwords between multiple devices.
 
-## Production setup on Debian 10
+## Production setup on Debian
+
+The following steps are tested with Debian 10.
 
 ### Installation
 
 Add APT repository:
 
-    $ echo "deb https://apt.pm-codeworks.de buster main" | sudo tee /etc/apt/sources.list.d/pm-codeworks.list
+    $ echo "deb https://apt.passbutler.de bullseye main" | sudo tee /etc/apt/sources.list.d/passbutler.list
 
 Add APT repository signing key and update package index:
 
-    $ wget -O - https://apt.pm-codeworks.de/pm-codeworks.de.gpg | sudo apt-key add -
+    $ wget -q -O - https://apt.passbutler.de/signing-key.gpg | sudo apt-key add -
     $ sudo apt update
 
 Install the package:
@@ -121,6 +127,11 @@ Setup virtual environment:
     $ virtualenv ~/Desktop/passbutler-server-venv --python=python3
     $ source ~/Desktop/passbutler-server-venv/bin/activate
 
+Clone repository:
+
+    $ git clone ssh://git@github.com/passbutler/passbutler-server.git
+    $ cd ./passbutler-server/
+
 Install dependencies:
 
     $ pip3 install -r requirements.txt
@@ -147,7 +158,7 @@ Currently, only the distribution with "deb" package is supported!
 
 #### Package for Debian/Ubuntu
 
-Install packages:
+Install package:
 
     $ sudo apt install devscripts
 
