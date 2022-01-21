@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.0.0] - UNRELEASED
+## [1.0.0] - 2022-01-21
 
 ### Changed
 - The registration route answers with HTTP 401 if registration invitation code was wrong
