@@ -217,7 +217,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         # Discard uncommitted changes to check if the changes has been committed
         db.session.rollback()
 
-        assert response.status_code == 403
+        assert response.status_code == 401
         assert User.query.get('alice-id') is None
 
     def test_register_user_wrong_invitation_code(self):
@@ -244,7 +244,7 @@ class PassButlerTestCase(TestConfigurationTestCase):
         # Discard uncommitted changes to check if the changes has been committed
         db.session.rollback()
 
-        assert response.status_code == 403
+        assert response.status_code == 401
         assert User.query.get('alice-id') is None
 
     def test_register_user_already_existing_user_by_existing_username(self):
