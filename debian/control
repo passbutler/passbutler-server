@@ -14,7 +14,7 @@ Homepage: https://passbutler.de
 
 Package: passbutler-server
 Pre-Depends: dpkg (>= 1.16.1),
-             python3 (>= 3.5),
+             python3 (>= 3.7),
              ${misc:Pre-Depends}
 Depends: ${misc:Depends}
 Architecture: all

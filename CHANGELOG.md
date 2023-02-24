@@ -4,6 +4,7 @@
 
 ### Changed
 - Upgraded to Debian 11
+- Raised dependencies
 
 ## [1.0.0] - 2022-01-21
 

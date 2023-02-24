@@ -5,15 +5,20 @@ from flask import Flask, request, jsonify, abort, make_response
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth
 from flask_marshmallow import Marshmallow, Schema
 from flask_sqlalchemy import SQLAlchemy
-from itsdangerous import TimedJSONWebSignatureSerializer, BadSignature
+from jwt.exceptions import InvalidTokenError
 from logging import FileHandler
 from marshmallow.exceptions import ValidationError
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from sqlalchemy import event, and_
 from werkzeug.security import check_password_hash
+import datetime
+import jwt
 import logging
 
 API_VERSION_PREFIX = 'v1'
+
+JWT_SIGNATURE_ALGORITHM = 'HS512'
+JWT_EXPIRATION_SECONDS = 3600
 
 db = SQLAlchemy()
 ma = Marshmallow()
@@ -154,8 +159,23 @@ class User(db.Model):
     def checkLocalComputedAuthenticationHash(self, localComputedAuthenticationHash):
         return check_password_hash(self.serverComputedAuthenticationHash, localComputedAuthenticationHash)
 
-    def generateAuthenticationToken(self, tokenSerializer):
-        return tokenSerializer.dumps({'id': self.id}).decode('ascii')
+    def generateAuthenticationToken(
+        self,
+        secretKey,
+        expirationDelta=datetime.timedelta(seconds=JWT_EXPIRATION_SECONDS),
+        signatureAlgorithm=JWT_SIGNATURE_ALGORITHM
+    ):
+        currentDateTimeUTC = datetime.datetime.now(tz=datetime.timezone.utc)
+
+        return jwt.encode(
+            payload={
+                'id': self.id,
+                'iat': currentDateTimeUTC,
+                'exp': currentDateTimeUTC + expirationDelta
+            },
+            key=secretKey,
+            algorithm=signatureAlgorithm
+        )
 
 class PublicUserSchema(Schema):
     class Meta:
@@ -203,8 +223,6 @@ def createApp(testConfig=None):
     if testConfig is None:
         createDatabaseStructure(app)
 
-    tokenSerializer = TimedJSONWebSignatureSerializer(secretKey, expires_in=3600, algorithm_name='HS512')
-
     passwordAuth = HTTPBasicAuth()
     webTokenAuth = HTTPTokenAuth('Bearer')
 
@@ -225,7 +243,13 @@ def createApp(testConfig=None):
         authenticatedUser = None
 
         try:
-            tokenData = tokenSerializer.loads(token)
+            tokenData = jwt.decode(
+                jwt=token,
+                key=secretKey,
+                algorithms=[JWT_SIGNATURE_ALGORITHM],
+                leeway=datetime.timedelta(seconds=JWT_EXPIRATION_SECONDS),
+            )
+
             userId = tokenData.get('id')
 
             if userId is not None:
@@ -235,7 +259,7 @@ def createApp(testConfig=None):
                 if requestingUser is not None:
                     authenticatedUser = requestingUser
 
-        except BadSignature:
+        except InvalidTokenError:
             authenticatedUser = None
 
         return authenticatedUser
@@ -331,7 +355,7 @@ def createApp(testConfig=None):
     @passwordAuth.login_required
     def get_token():
         authenticatedUser = passwordAuth.current_user()
-        token = authenticatedUser.generateAuthenticationToken(tokenSerializer)
+        token = authenticatedUser.generateAuthenticationToken(secretKey=secretKey)
         return jsonify({'token': token})
 
     @app.route('/' + API_VERSION_PREFIX + '/users', methods=['GET'])
@@ -429,14 +453,14 @@ def createApp(testConfig=None):
 
     def createOrUpdateItem(authenticatedUser, item):
         # Be sure, the foreign key `userId` exists (check manually for explicit status code and detailed logging)
-        if User.query.get(item.userId) is None:
+        if db.session.get(User, item.userId) is None:
             app.logger.warning(
                 'The user (id="{0}") of item (id="{1}") does not exist!'
                 .format(item.userId, item.id)
             )
             abort(404)
 
-        existingItem = Item.query.get(item.id)
+        existingItem = db.session.get(Item, item.id)
 
         # Determine to create or update the item
         if existingItem is None:
@@ -501,6 +525,7 @@ def createApp(testConfig=None):
         result = DefaultItemAuthorizationSchema(many=True).dump(
             itemAuthorizationsForUser + itemAuthorizationsCreatedByUser
         )
+
         return jsonify(result)
 
     @app.route('/' + API_VERSION_PREFIX + '/user/itemauthorizations', methods=['PUT'])
@@ -527,14 +552,14 @@ def createApp(testConfig=None):
 
     def createOrUpdateItemAuthorization(authenticatedUser, itemAuthorization):
         # Be sure, the foreign key `userId` exists (check manually for explicit status code and detailed logging)
-        if User.query.get(itemAuthorization.userId) is None:
+        if db.session.get(User, itemAuthorization.userId) is None:
             app.logger.warning(
                 'The user (id="{0}") of item authorization (id="{1}") does not exist!'
                 .format(itemAuthorization.userId, itemAuthorization.id)
             )
             abort(404)
 
-        item = Item.query.get(itemAuthorization.itemId)
+        item = db.session.get(Item, itemAuthorization.itemId)
 
         # Be sure, the foreign key `itemId` exists (check manually for explicit status code and detailed logging)
         if item is None:
@@ -552,7 +577,7 @@ def createApp(testConfig=None):
             )
             abort(403)
 
-        existingItemAuthorization = ItemAuthorization.query.get(itemAuthorization.id)
+        existingItemAuthorization = db.session.get(ItemAuthorization, itemAuthorization.id)
 
         # Determine to create or update the item authorization
         if existingItemAuthorization is None:

@@ -150,7 +150,7 @@ Run unit tests (add `-v` for more verbosity):
 
 Start server:
 
-    $ FLASK_ENV=development FLASK_APP=passbutlerserver:createApp PASSBUTLER_SETTINGS=./passbutlerserver-example.conf flask run --host 0.0.0.0 --port 5000
+    $ PASSBUTLER_SETTINGS=./passbutlerserver-example.conf flask --app='passbutlerserver:createApp' --debug run --host 0.0.0.0 --port 5000
 
 ### Packaging
 
