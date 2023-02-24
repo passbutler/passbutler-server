@@ -2,6 +2,9 @@
 
 ## [1.1.0] - UNRELEASED
 
+### Changed
+- Upgraded to Debian 11
+
 ## [1.0.0] - 2022-01-21
 
 ### Changed

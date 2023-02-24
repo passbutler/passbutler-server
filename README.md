@@ -8,7 +8,7 @@ The Pass Butler server provides the possibility to synchronize passwords between
 
 ## Production setup on Debian
 
-The following steps are tested with Debian 10.
+The following steps are tested with Debian 11.
 
 ### Installation
 
@@ -29,7 +29,7 @@ Install the package:
 
 Install the package:
 
-    $ sudo apt install gunicorn3
+    $ sudo apt install gunicorn
 
 Add dedicated user and group:
 
@@ -71,7 +71,7 @@ Create Systemd service file `/etc/systemd/system/passbutler-server-example.servi
     RuntimeDirectory=passbutler-server-example
     WorkingDirectory=/var/lib/passbutler-server/example/
     Environment="PASSBUTLER_SETTINGS=/etc/passbutler-server/example.conf"
-    ExecStart=/usr/bin/gunicorn3 --name=gunicorn-passbutler-server-example --pid /run/passbutler-server-example/pid --workers=1 --pythonpath=/opt/venvs/passbutler-server/lib/python3.8/site-packages --bind=unix:/run/passbutler-server-example/socket.sock 'passbutlerserver:createApp()'
+    ExecStart=/usr/bin/gunicorn --name=gunicorn-passbutler-server-example --pid /run/passbutler-server-example/pid --workers=1 --pythonpath=/opt/venvs/passbutler-server/lib/python3.8/site-packages --bind=unix:/run/passbutler-server-example/socket.sock 'passbutlerserver:createApp()'
     ExecReload=/bin/kill -s HUP $MAINPID
     ExecStop=/bin/kill -s TERM $MAINPID
     PrivateTmp=true
