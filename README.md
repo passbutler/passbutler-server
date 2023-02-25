@@ -142,7 +142,7 @@ Install dependencies for testing:
 
 ### Unit testing
 
-Run unit tests (add `-v` for more verbosity):
+Run unit tests (add `-v` for more verbosity and `-s` if you want to see `print` logs also for successful tests):
 
     $ pytest
 
