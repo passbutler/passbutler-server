@@ -231,7 +231,7 @@ def createApp(testConfig=None):
         authenticatedUser = None
 
         # Authentication is only possible for non-deleted users
-        requestingUser = User.query.filter_by(username=username, deleted=False).first()
+        requestingUser = db.session.query(User).filter_by(username=username, deleted=False).first()
 
         if requestingUser is not None and requestingUser.checkLocalComputedAuthenticationHash(localComputedAuthenticationHash):
             authenticatedUser = requestingUser
@@ -254,7 +254,7 @@ def createApp(testConfig=None):
 
             if userId is not None:
                 # Authentication is only possible for non-deleted users
-                requestingUser = User.query.filter_by(id=userId, deleted=False).first()
+                requestingUser = db.session.query(User).filter_by(id=userId, deleted=False).first()
 
                 if requestingUser is not None:
                     authenticatedUser = requestingUser
@@ -331,7 +331,7 @@ def createApp(testConfig=None):
             username = userSchemaResult.username
 
             # Be sure, the user does not exists
-            if User.query.filter_by(username=username).first() is not None:
+            if db.session.query(User).filter_by(username=username).first() is not None:
                 app.logger.warning(
                     'The user (username="{0}") already exists - registration is not possible!'
                     .format(username)
@@ -361,7 +361,7 @@ def createApp(testConfig=None):
     @app.route('/' + API_VERSION_PREFIX + '/users', methods=['GET'])
     @webTokenAuth.login_required
     def get_users():
-        allUsers = User.query.all()
+        allUsers = db.session.query(User).all()
         result = PublicUserSchema(many=True).dump(allUsers)
         return jsonify(result)
 
@@ -384,7 +384,7 @@ def createApp(testConfig=None):
             newUsername = userSchemaResult.username
 
             # Be sure, the user does not exists
-            if authenticatedUser.username != newUsername and User.query.filter_by(username=newUsername).first() is not None:
+            if authenticatedUser.username != newUsername and db.session.query(User).filter_by(username=newUsername).first() is not None:
                 app.logger.warning(
                     'The user (username="{0}") already exists - update is not possible!'
                     .format(newUsername)
@@ -411,9 +411,9 @@ def createApp(testConfig=None):
     def get_user_items():
         authenticatedUser = webTokenAuth.current_user()
 
-        itemAuthorizations = ItemAuthorization.query.filter_by(userId=authenticatedUser.id).all()
+        itemAuthorizations = db.session.query(ItemAuthorization).filter_by(userId=authenticatedUser.id).all()
         itemAuthorizationItemIds = map(lambda itemAuthorization: itemAuthorization.itemId, itemAuthorizations)
-        userItems = Item.query.filter(Item.id.in_(itemAuthorizationItemIds))
+        userItems = db.session.query(Item).filter(Item.id.in_(itemAuthorizationItemIds))
 
         deletedItemAuthorizations = filter(lambda itemAuthorization: itemAuthorization.deleted == True, itemAuthorizations)
         deletedItemAuthorizationItemIds = list(map(lambda itemAuthorization: itemAuthorization.itemId, deletedItemAuthorizations))
@@ -476,7 +476,7 @@ def createApp(testConfig=None):
 
             db.session.add(item)
         else:
-            itemAuthorization = ItemAuthorization.query.filter_by(userId=authenticatedUser.id, itemId=item.id).first()
+            itemAuthorization = db.session.query(ItemAuthorization).filter_by(userId=authenticatedUser.id, itemId=item.id).first()
 
             if itemAuthorization is None:
                 app.logger.warning(
@@ -510,12 +510,12 @@ def createApp(testConfig=None):
         authenticatedUser = webTokenAuth.current_user()
 
         # 1) Item authorizations created for requesting user
-        itemAuthorizationsForUser = ItemAuthorization.query.filter_by(userId=authenticatedUser.id).all()
+        itemAuthorizationsForUser = db.session.query(ItemAuthorization).filter_by(userId=authenticatedUser.id).all()
 
         # 2) Item authorizations created by requesting user for other users
-        userItems = Item.query.filter_by(userId=authenticatedUser.id).all()
+        userItems = db.session.query(Item).filter_by(userId=authenticatedUser.id).all()
         userItemsIds = map(lambda item: item.id, userItems)
-        itemAuthorizationsCreatedByUser = ItemAuthorization.query.filter(
+        itemAuthorizationsCreatedByUser = db.session.query(ItemAuthorization).filter(
             and_(
                 ItemAuthorization.itemId.in_(userItemsIds),
                 ItemAuthorization.userId != authenticatedUser.id
@@ -582,7 +582,7 @@ def createApp(testConfig=None):
         # Determine to create or update the item authorization
         if existingItemAuthorization is None:
             # Check for already existing user+item combination to avoid multiple item authorization for the same user and item
-            if ItemAuthorization.query.filter_by(userId=itemAuthorization.userId, itemId=itemAuthorization.itemId).count() > 0:
+            if db.session.query(ItemAuthorization).filter_by(userId=itemAuthorization.userId, itemId=itemAuthorization.itemId).count() > 0:
                 app.logger.warning(
                     'An item authorization already exists for the user (id="{0}") and item (id="{1}")!'
                     .format(itemAuthorization.userId, itemAuthorization.itemId)
