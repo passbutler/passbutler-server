@@ -314,7 +314,7 @@ def createApp(testConfig=None):
 
         return response
 
-    @app.route('/' + API_VERSION_PREFIX + '/register', methods=['PUT'])
+    @app.put('/' + API_VERSION_PREFIX + '/register')
     def registerUser():
         if not app.config.get('REGISTRATION_ENABLED', False):
             app.logger.warning('The user registration is not enabled!')
@@ -351,28 +351,28 @@ def createApp(testConfig=None):
     Get a new token is only possible with password based authentication
     to be sure tokens can't refresh themselves for unlimited time!
     """
-    @app.route('/' + API_VERSION_PREFIX + '/token', methods=['GET'])
+    @app.get('/' + API_VERSION_PREFIX + '/token')
     @passwordAuth.login_required
     def getToken():
         authenticatedUser = passwordAuth.current_user()
         token = authenticatedUser.generateAuthenticationToken(secretKey=secretKey)
         return jsonify({'token': token})
 
-    @app.route('/' + API_VERSION_PREFIX + '/users', methods=['GET'])
+    @app.get('/' + API_VERSION_PREFIX + '/users')
     @webTokenAuth.login_required
     def getUsers():
         allUsers = db.session.query(User).all()
         result = PublicUserSchema(many=True).dump(allUsers)
         return jsonify(result)
 
-    @app.route('/' + API_VERSION_PREFIX + '/user', methods=['GET'])
+    @app.get('/' + API_VERSION_PREFIX + '/user')
     @webTokenAuth.login_required
     def getUserDetails():
         authenticatedUser = webTokenAuth.current_user()
         result = DefaultUserSchema().dump(authenticatedUser)
         return jsonify(result)
 
-    @app.route('/' + API_VERSION_PREFIX + '/user', methods=['PUT'])
+    @app.put('/' + API_VERSION_PREFIX + '/user')
     @webTokenAuth.login_required
     def setUserDetails():
         authenticatedUser = webTokenAuth.current_user()
@@ -406,7 +406,7 @@ def createApp(testConfig=None):
 
         return '', 204
 
-    @app.route('/' + API_VERSION_PREFIX + '/user/items', methods=['GET'])
+    @app.get('/' + API_VERSION_PREFIX + '/user/items')
     @webTokenAuth.login_required
     def getUserItems():
         authenticatedUser = webTokenAuth.current_user()
@@ -431,7 +431,7 @@ def createApp(testConfig=None):
         result = DefaultItemSchema(many=True).dump(userItems)
         return jsonify(result)
 
-    @app.route('/' + API_VERSION_PREFIX + '/user/items', methods=['PUT'])
+    @app.put('/' + API_VERSION_PREFIX + '/user/items')
     @webTokenAuth.login_required
     def setUserItems():
         authenticatedUser = webTokenAuth.current_user()
@@ -504,7 +504,7 @@ def createApp(testConfig=None):
             existingItem.deleted = item.deleted
             existingItem.modified = item.modified
 
-    @app.route('/' + API_VERSION_PREFIX + '/user/itemauthorizations', methods=['GET'])
+    @app.get('/' + API_VERSION_PREFIX + '/user/itemauthorizations')
     @webTokenAuth.login_required
     def getUserItemAuthorizations():
         authenticatedUser = webTokenAuth.current_user()
@@ -528,7 +528,7 @@ def createApp(testConfig=None):
 
         return jsonify(result)
 
-    @app.route('/' + API_VERSION_PREFIX + '/user/itemauthorizations', methods=['PUT'])
+    @app.put('/' + API_VERSION_PREFIX + '/user/itemauthorizations')
     @webTokenAuth.login_required
     def setUserItemAuthorizations():
         authenticatedUser = webTokenAuth.current_user()
