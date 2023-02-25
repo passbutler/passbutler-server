@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.1.0] - UNRELEASED
+## [1.1.0] - 2023-02-25
 
 ### Changed
 - Upgraded to Debian 11
