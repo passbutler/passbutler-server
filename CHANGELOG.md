@@ -1,5 +1,7 @@
 # Changelog
 
+## [1.2.0] - UNRELEASED
+
 ## [1.1.0] - 2023-02-25
 
 ### Changed
