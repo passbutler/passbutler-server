@@ -1,5 +1,5 @@
 <div align="center">
-    <img alt="Pass Butler – Private Cloud Password Manager" src="./projectcover.jpg" width="600">
+    <img alt="Pass Butler – Private Cloud Password Manager" src="./projectcover.png" width="600">
 </div>
 
 # Pass Butler synchronization server
