@@ -1,9 +1,9 @@
-passbutler-server (1.1.0) UNRELEASED; urgency=low
+passbutler-server (1.1.0) unstable; urgency=low
 
   * Upgraded to Debian 11
   * Raised dependencies
 
- -- Bastian Raschke <bastian.raschke@posteo.de>  Thu, 24 Feb 2023 17:32:00 +0100
+ -- Bastian Raschke <bastian.raschke@posteo.de>  Sat, 25 Feb 2023 17:17:00 +0100
 
 passbutler-server (1.0.0) unstable; urgency=low
 
