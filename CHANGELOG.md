@@ -2,6 +2,9 @@
 
 ## [1.2.0] - UNRELEASED
 
+### Changed
+- Raised dependencies
+
 ## [1.1.0] - 2023-02-25
 
 ### Changed
