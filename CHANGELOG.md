@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.2.0] - UNRELEASED
+## [1.2.0] - 2023-05-18
 
 ### Changed
 - Raised dependencies

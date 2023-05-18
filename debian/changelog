@@ -1,8 +1,8 @@
-passbutler-server (1.2.0) UNRELEASED; urgency=low
+passbutler-server (1.2.0) unstable; urgency=low
 
   * Raised dependencies
 
- -- Bastian Raschke <bastian.raschke@posteo.de>  Sat, 11 Mar 2023 16:30:00 +0100
+ -- Bastian Raschke <bastian.raschke@posteo.de>  Thu, 18 May 2023 15:42:23 +0200
 
  passbutler-server (1.1.0) unstable; urgency=low
 
