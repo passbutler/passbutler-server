@@ -172,7 +172,7 @@ The "deb" file is created in the parent directory.
 
 Pass Butler is licensed under the GNU Affero General Public License 3:
 
-    Copyright (c) 2019-2022 Bastian Raschke
+    Copyright (c) 2019-2023 Bastian Raschke
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License, version 3,
